@@ -17,6 +17,11 @@ export const authOptions = {
     signIn: "/auth/signin",
     error: "/auth/error", // hata sayfası
   },
+  session: {
+    strategy: "jwt",
+    maxAge: 60 * 60 * 8, // 8 saat
+    updateAge: 60 * 60 * 4, // 4 saatte bir güncellenir
+  },
   secret: process.env.NEXTAUTH_SECRET,
 };
 

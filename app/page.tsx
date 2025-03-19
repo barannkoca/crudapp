@@ -1,17 +1,19 @@
 "use client";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
+import { useEffect } from "react";
 
 export default function page() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
-  if (!session) {
-    redirect("/auth/signin");
-    return null;
-  }
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <h1 className="text-2xl font-semibold">Hoş geldin!</h1>
-    </div>
-  );
+  useEffect(() => {
+    if (status === "loading") return; // Session yükleniyorsa bekle
+    if (session) {
+      redirect("/dashboard");
+    } else {
+      redirect("/auth/signin");
+    }
+  }, [session, status]);
+
+  return <p className="flex items-center justify-center min-h-screen flex-col text-center text-2xl font-semibold">Yükleniyor...</p>;
 }
