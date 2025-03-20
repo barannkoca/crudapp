@@ -19,8 +19,8 @@ export const authOptions = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 60 * 60 * 8, // 8 saat
-    updateAge: 60 * 60 * 4, // 4 saatte bir güncellenir
+    maxAge: 60 * 60 * 2, // 1 saat
+    updateAge: 60 * 30, // yarım saatte bir güncellenir
   },
   secret: process.env.NEXTAUTH_SECRET,
 };

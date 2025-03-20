@@ -12,6 +12,7 @@ export default function Navbar() {
         signOut({callbackUrl: "/"});
       };
       
+      console.log(session)
   return (
     <nav className="bg-white border-b border-gray-200">
       <div className="container mx-auto flex justify-between items-center py-4 px-6">
@@ -29,7 +30,7 @@ export default function Navbar() {
         <div>
             {session ? (
                 <div className="space-x-6">
-                    <Link href="/" className="text-gray-900 hover:text-gray-600 hover:underline hover:underline-offset-4 transition">Kayıt Oluştur</Link>
+                    <Link href="/createform" className="text-gray-900 hover:text-gray-600 hover:underline hover:underline-offset-4 transition">Kayıt Oluştur</Link>
                     <Link href="/products" className="text-gray-900 hover:text-gray-600 hover:underline hover:underline-offset-4 transition">Kayıtları Gör</Link>
                     <button onClick={handleLogout} className="rounded-full border border-solid border-transparent transition-colors items-center justify-center bg-foreground text-background hover:bg-[#383838] dark:hover:bg-[#ccc] h-10 sm:px-5 sm:w-auto">
                     Çıkış Yap
