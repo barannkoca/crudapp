@@ -10,6 +10,7 @@ interface FileUploadFieldProps {
   fieldName: string           // örn: "photo", "kayit_pdf", vs.
   label: string
   accept?: string             // "image/*, application/pdf" vb.
+  onFileSelect?: (file: File) => void
 }
 
 export function FileUploadField({
@@ -17,6 +18,7 @@ export function FileUploadField({
   fieldName,
   label,
   accept = "image/*,application/pdf",
+  onFileSelect,
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -27,18 +29,25 @@ export function FileUploadField({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    form.setValue(fieldName, file)
-
-    if (file && file.type.includes("image")) {
-      // Resim dosyası ise önizleme oluştur
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setPreview(reader.result as string)
+    if (file) {
+      form.setValue(fieldName, file)
+      
+      // PDF dosyası seçildiğinde onFileSelect fonksiyonunu çağır
+      if (file.type === "application/pdf" && onFileSelect) {
+        onFileSelect(file)
       }
-      reader.readAsDataURL(file)
-    } else {
-      // PDF vs. için önizleme yerine sadece dosya adını gösterebiliriz
-      setPreview(null)
+
+      if (file.type.includes("image")) {
+        // Resim dosyası ise önizleme oluştur
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          setPreview(reader.result as string)
+        }
+        reader.readAsDataURL(file)
+      } else {
+        // PDF vs. için önizleme yerine sadece dosya adını gösterebiliriz
+        setPreview(null)
+      }
     }
   }
 

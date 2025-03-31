@@ -22,11 +22,24 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="tr">
-      <body className="antialiased">
+    <html lang="tr" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className="antialiased min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
         <Provider>
-          <Navbar /> {/* Navbar bileşeni */}
-          <main className="container mx-auto p-4">{children}</main>
+          <div className="flex flex-col min-h-screen">
+            <Navbar /> {/* Navbar bileşeni */}
+            <main className="flex-grow container mx-auto px-4 py-8">
+              <div className="max-w-7xl mx-auto">
+                {children}
+              </div>
+            </main>
+            <footer className="bg-white/80 backdrop-blur-sm border-t border-gray-100">
+              <div className="container mx-auto px-4 py-6">
+                <p className="text-center text-gray-600 text-sm">
+                  © 2024 CrudApp. Tüm hakları saklıdır.
+                </p>
+              </div>
+            </footer>
+          </div>
         </Provider>
       </body>
     </html>

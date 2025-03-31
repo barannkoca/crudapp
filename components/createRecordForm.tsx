@@ -3,6 +3,9 @@
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import {pdfToText} from 'pdf-ts';
+
 
 import {
   userRecordSchema,
@@ -25,12 +28,45 @@ import { Button } from "@/components/ui/button";
 
 // Dosya yükleme alanı için oluşturduğumuz bileşen
 import { FileUploadField } from "@/components/fields/FileUploadField";
+import { TextExtractionService } from "@/services/textExtractionService";
+import { FormFillService } from "@/services/formFillService";
 
 export function CreateRecordForm() {
   // react-hook-form kurulum
   const form = useForm<UserRecordFormData>({
     resolver: zodResolver(userRecordSchema),
+    defaultValues: {
+      kayit_ili: undefined,
+      yapilan_islem: undefined,
+      kayit_tarihi: undefined,
+      kayit_numarasi: "",
+      adi: "",
+      soyadi: "",
+      baba_adi: "",
+      anne_adi: "",
+      yabanci_kimlik_no: "",
+      uyrugu: "",
+      cinsiyeti: undefined,
+      medeni_hali: "",
+      dogum_tarihi: undefined,
+      belge_turu: "",
+      belge_no: "",
+      telefon_no: "",
+      eposta: "",
+      aciklama: "",
+      photo: undefined,
+      kayit_pdf: undefined,
+      saglik_sigortasi_pdf: undefined
+    }
   });
+
+  const extractAndFillForm = (text: string) => {
+    const extractionService = new TextExtractionService(text);
+    const formFillService = new FormFillService(form);
+    
+    const extractedData = extractionService.extractData();
+    formFillService.fillForm(extractedData);
+  };
 
   // Form submit olayı
   function onSubmit(values: UserRecordFormData) {
@@ -55,7 +91,13 @@ export function CreateRecordForm() {
           form={form}
           fieldName="kayit_pdf"
           label="Kayıt PDF"
-          accept="application/pdf,image/*"
+          accept="application/pdf"
+          onFileSelect={async (file) => {
+            const arrayBuffer = await file.arrayBuffer();
+            const uint8Array = new Uint8Array(arrayBuffer);
+            const text = await pdfToText(uint8Array);
+            extractAndFillForm(text);
+          }}
         />
 
         {/* Sağlık Sigortası PDF */}
@@ -63,7 +105,7 @@ export function CreateRecordForm() {
           form={form}
           fieldName="saglik_sigortasi_pdf"
           label="Sağlık Sigortası PDF"
-          accept="application/pdf,image/*"
+          accept="application/pdf"
         />
         </div>
 
