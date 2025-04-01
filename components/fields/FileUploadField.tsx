@@ -1,15 +1,19 @@
 "use client"
 
-import React, { useRef, useState } from "react"
+import React, { useCallback, useState, useEffect } from "react"
 import { UseFormReturn } from "react-hook-form"
-import { Input } from "@/components/ui/input"
-import { FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { useDropzone } from "react-dropzone"
+import { Card } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Upload, X, Loader2, FileText, Image as ImageIcon, AlertCircle, CheckCircle2 } from "lucide-react"
+import Image from 'next/image'
+import { FileService, FileInfo } from "@/services/fileService"
 
 interface FileUploadFieldProps {
-  form: UseFormReturn<any>    // veya UseFormReturn<UserRegistrationFormData>
-  fieldName: string           // örn: "photo", "kayit_pdf", vs.
+  form: UseFormReturn<any>
+  fieldName: string
   label: string
-  accept?: string             // "image/*, application/pdf" vb.
+  accept?: string
   onFileSelect?: (file: File) => void
 }
 
@@ -20,81 +24,155 @@ export function FileUploadField({
   accept = "image/*,application/pdf",
   onFileSelect,
 }: FileUploadFieldProps) {
-  const inputRef = useRef<HTMLInputElement | null>(null)
-  const [preview, setPreview] = useState<string | null>(null)
+  const [fileInfo, setFileInfo] = useState<FileInfo | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [status, setStatus] = useState<string | null>(null)
 
-  // react-hook-form ile kayıtlı değeri izleyelim.
-  // örn: "photo" alanında hangi dosya var?
-  const fileValue = form.watch(fieldName)
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
+  const handleFileUpload = useCallback(async (file: File) => {
+    setIsLoading(true)
+    setError(null)
+    setStatus(null)
+    
+    try {
+      const info = await FileService.processFile(file)
+      setFileInfo(info)
       form.setValue(fieldName, file)
       
-      // PDF dosyası seçildiğinde onFileSelect fonksiyonunu çağır
-      if (file.type === "application/pdf" && onFileSelect) {
+      if (file.type === "application/pdf") {
+        setStatus("PDF başarıyla yüklendi!")
+      } else if (file.type.startsWith('image/')) {
+        setStatus("Resim başarıyla yüklendi!")
+      } else {
+        setStatus("Dosya başarıyla yüklendi!")
+      }
+      
+      if (onFileSelect) {
         onFileSelect(file)
       }
-
-      if (file.type.includes("image")) {
-        // Resim dosyası ise önizleme oluştur
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          setPreview(reader.result as string)
-        }
-        reader.readAsDataURL(file)
-      } else {
-        // PDF vs. için önizleme yerine sadece dosya adını gösterebiliriz
-        setPreview(null)
-      }
+    } catch (error) {
+      console.error('Dosya işleme hatası:', error)
+      setError('Dosya işlenirken bir hata oluştu. Lütfen tekrar deneyin.')
+      form.setValue(fieldName, file)
+    } finally {
+      setIsLoading(false)
     }
-  }
+  }, [form, fieldName, onFileSelect])
+
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      const file = acceptedFiles[0]
+      if (file) {
+        if (file.type === "application/pdf") {
+          setStatus("PDF yükleniyor...")
+        } else if (file.type.startsWith('image/')) {
+          setStatus("Resim yükleniyor...")
+        }
+        await handleFileUpload(file)
+      }
+    },
+    [handleFileUpload]
+  )
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: accept ? { [accept]: [] } : undefined,
+    maxFiles: 1,
+  })
+
+  const file = form.watch(fieldName)
 
   const removeFile = () => {
     form.setValue(fieldName, undefined)
-    if (inputRef.current) {
-      inputRef.current.value = ""
+    if (fileInfo?.preview) {
+      FileService.revokePreview(fileInfo.preview)
     }
-    setPreview(null)
+    setFileInfo(null)
+    setError(null)
+    setStatus(null)
   }
 
   return (
-    <FormItem className="flex flex-col gap-2">
-      <FormLabel className="font-semibold text-gray-700">{label}</FormLabel>
-      <Input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        onChange={handleFileChange}
-        className="border border-gray-300 rounded-md p-2 focus:outline-none focus:border-blue-500"
-      />
-      <FormMessage className="text-red-600 text-sm" />
-
-      {fileValue && (
-        <div className="mt-2 flex flex-col gap-1">
-        {preview ? (
-            <img
-            src={preview}
-            alt="Önizleme"
-            className="mx-auto w-32 h-auto rounded-md border border-gray-300 mb-1"
-            />
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <Card
+        {...getRootProps()}
+        className={`border-2 border-dashed p-6 text-center cursor-pointer transition-colors ${
+          isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
+        }`}
+      >
+        <input {...getInputProps()} />
+        {isLoading ? (
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
+            <p className="text-sm text-gray-600">{status || "Dosya işleniyor..."}</p>
+          </div>
+        ) : fileInfo ? (
+          <div className="space-y-4">
+            {fileInfo.preview ? (
+              <div className="relative w-32 h-32 mx-auto">
+                <Image
+                  src={fileInfo.preview}
+                  alt="Önizleme"
+                  fill
+                  className="object-contain rounded-md"
+                />
+              </div>
+            ) : (
+              <div className="flex justify-center">
+                {fileInfo.type === "application/pdf" ? (
+                  <FileText className="h-12 w-12 text-gray-400" />
+                ) : (
+                  <ImageIcon className="h-12 w-12 text-gray-400" />
+                )}
+              </div>
+            )}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700">{fileInfo.name}</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    removeFile()
+                  }}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="text-xs text-gray-500">
+                <p>Boyut: {fileInfo.size}</p>
+                <p>Tip: {fileInfo.type}</p>
+              </div>
+            </div>
+          </div>
         ) : (
-            <p className="text-xs text-gray-600">
-            Seçilen dosya: {fileValue.name}
+          <div className="flex flex-col items-center gap-2">
+            <Upload className="h-8 w-8 text-gray-400" />
+            <p className="text-sm text-gray-600">
+              {isDragActive
+                ? "Dosyayı buraya bırakın"
+                : "Dosya yüklemek için tıklayın veya sürükleyin"}
             </p>
+            <p className="text-xs text-gray-500">
+              PDF veya resim dosyası yükleyebilirsiniz
+            </p>
+          </div>
         )}
-
-        <button
-            type="button"
-            onClick={removeFile}
-            className="text-red-500 text-sm underline hover:text-red-600"
-        >
-            Kaldır
-        </button>
+      </Card>
+      {error && (
+        <div className="flex items-center gap-2 text-sm text-red-500 mt-2">
+          <AlertCircle className="h-4 w-4" />
+          <p>{error}</p>
         </div>
-
       )}
-    </FormItem>
+      {status && !error && (
+        <div className="flex items-center gap-2 text-sm text-green-500 mt-2">
+          <CheckCircle2 className="h-4 w-4" />
+          <p>{status}</p>
+        </div>
+      )}
+    </div>
   )
 }

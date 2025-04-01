@@ -23,14 +23,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="tr" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="antialiased min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      <body className="antialiased min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
         <Provider>
           <div className="flex flex-col min-h-screen">
             <Navbar /> {/* Navbar bileşeni */}
-            <main className="flex-grow container mx-auto px-4 py-8">
-              <div className="max-w-7xl mx-auto">
-                {children}
-              </div>
+            <main className="flex-grow">
+              {children}
             </main>
             <footer className="bg-white/80 backdrop-blur-sm border-t border-gray-100">
               <div className="container mx-auto px-4 py-6">

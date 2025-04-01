@@ -6,6 +6,8 @@ export class FormFillService {
   constructor(private form: { setValue: UseFormSetValue<UserRecordFormData> }) {}
 
   private setDateValue(key: keyof UserRecordFormData, value: string, separator: string) {
+    if (!value) return;
+    
     const [day, month, year] = value.split(separator).map((part: string) => part.trim());
     if (day && month && year) {
       const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));

@@ -6,43 +6,127 @@ import { signIn, signOut, useSession, getProviders } from "next-auth/react";
 
 export default function Navbar() {
     const { data: session } = useSession();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const handleLogout = () => {
-        console.log("Çıkış yapıldı");
         signOut({callbackUrl: "/"});
-      };
-      
-      console.log(session)
-  return (
-    <nav className="bg-white border-b border-gray-200">
-      <div className="container mx-auto flex justify-between items-center py-4 px-6">
-      <Link href="/" className="flex items-center">
-            <Image
-            src="/file.svg"
-            width={30}
-            height={30}
-            alt=""
-            />
-            <p className="text-black text-lg font-semibold tracking-wide px-3">CrudApp</p>
-        </Link>
+    };
 
-        {/* Menü */}
-        <div>
-            {session ? (
-                <div className="space-x-6">
-                    <Link href="/createform" className="text-gray-900 hover:text-gray-600 hover:underline hover:underline-offset-4 transition">Kayıt Oluştur</Link>
-                    <Link href="/products" className="text-gray-900 hover:text-gray-600 hover:underline hover:underline-offset-4 transition">Kayıtları Gör</Link>
-                    <button onClick={handleLogout} className="rounded-full border border-solid border-transparent transition-colors items-center justify-center bg-foreground text-background hover:bg-[#383838] dark:hover:bg-[#ccc] h-10 sm:px-5 sm:w-auto">
-                    Çıkış Yap
-                    </button>
-                    
+    return (
+        <nav className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
+            <div className="container mx-auto px-4">
+                <div className="flex justify-between items-center h-16">
+                    {/* Logo */}
+                    <Link href="/" className="flex items-center space-x-2">
+                        <Image
+                            src="/file.svg"
+                            width={32}
+                            height={32}
+                            alt="CrudApp Logo"
+                            className="w-8 h-8"
+                        />
+                        <span className="text-xl font-semibold text-gray-900">CrudApp</span>
+                    </Link>
+
+                    {/* Desktop Menu */}
+                    <div className="hidden md:flex items-center space-x-8">
+                        {session ? (
+                            <>
+                                <Link 
+                                    href="/createform" 
+                                    className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
+                                >
+                                    Kayıt Oluştur
+                                </Link>
+                                <Link 
+                                    href="/products" 
+                                    className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
+                                >
+                                    Kayıtları Gör
+                                </Link>
+                                <button 
+                                    onClick={handleLogout} 
+                                    className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors duration-200 font-medium"
+                                >
+                                    Çıkış Yap
+                                </button>
+                            </>
+                        ) : (
+                            <Link 
+                                href="/auth/signin"
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+                            >
+                                Giriş Yap
+                            </Link>
+                        )}
+                    </div>
+
+                    {/* Mobile Menu Button */}
+                    <div className="md:hidden">
+                        <button
+                            onClick={() => setIsMenuOpen(!isMenuOpen)}
+                            className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+                        >
+                            <svg
+                                className="w-6 h-6 text-gray-600"
+                                fill="none"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                {isMenuOpen ? (
+                                    <path d="M6 18L18 6M6 6l12 12" />
+                                ) : (
+                                    <path d="M4 6h16M4 12h16M4 18h16" />
+                                )}
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-            ):(
-                <>
-                </>
-            )}
-        </div>
-      </div>
-    </nav>
-  );
+
+                {/* Mobile Menu */}
+                {isMenuOpen && (
+                    <div className="md:hidden py-4 space-y-4">
+                        {session ? (
+                            <>
+                                <Link 
+                                    href="/createform" 
+                                    className="block text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium py-2"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    Kayıt Oluştur
+                                </Link>
+                                <Link 
+                                    href="/products" 
+                                    className="block text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium py-2"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    Kayıtları Gör
+                                </Link>
+                                <button 
+                                    onClick={() => {
+                                        handleLogout();
+                                        setIsMenuOpen(false);
+                                    }}
+                                    className="w-full text-left px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors duration-200 font-medium"
+                                >
+                                    Çıkış Yap
+                                </button>
+                            </>
+                        ) : (
+                            <Link 
+                                href="/auth/signin"
+                                className="block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-center"
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                Giriş Yap
+                            </Link>
+                        )}
+                    </div>
+                )}
+            </div>
+        </nav>
+    );
 }
