@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import {
   userRecordSchema,
   UserRecordFormData,
-  TURKISH_PROVINCES,
+  ILLER,
   ISLEMLER,
 } from "@/schemas/userRecordSchema";
 
@@ -208,7 +208,7 @@ export function CreateRecordForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {TURKISH_PROVINCES.map((il) => (
+                        {ILLER.map((il: string) => (
                           <SelectItem key={il} value={il}>{il}</SelectItem>
                         ))}
                       </SelectContent>

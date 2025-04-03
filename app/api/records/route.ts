@@ -94,16 +94,22 @@ export async function POST(request: Request) {
     const photo = formData.get('photo') as File;
     const kayitPdf = formData.get('kayit_pdf') as File;
 
-    let photoBuffer = null;
-    let kayitPdfBuffer = null;
+    let photoData = null;
+    let photoContentType = null;
+    let kayitPdfData = null;
+    let kayitPdfContentType = null;
 
     try {
       if (photo) {
-        photoBuffer = Buffer.from(await photo.arrayBuffer());
+        const photoBuffer = Buffer.from(await photo.arrayBuffer());
+        photoData = photoBuffer.toString('base64');
+        photoContentType = photo.type;
         console.log('Fotoğraf başarıyla yüklendi');
       }
       if (kayitPdf) {
-        kayitPdfBuffer = Buffer.from(await kayitPdf.arrayBuffer());
+        const kayitPdfBuffer = Buffer.from(await kayitPdf.arrayBuffer());
+        kayitPdfData = kayitPdfBuffer.toString('base64');
+        kayitPdfContentType = kayitPdf.type;
         console.log('PDF başarıyla yüklendi');
       }
     } catch (error) {
@@ -141,20 +147,20 @@ export async function POST(request: Request) {
       eposta: formData.get('eposta') as string,
       aciklama: formData.get('aciklama') as string || undefined,
       durum: 'beklemede',
-      photo: photoBuffer ? {
-        data: photoBuffer,
-        contentType: photo.type
+      photo: photoData ? {
+        data: photoData,
+        contentType: photoContentType
       } : undefined,
-      kayit_pdf: kayitPdfBuffer ? {
-        data: kayitPdfBuffer,
-        contentType: kayitPdf.type
+      kayit_pdf: kayitPdfData ? {
+        data: kayitPdfData,
+        contentType: kayitPdfContentType
       } : undefined,
     };
 
     console.log('Kayıt verileri hazırlandı:', {
       ...recordData,
-      photo: photoBuffer ? 'Var' : 'Yok',
-      kayit_pdf: kayitPdfBuffer ? 'Var' : 'Yok'
+      photo: photoData ? 'Var' : 'Yok',
+      kayit_pdf: kayitPdfData ? 'Var' : 'Yok'
     });
 
     try {
@@ -207,21 +213,38 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Yetkilendirme gerekli' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Yetkilendirme gerekli' },
+        { 
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
     }
 
     await connectDB();
 
     const records = await Record.find({ user: session.user.id })
-      .sort({ createdAt: -1 }) // timestamps kullandığımız için created_at yerine createdAt
-      .select('-photo.data -kayit_pdf.data');
+      .sort({ createdAt: -1 })
+      .select('-kayit_pdf.data'); // Sadece PDF verisini çıkar, fotoğraf verisini koru
 
-    return NextResponse.json(records);
+    return NextResponse.json(records, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
   } catch (error) {
     console.error('Kayıtları getirme hatası:', error);
     return NextResponse.json(
       { error: 'Kayıtlar getirilirken bir hata oluştu' },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
     );
   }
 } 

@@ -1,5 +1,10 @@
 import mongoose from 'mongoose';
-import { TURKISH_PROVINCES, ISLEMLER } from '@/schemas/userRecordSchema';
+import { ILLER, ISLEMLER } from '@/schemas/userRecordSchema';
+
+// Eğer model zaten varsa önce kaldır
+if (mongoose.models.Record) {
+  delete mongoose.models.Record;
+}
 
 const recordSchema = new mongoose.Schema({
   user: {
@@ -9,7 +14,7 @@ const recordSchema = new mongoose.Schema({
   },
   kayit_ili: {
     type: String,
-    enum: TURKISH_PROVINCES,
+    enum: ILLER,
     required: true,
   },
   yapilan_islem: {
@@ -37,15 +42,19 @@ const recordSchema = new mongoose.Schema({
   },
   baba_adi: {
     type: String,
+    default: undefined,
   },
   anne_adi: {
     type: String,
+    default: undefined,
   },
   yabanci_kimlik_no: {
     type: String,
+    default: undefined,
   },
   uyrugu: {
     type: String,
+    default: undefined,
   },
   cinsiyeti: {
     type: String,
@@ -54,15 +63,19 @@ const recordSchema = new mongoose.Schema({
   },
   medeni_hali: {
     type: String,
+    default: undefined,
   },
   dogum_tarihi: {
     type: Date,
+    default: undefined,
   },
   belge_turu: {
     type: String,
+    default: undefined,
   },
   belge_no: {
     type: String,
+    default: undefined,
   },
   telefon_no: {
     type: String,
@@ -76,22 +89,43 @@ const recordSchema = new mongoose.Schema({
   },
   aciklama: {
     type: String,
+    default: undefined,
   },
   photo: {
-    data: Buffer,
-    contentType: String,
+    data: {
+      type: String,
+      default: undefined,
+    },
+    contentType: {
+      type: String,
+      default: undefined,
+    },
+    _id: false,
   },
   kayit_pdf: {
-    data: Buffer,
-    contentType: String,
+    data: {
+      type: String,
+      default: undefined,
+    },
+    contentType: {
+      type: String,
+      default: undefined,
+    },
+    _id: false,
   },
   durum: {
     type: String,
     enum: ['beklemede', 'onaylandi', 'reddedildi'],
     default: 'beklemede'
+  },
+  gecerlilik_tarihi: {
+    type: Date,
+    default: undefined,
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  strict: true
 });
 
-export const Record = mongoose.models.Record || mongoose.model('Record', recordSchema); 
+// Modeli yeniden oluştur
+export const Record = mongoose.model('Record', recordSchema); 

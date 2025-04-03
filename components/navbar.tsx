@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from 'next/image'
 import {useState, useEffect} from'react';
 import { signIn, signOut, useSession, getProviders } from "next-auth/react";
+import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
     const { data: session } = useSession();
@@ -38,11 +39,8 @@ export default function Navbar() {
                                 >
                                     Kayıt Oluştur
                                 </Link>
-                                <Link 
-                                    href="/products" 
-                                    className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
-                                >
-                                    Kayıtları Gör
+                                <Link href="/records">
+                                    <Button variant="ghost">Kayıtları Gör</Button>
                                 </Link>
                                 <button 
                                     onClick={handleLogout} 
@@ -98,12 +96,8 @@ export default function Navbar() {
                                 >
                                     Kayıt Oluştur
                                 </Link>
-                                <Link 
-                                    href="/products" 
-                                    className="block text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium py-2"
-                                    onClick={() => setIsMenuOpen(false)}
-                                >
-                                    Kayıtları Gör
+                                <Link href="/records">
+                                    <Button variant="ghost">Kayıtları Gör</Button>
                                 </Link>
                                 <button 
                                     onClick={() => {
