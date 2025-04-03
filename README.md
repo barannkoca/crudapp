@@ -1,36 +1,127 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CRUD Başvuru Yönetim Sistemi
 
-## Getting Started
+Modern web teknolojileri kullanılarak geliştirilmiş, kapsamlı bir başvuru yönetim sistemi. Bu proje, kullanıcı dostu arayüzü ve güçlü backend yapısıyla başvuruların etkin yönetimini sağlar.
 
-First, run the development server:
+## 🚀 Özellikler
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### 📋 Başvuru Yönetimi
+- Yeni başvuru oluşturma ve düzenleme
+- PDF ve fotoğraf yükleme desteği
+- Otomatik form doldurma (PDF'den veri çıkarma)
+- Başvuru durumu takibi (Beklemede, Onaylandı, Reddedildi)
+- Geçerlilik tarihi yönetimi
+
+### 🔍 Gelişmiş Filtreleme Sistemi
+- Başvuru türüne göre filtreleme
+- İl bazlı filtreleme
+- Durum filtreleme
+- Tarih aralığı filtreleme
+- Ad-soyad ve kayıt no ile arama
+- SOLID prensiplerine uygun filtreleme mimarisi
+
+### 📊 Veri Görüntüleme
+- Sayfalama sistemi
+- Detaylı başvuru görüntüleme
+- PDF indirme özelliği
+- Responsive tasarım
+
+## 🛠️ Kullanılan Teknolojiler
+
+### Frontend
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS
+- Shadcn/ui
+- React Hook Form
+- date-fns
+- Lucide Icons
+
+### Backend
+- Next.js API Routes
+- MongoDB
+- NextAuth.js
+- PDF İşleme (pdf-ts)
+
+### Mimari
+- SOLID Prensipleri
+- Service Pattern
+- Clean Architecture
+- Responsive Design
+- Type-Safe Development
+
+## 🏗️ Proje Yapısı
+
+```
+├── app/
+│   ├── api/           # API endpoints
+│   └── pages/         # Sayfa bileşenleri
+├── components/        # UI bileşenleri
+├── services/         # İş mantığı servisleri
+│   ├── filters/      # Filtreleme sistemi
+│   └── ...
+├── types/           # TypeScript tipleri
+├── schemas/         # Veri şemaları
+└── lib/            # Yardımcı fonksiyonlar
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🌟 Öne Çıkan Özellikler
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Modüler Tasarım**
+   - Bağımsız ve yeniden kullanılabilir bileşenler
+   - Kolay bakım ve geliştirme
+   - Test edilebilir kod yapısı
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. **Performans Optimizasyonu**
+   - Sayfalama ile verimli veri yükleme
+   - Optimized image loading
+   - Lazy loading
 
-## Learn More
+3. **Güvenlik**
+   - Oturum yönetimi
+   - API route koruması
+   - Input validasyonu
 
-To learn more about Next.js, take a look at the following resources:
+4. **Kullanıcı Deneyimi**
+   - Sezgisel arayüz
+   - Responsive tasarım
+   - Anlık bildirimler
+   - Gelişmiş filtreleme ve arama
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🚀 Kurulum
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+# Depoyu klonlayın
+git clone [repo-url]
 
-## Deploy on Vercel
+# Bağımlılıkları yükleyin
+npm install
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Geliştirme sunucusunu başlatın
+npm run dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🔧 Ortam Değişkenleri
+
+```env
+MONGODB_URI=your_mongodb_uri
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=http://localhost:3000
+```
+
+## 🤝 Katkıda Bulunma
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📝 Lisans
+
+Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICENSE) dosyasına bakınız.
+
+## 👤 Geliştirici
+
+Baran Koca
+- LinkedIn: [Baran Koca](https://www.linkedin.com/in/baran-koca-6a330a217/)
+- GitHub: [@barannkoca](https://github.com/barannkoca)
