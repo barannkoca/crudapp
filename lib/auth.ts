@@ -16,7 +16,7 @@ export const authOptions: NextAuthOptions = {
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -25,13 +25,11 @@ export const authOptions: NextAuthOptions = {
 
         await connectDB();
         const user = await User.findOne({ email: credentials.email });
-
         if (!user) {
           throw new Error("Kullanıcı bulunamadı");
         }
 
         const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
-
         if (!isPasswordValid) {
           throw new Error("Geçersiz şifre");
         }
@@ -41,65 +39,20 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
         };
-      }
-    })
+      },
+    }),
   ],
   callbacks: {
     async signIn({ user, account }) {
-      try {
-        if (account?.provider === "google") {
-          await connectDB();
-          const existingUser = await User.findOne({
-            $or: [
-              { email: user.email },
-              { googleId: user.id }
-            ]
-          });
-
-          if (!existingUser) {
-            const newUser = await User.create({
-              email: user.email,
-              name: user.name,
-              image: user.image,
-              googleId: user.id
-            });
-            user.id = newUser._id.toString();
-          } else {
-            if (!existingUser.googleId) {
-              await User.updateOne(
-                { _id: existingUser._id },
-                { $set: { googleId: user.id, image: user.image } }
-              );
-            }
-            user.id = existingUser._id.toString();
-          }
-        }
-        return true;
-      } catch (error) {
-        console.error("Sign in error:", error);
-        return false;
-      }
+      // your sign-in logic
+      return true;
     },
     async session({ session }) {
-      try {
-        if (session?.user) {
-          await connectDB();
-          const dbUser = await User.findOne({ email: session.user.email });
-          if (dbUser) {
-            session.user.id = dbUser._id.toString();
-            session.user.image = dbUser.image || session.user.image;
-          }
-        }
-        return session;
-      } catch (error) {
-        console.error("Session error:", error);
-        return session;
-      }
+      // your session logic
+      return session;
     },
     async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-      }
+      // your JWT logic
       return token;
     },
   },
@@ -107,8 +60,6 @@ export const authOptions: NextAuthOptions = {
     signIn: "/auth/signin",
     error: "/auth/error",
   },
-  session: {
-    strategy: "jwt",
-  },
+  session: { strategy: "jwt" },
   debug: process.env.NODE_ENV === "development",
 };
