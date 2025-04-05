@@ -425,10 +425,11 @@ export default function RecordsTable() {
             <TableRow className="bg-gray-50/50">
               <TableHead className="font-semibold">Fotoğraf</TableHead>
               <TableHead className="font-semibold">Kayıt No</TableHead>
+              <TableHead className="font-semibold">Yabancı Kimlik No</TableHead>
               <TableHead className="font-semibold">Ad Soyad</TableHead>
-              <TableHead className="font-semibold">Başvuru Türü</TableHead>
-              <TableHead className="font-semibold">İl</TableHead>
+              <TableHead className="font-semibold">Telefon No</TableHead>
               <TableHead className="font-semibold">Kayıt Tarihi</TableHead>
+              <TableHead className="font-semibold">Geçerlilik Tarihi</TableHead>
               <TableHead className="font-semibold">Durum</TableHead>
               <TableHead className="font-semibold">İşlemler</TableHead>
             </TableRow>
@@ -459,13 +460,22 @@ export default function RecordsTable() {
                   )}
                 </TableCell>
                 <TableCell className="font-medium">{record.kayit_numarasi}</TableCell>
+                <TableCell>{record.yabanci_kimlik_no || "-"}</TableCell>
                 <TableCell>{`${record.adi} ${record.soyadi}`}</TableCell>
-                <TableCell>{record.yapilan_islem}</TableCell>
-                <TableCell>{record.kayit_ili}</TableCell>
+                <TableCell>{record.telefon_no ? `${record.telefon_no}` : "-"}</TableCell>
                 <TableCell>
                   {format(new Date(record.kayit_tarihi), "dd MMMM yyyy", {
                     locale: tr,
                   })}
+                </TableCell>
+                <TableCell>
+                  {record.gecerlilik_tarihi ? (
+                    format(new Date(record.gecerlilik_tarihi), "dd MMMM yyyy", {
+                      locale: tr,
+                    })
+                  ) : (
+                    "-"
+                  )}
                 </TableCell>
                 <TableCell>
                   <span
