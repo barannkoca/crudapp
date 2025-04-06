@@ -12,10 +12,7 @@ interface Cached {
 }
 
 declare global {
-  var mongoose: {
-    conn: typeof mongoose | null;
-    promise: Promise<typeof mongoose> | null;
-  };
+  var mongoose: Cached;
 }
 
 let cached: Cached = global.mongoose || { conn: null, promise: null };
