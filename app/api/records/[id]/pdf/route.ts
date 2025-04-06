@@ -6,8 +6,10 @@ import connectDB from "@/lib/mongodb";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+
   try {
     // Oturum kontrolü
     const session = await getServerSession(authOptions);
@@ -23,7 +25,7 @@ export async function GET(
 
     // Kaydı bul
     const record = await Record.findOne({
-      _id: params.id,
+      _id: id,
       user: session.user.id,
     });
 
@@ -49,7 +51,7 @@ export async function GET(
     return new NextResponse(buffer, {
       headers: {
         "Content-Type": record.kayit_pdf.contentType || "application/pdf",
-        "Content-Disposition": `attachment; filename="kayit-${params.id}.pdf"`,
+        "Content-Disposition": `attachment; filename="kayit-${id}.pdf"`,
       },
     });
   } catch (error) {
