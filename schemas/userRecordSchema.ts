@@ -20,11 +20,13 @@ export const ILLER = [
  * Yapılabilen işlemler listesi
  */
 export const ISLEMLER = [
-  "Kısa Dönem İlk Başvuru",
-  "Kısa Dönem İlk Aile Başvurusu",
-  "Kısa Dönem Uzatma Başvurusu",
-  "Kısa Dönem Aile Uzatma Başvurusu",
-  "Çalışma İzni Başvurusu"
+  "İlk Başvuru",
+  "Uzatma Başvurusu"
+] as const
+
+export const IKAMET_TURU = [
+  "KISA DÖNEM",
+  "UZUN DÖNEM"
 ] as const
 
 /**
@@ -35,8 +37,11 @@ export const userRecordSchema = z.object({
   // Kayıt ili - sadece 81 ilden biri seçilebilir
   kayit_ili: z.string().min(1, "İl seçilmelidir"),
 
-  // Yapılan işlem - belirli 5 seçenekten biri olmalı
+  // Yapılan işlem - İlk Başvuru veya Uzatma Başvurusu
   yapilan_islem: z.string().min(1, "İşlem seçilmelidir"),
+
+  // Başvurulan İkamet İzni Türü - KISA DÖNEM veya UZUN DÖNEM
+  ikamet_turu: z.string().min(1, "İkamet türü seçilmelidir"),
 
   // Kayıt tarihi - Zod ile string'i tarihe dönüştürüp gelecekteki tarihi engelliyoruz
   kayit_tarihi: z.date().nullable(),

@@ -12,6 +12,7 @@ import {
   UserRecordFormData,
   ILLER,
   ISLEMLER,
+  IKAMET_TURU,
 } from "@/schemas/userRecordSchema";
 
 import {
@@ -46,6 +47,7 @@ export function CreateRecordForm() {
     defaultValues: {
       kayit_ili: "",
       yapilan_islem: "",
+      ikamet_turu: "",
       kayit_tarihi: null,
       kayit_numarasi: "",
       adi: "",
@@ -139,7 +141,23 @@ export function CreateRecordForm() {
       console.log('Sunucu yanıtı:', responseData);
 
       if (!response.ok) {
-        throw new Error(responseData.error || "Kayıt oluşturulurken bir hata oluştu");
+        console.error('Kayıt oluşturma hatası:', responseData.error);
+        
+        // HTTP durum koduna göre farklı mesajlar göster
+        if (response.status === 403) {
+          if (responseData.error.includes('onaylanmamış')) {
+            toast.error('Hesabınız henüz onaylanmamış! Yöneticinizle iletişime geçin.');
+          } else if (responseData.error.includes('şirkete üye')) {
+            toast.error('Lütfen önce bir şirket oluşturun veya mevcut bir şirkete katılın!');
+          } else {
+            toast.error(responseData.error);
+          }
+        } else if (response.status === 400) {
+          toast.error('Lütfen tüm zorunlu alanları doldurun!');
+        } else {
+          toast.error('Kayıt oluşturulurken bir hata oluştu!');
+        }
+        return;
       }
 
       toast.success("Kayıt başarıyla oluşturuldu");
@@ -233,6 +251,29 @@ export function CreateRecordForm() {
                       <SelectContent>
                         {ISLEMLER.map((islem) => (
                           <SelectItem key={islem} value={islem}>{islem}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="ikamet_turu"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>İkamet Türü</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="İkamet Türü Seçiniz" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {IKAMET_TURU.map((tur: string) => (
+                          <SelectItem key={tur} value={tur}>{tur}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

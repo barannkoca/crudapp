@@ -61,7 +61,9 @@ export const authOptions: NextAuthOptions = {
               email: user.email,
               name: user.name,
               image: user.image,
-              googleId: user.id
+              googleId: user.id,
+              corporate: undefined,
+              role: undefined
             });
             user.id = newUser._id.toString();
           } else {

@@ -2,6 +2,7 @@ export interface Record {
   _id: string;
   kayit_ili: string;
   yapilan_islem: string;
+  ikamet_turu: string;
   kayit_tarihi: string;
   kayit_numarasi: string;
   adi: string;
@@ -22,4 +23,8 @@ export interface Record {
     data: string;
     contentType: string;
   };
+  user: {
+    _id: string;
+    name: string;
+  } | string; 
 } 

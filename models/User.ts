@@ -16,8 +16,24 @@ const userSchema = new mongoose.Schema({
       return !this.googleId;
     }
   },
+  status: {
+    type: String,
+    enum: ['active', 'inactive', 'pending'],
+    default: 'pending'
+  },
   image: String,
   googleId: String,
+  corporate: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Corporate',
+    required: function(this: any) {
+      return this.status === 'active';
+    }
+  },
+  role: {
+    type: String,
+    enum: ['owner', 'admin', 'member']
+  },
   records: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Record'

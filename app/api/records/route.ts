@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { Record } from "@/models/Record";
+import { User } from "@/models/User";
 import connectDB from "@/lib/mongodb";
 
 // Dosyayı Base64'e çeviren yardımcı fonksiyon
@@ -43,10 +44,52 @@ export async function POST(request: Request) {
       );
     }
 
+    let userCorporate: any;
+
     // Veritabanı bağlantısı
     try {
       await connectDB();
       console.log('MongoDB bağlantısı başarılı');
+
+      // Kullanıcıyı kontrol et
+      const user = await User.findById(session.user.id)
+        .select('corporate status')
+        .populate({
+          path: 'corporate',
+          select: 'name'
+        });
+
+      // Güvenlik kontrolleri:
+      // 1. Kullanıcının status'u active olmalı
+      // 2. Şirketi olmalı
+      if (user.status !== 'active' || !user?.corporate) {
+        let errorMessage = '';
+        
+        if (!user?.corporate) {
+          errorMessage = 'Kayıt oluşturmak için bir şirkete üye olmanız gerekiyor.';
+        } else if (user.status === 'pending') {
+          errorMessage = 'Hesabınız henüz onaylanmamış. Kayıt oluşturmak için hesabınızın onaylanmasını bekleyin.';
+        } else if (user.status === 'inactive') {
+          errorMessage = 'Hesabınız şu anda aktif değil. Kayıt oluşturmak için hesabınızın aktif olması gerekiyor.';
+        }
+
+        return NextResponse.json(
+          { error: errorMessage },
+          { status: 403 }
+        );
+      }
+
+      // Tüm güvenlik kontrolleri geçildiyse corporate'i kullan
+      userCorporate = user.corporate;
+      
+      // Corporate'in geçerli olduğunu kontrol et
+      if (!userCorporate?._id) {
+        return NextResponse.json(
+          { error: 'Şirket bilgilerinize ulaşılamadı. Lütfen daha sonra tekrar deneyin.' },
+          { status: 500 }
+        );
+      }
+
     } catch (dbError) {
       console.error('MongoDB bağlantı hatası:', dbError);
       return NextResponse.json(
@@ -67,6 +110,7 @@ export async function POST(request: Request) {
     const requiredFields = [
       'kayit_ili',
       'yapilan_islem',
+      'ikamet_turu',
       'kayit_tarihi',
       'kayit_numarasi',
       'adi',
@@ -126,10 +170,12 @@ export async function POST(request: Request) {
     }
 
     // Kayıt verilerini hazırla
-    const recordData = {
+    const recordData: any = {
       user: session.user.id,
+      corporate: userCorporate._id,
       kayit_ili: formData.get('kayit_ili') as string,
       yapilan_islem: formData.get('yapilan_islem') as string,
+      ikamet_turu: formData.get('ikamet_turu') as string,
       kayit_tarihi: new Date(formData.get('kayit_tarihi') as string),
       kayit_numarasi: formData.get('kayit_numarasi') as string,
       adi: formData.get('adi') as string,
@@ -228,7 +274,8 @@ export async function GET() {
 
     const records = await Record.find({ user: session.user.id })
       .sort({ createdAt: -1 })
-      .select('-kayit_pdf.data'); // Sadece PDF verisini çıkar, fotoğraf verisini koru
+      .select('-kayit_pdf.data') // Sadece PDF verisini çıkar, fotoğraf verisini koru
+      .populate('user', 'name'); // User bilgisini name alanıyla birlikte getir
 
     return NextResponse.json(records, {
       headers: {

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { ILLER, ISLEMLER } from '@/schemas/userRecordSchema';
+import { ILLER, ISLEMLER, IKAMET_TURU } from '@/schemas/userRecordSchema';
 
 // Eğer model zaten varsa önce kaldır
 if (mongoose.models.Record) {
@@ -12,6 +12,11 @@ const recordSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  corporate: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Corporate',
+    required: true,
+  },
   kayit_ili: {
     type: String,
     enum: ILLER,
@@ -20,6 +25,11 @@ const recordSchema = new mongoose.Schema({
   yapilan_islem: {
     type: String,
     enum: ISLEMLER,
+    required: true,
+  },
+  ikamet_turu: {
+    type: String,
+    enum: IKAMET_TURU,
     required: true,
   },
   kayit_tarihi: {

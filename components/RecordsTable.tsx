@@ -618,10 +618,20 @@ export default function RecordsTable() {
                   <AccordionTrigger>Kayıt Bilgileri</AccordionTrigger>
                   <AccordionContent>
                     <div className="space-y-2 text-sm">
+                    <div className="flex items-center">
+                        <Hash className="h-4 w-4 mr-2 text-gray-500" />
+                        <span className="font-medium">Kaydı Oluşturan:</span>
+                        <span className="ml-2">{typeof selectedRecord.user === 'object' ? selectedRecord.user.name : selectedRecord.user || 'Bilinmiyor'}</span>
+                      </div>
                       <div className="flex items-center">
                         <Hash className="h-4 w-4 mr-2 text-gray-500" />
                         <span className="font-medium">Kayıt No:</span>
                         <span className="ml-2">{selectedRecord.kayit_numarasi}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <FileText className="h-4 w-4 mr-2 text-gray-500" />
+                        <span className="font-medium">İkamet İzni Türü:</span>
+                        <span className="ml-2">{selectedRecord.ikamet_turu}</span>
                       </div>
                       <div className="flex items-center">
                         <FileText className="h-4 w-4 mr-2 text-gray-500" />

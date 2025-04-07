@@ -52,6 +52,8 @@ export async function POST(request: Request) {
         email,
         name,
         password: hashedPassword,
+        corporate: undefined,
+        role: undefined
       });
 
       return NextResponse.json({
