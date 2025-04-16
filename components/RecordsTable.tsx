@@ -122,8 +122,14 @@ export default function RecordsTable() {
       if (!response.ok) {
         throw new Error("Kayıtlar getirilirken bir hata oluştu");
       }
-      const data = await response.json();
-      setRecords(data);
+      const data: Record[] = await response.json(); // Burada türü belirtiyoruz
+
+          // Kayıtları kayıt tarihine göre sıralama
+    const sortedData = data.sort((a, b) => {
+      return new Date(b.kayit_tarihi).getTime() - new Date(a.kayit_tarihi).getTime();
+    });
+
+      setRecords(sortedData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
