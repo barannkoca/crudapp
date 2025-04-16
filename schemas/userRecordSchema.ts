@@ -26,7 +26,8 @@ export const ISLEMLER = [
 
 export const IKAMET_TURU = [
   "KISA DÖNEM",
-  "UZUN DÖNEM"
+  "UZUN DÖNEM",
+  "AİLE"
 ] as const
 
 /**
