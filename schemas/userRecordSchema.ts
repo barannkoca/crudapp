@@ -27,7 +27,8 @@ export const ISLEMLER = [
 export const IKAMET_TURU = [
   "KISA DÖNEM",
   "UZUN DÖNEM",
-  "AİLE"
+  "AİLE",
+  "İNSANİ"
 ] as const
 
 /**
@@ -87,7 +88,7 @@ export const userRecordSchema = z.object({
   telefon_no: z.string().min(10, "Telefon numarası en az 10 haneli olmalıdır"),
 
   // E-posta - geçerli format
-  eposta: z.string().email("Geçerli bir e-posta adresi giriniz"),
+  eposta: z.string().optional().nullable(),
 
   // Açıklama - opsiyonel
   aciklama: z.string().optional(),

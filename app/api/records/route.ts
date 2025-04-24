@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { Record } from "@/models/Record";
 import { User } from "@/models/User";
+import { Corporate } from "@/models/Corporate";
 import connectDB from "@/lib/mongodb";
 
 // Dosyayı Base64'e çeviren yardımcı fonksiyon
@@ -116,8 +117,7 @@ export async function POST(request: Request) {
       'adi',
       'soyadi',
       'cinsiyeti',
-      'telefon_no',
-      'eposta'
+      'telefon_no'
     ];
 
     const missingFields = requiredFields.filter(field => !formData.get(field));
@@ -190,7 +190,7 @@ export async function POST(request: Request) {
       belge_turu: formData.get('belge_turu') as string || undefined,
       belge_no: formData.get('belge_no') as string || undefined,
       telefon_no: formData.get('telefon_no') as string,
-      eposta: formData.get('eposta') as string,
+      eposta: formData.get('eposta') ? formData.get('eposta') as string : undefined,
       aciklama: formData.get('aciklama') as string || undefined,
       durum: 'beklemede',
       photo: photoData ? {

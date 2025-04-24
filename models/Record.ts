@@ -89,13 +89,10 @@ const recordSchema = new mongoose.Schema({
   },
   telefon_no: {
     type: String,
-    required: true,
     match: /^\d{10,}$/,
   },
   eposta: {
     type: String,
-    required: true,
-    match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   },
   aciklama: {
     type: String,

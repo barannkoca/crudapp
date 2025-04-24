@@ -539,7 +539,13 @@ export function CreateRecordForm() {
                   <FormItem>
                     <FormLabel>E-posta</FormLabel>
                     <FormControl>
-                      <Input placeholder="E-posta adresi" {...field} />
+                    <Input 
+                      placeholder="E-posta adresi" 
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                    />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -126,7 +126,7 @@ export default function RecordsTable() {
 
           // Kayıtları kayıt tarihine göre sıralama
     const sortedData = data.sort((a, b) => {
-      return new Date(b.kayit_tarihi).getTime() - new Date(a.kayit_tarihi).getTime();
+      return new Date(a.kayit_tarihi).getTime() - new Date(b.kayit_tarihi).getTime();
     });
 
       setRecords(sortedData);
@@ -273,6 +273,15 @@ export default function RecordsTable() {
       </div>
     );
   }
+
+  const formatPhoneNumber = (phoneNumber: string) => {
+    const cleaned = ('' + phoneNumber).replace(/\D/g, ''); // Sadece rakamları al
+    const match = cleaned.match(/^(\d{3})(\d{3})(\d{2})(\d{2})$/); // 5xx xxx-xx-xx formatı için eşleştir
+    if (match) {
+      return `(${match[1]}) ${match[2]}-${match[3]}-${match[4]}`; // Formatı uygula
+    }
+    return phoneNumber; // Eğer formatlanamazsa orijinal numarayı döndür
+  };
 
   return (
     <div className="space-y-4">
@@ -429,6 +438,7 @@ export default function RecordsTable() {
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50/50">
+            <TableHead className="font-semibold">Sıra No</TableHead>
               <TableHead className="font-semibold">Fotoğraf</TableHead>
               <TableHead className="font-semibold">Kayıt No</TableHead>
               <TableHead className="font-semibold">Yabancı Kimlik No</TableHead>
@@ -443,6 +453,7 @@ export default function RecordsTable() {
           <TableBody>
             {filteredRecords.map((record) => (
               <TableRow key={record._id} className="hover:bg-gray-50/50">
+                <TableCell>{"-"}</TableCell>
                 <TableCell>
                   {record.photo?.data ? (
                     <Button 
@@ -468,15 +479,14 @@ export default function RecordsTable() {
                 <TableCell className="font-medium">{record.kayit_numarasi}</TableCell>
                 <TableCell>{record.yabanci_kimlik_no || "-"}</TableCell>
                 <TableCell>{`${record.adi} ${record.soyadi}`}</TableCell>
-                <TableCell>{record.telefon_no ? `${record.telefon_no}` : "-"}</TableCell>
-                <TableCell>
-                  {format(new Date(record.kayit_tarihi), "dd MMMM yyyy", {
+                <TableCell>{record.telefon_no ? formatPhoneNumber(record.telefon_no) : "-"}</TableCell>                
+                <TableCell>{format(new Date(record.kayit_tarihi), "dd.MM.yyyy", {
                     locale: tr,
                   })}
                 </TableCell>
                 <TableCell>
                   {record.gecerlilik_tarihi ? (
-                    format(new Date(record.gecerlilik_tarihi), "dd MMMM yyyy", {
+                    format(new Date(record.gecerlilik_tarihi), "dd.MM.yyyy", {
                       locale: tr,
                     })
                   ) : (
@@ -698,7 +708,7 @@ export default function RecordsTable() {
                         <div className="flex items-center">
                           <Phone className="h-4 w-4 mr-2 text-gray-500" />
                           <span className="font-medium">Telefon:</span>
-                          <span className="ml-2">{selectedRecord.telefon_no}</span>
+                          <span className="ml-2">{formatPhoneNumber(selectedRecord.telefon_no)}</span>
                         </div>
                       )}
                       {selectedRecord.eposta && (
