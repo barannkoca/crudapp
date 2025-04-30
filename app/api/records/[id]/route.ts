@@ -163,10 +163,8 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;{
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -204,3 +202,4 @@ export async function DELETE(
     );
   }
 } 
+}
