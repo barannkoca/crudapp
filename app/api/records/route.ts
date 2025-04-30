@@ -255,43 +255,42 @@ export async function POST(request: Request) {
 }
 
 // Kayıtları getirme
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Yetkilendirme gerekli' },
-        { 
-          status: 401,
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        }
+        { status: 401 }
       );
     }
 
     await connectDB();
 
-    const records = await Record.find({ user: session.user.id })
-      .sort({ createdAt: -1 })
-      .select('-kayit_pdf.data') // Sadece PDF verisini çıkar, fotoğraf verisini koru
-      .populate('user', 'name'); // User bilgisini name alanıyla birlikte getir
+    // Önce kullanıcıyı ve corporate bilgisini al
+    const user = await User.findById(session.user.id)
+      .select('corporate')
+      .populate('corporate');
 
-    return NextResponse.json(records, {
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
+    if (!user?.corporate) {
+      return NextResponse.json(
+        { error: 'Şirket bilgisi bulunamadı' },
+        { status: 404 }
+      );
+    }
+
+    // Corporate'a ait kayıtları getir
+    const records = await Record.find({ corporate: user.corporate._id })
+      .sort({ createdAt: -1 })
+      .select('-kayit_pdf.data')
+      .populate('user', 'name');
+
+    return NextResponse.json(records);
   } catch (error) {
     console.error('Kayıtları getirme hatası:', error);
     return NextResponse.json(
       { error: 'Kayıtlar getirilirken bir hata oluştu' },
-      { 
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      }
+      { status: 500 }
     );
   }
 } 

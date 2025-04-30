@@ -35,7 +35,8 @@ import {
   MapPin,
   Hash,
   Filter,
-  X
+  X,
+  Trash2
 } from "lucide-react";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
@@ -240,6 +241,38 @@ export default function RecordsTable() {
       toast.success("PDF başarıyla indirildi");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "PDF indirilirken bir hata oluştu");
+    }
+  };
+
+  const viewPDF = async (recordId: string) => {
+    try {
+      const response = await fetch(`/api/records/${recordId}?viewPdf=true`);
+      if (!response.ok) {
+        throw new Error('PDF görüntülenirken bir hata oluştu');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (error) {
+      toast.error('PDF görüntülenirken bir hata oluştu');
+    }
+  };
+
+  const deleteRecord = async (recordId: string) => {
+    try {
+      const response = await fetch(`/api/records/${recordId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Kayıt silinirken bir hata oluştu');
+      }
+
+      toast.success('Kayıt başarıyla silindi');
+      fetchRecords(); // Kayıtları yeniden yükle
+    } catch (error) {
+      toast.error('Kayıt silinirken bir hata oluştu');
     }
   };
 
@@ -543,20 +576,26 @@ export default function RecordsTable() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="cursor-pointer"
-                            onClick={() => openPhotoDialog(record)}
+                            onClick={() => viewPDF(record._id)}
                           >
-                            <Eye className="h-4 w-4 mr-2" />
-                            Detay
+                            <FileText className="h-4 w-4 mr-2" />
+                            PDF Görüntüle
                           </DropdownMenuItem>
-                          {record.kayit_pdf && (
-                            <DropdownMenuItem
-                              className="cursor-pointer"
-                              onClick={() => downloadPDF(record._id)}
-                            >
-                              <Download className="h-4 w-4 mr-2" />
-                              PDF İndir
-                            </DropdownMenuItem>
-                          )}
+                          <DropdownMenuItem
+                            className="cursor-pointer"
+                            onClick={() => downloadPDF(record._id)}
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            PDF İndir
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => deleteRecord(record._id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Kaydı Sil
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     ) : (
@@ -571,22 +610,23 @@ export default function RecordsTable() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            className="cursor-pointer"
-                            onClick={() => openPhotoDialog(record)}
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            Detay
-                          </DropdownMenuItem>
                           {record.kayit_pdf && (
                             <DropdownMenuItem
                               className="cursor-pointer"
-                              onClick={() => downloadPDF(record._id)}
+                              onClick={() => viewPDF(record._id)}
                             >
-                              <Download className="h-4 w-4 mr-2" />
-                              PDF İndir
+                              <FileText className="h-4 w-4 mr-2" />
+                              PDF Görüntüle
                             </DropdownMenuItem>
                           )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => deleteRecord(record._id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Kaydı Sil
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}
@@ -628,118 +668,6 @@ export default function RecordsTable() {
                   <p className="text-gray-500">Fotoğraf bulunamadı</p>
                 </div>
               )}
-              
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="kayit-bilgileri">
-                  <AccordionTrigger>Kayıt Bilgileri</AccordionTrigger>
-                  <AccordionContent>
-                    <div className="space-y-2 text-sm">
-                    <div className="flex items-center">
-                        <Hash className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="font-medium">Kaydı Oluşturan:</span>
-                        <span className="ml-2">{typeof selectedRecord.user === 'object' ? selectedRecord.user.name : selectedRecord.user || 'Bilinmiyor'}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Hash className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="font-medium">Kayıt No:</span>
-                        <span className="ml-2">{selectedRecord.kayit_numarasi}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <FileText className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="font-medium">İkamet İzni Türü:</span>
-                        <span className="ml-2">{selectedRecord.ikamet_turu}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <FileText className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="font-medium">Başvuru Türü:</span>
-                        <span className="ml-2">{selectedRecord.yapilan_islem}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="font-medium">Kayıt Tarihi:</span>
-                        <span className="ml-2">
-                          {format(new Date(selectedRecord.kayit_tarihi), "dd MMMM yyyy", {
-                            locale: tr,
-                          })}
-                        </span>
-                      </div>
-                      {selectedRecord.gecerlilik_tarihi && (
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-2 text-gray-500" />
-                          <span className="font-medium">Geçerlilik Tarihi:</span>
-                          <span className="ml-2">
-                            {format(new Date(selectedRecord.gecerlilik_tarihi), "dd MMMM yyyy", {
-                              locale: tr,
-                            })}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex items-center">
-                        <MapPin className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="font-medium">İl:</span>
-                        <span className="ml-2">{selectedRecord.kayit_ili}</span>
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="kisi-bilgileri">
-                  <AccordionTrigger>Kişi Bilgileri</AccordionTrigger>
-                  <AccordionContent>
-                    <div className="space-y-2 text-sm">
-                      {selectedRecord.yabanci_kimlik_no && (
-                        <div className="flex items-center">
-                          <Hash className="h-4 w-4 mr-2 text-gray-500" />
-                          <span className="font-medium">Yabancı Kimlik No:</span>
-                          <span className="ml-2">{selectedRecord.yabanci_kimlik_no}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center">
-                        <User className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="font-medium">Ad Soyad:</span>
-                        <span className="ml-2">{`${selectedRecord.adi} ${selectedRecord.soyadi}`}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <User className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="font-medium">Cinsiyet:</span>
-                        <span className="ml-2">{selectedRecord.cinsiyeti}</span>
-                      </div>
-                      {selectedRecord.telefon_no && (
-                        <div className="flex items-center">
-                          <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                          <span className="font-medium">Telefon:</span>
-                          <span className="ml-2">{formatPhoneNumber(selectedRecord.telefon_no)}</span>
-                        </div>
-                      )}
-                      {selectedRecord.eposta && (
-                        <div className="flex items-center">
-                          <Mail className="h-4 w-4 mr-2 text-gray-500" />
-                          <span className="font-medium">E-posta:</span>
-                          <span className="ml-2">{selectedRecord.eposta}</span>
-                        </div>
-                      )}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="seyahat-belgesi">
-                  <AccordionTrigger>Seyahat Belgesi Bilgileri</AccordionTrigger>
-                  <AccordionContent>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center">
-                        <FileText className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="font-medium">Belge Türü:</span>
-                        <span className="ml-2">Umuma Mahsus Pasaport</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Hash className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="font-medium">Belge No:</span>
-                        <span className="ml-2">{selectedRecord.belge_no || `P0${selectedRecord.kayit_numarasi}`}</span>
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
               
               {selectedRecord.kayit_pdf && (
                 <div className="pt-2">
