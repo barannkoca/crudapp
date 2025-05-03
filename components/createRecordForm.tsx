@@ -65,7 +65,9 @@ export function CreateRecordForm() {
       eposta: "",
       aciklama: "",
       photo: undefined,
-      kayit_pdf: undefined
+      kayit_pdf: undefined,
+      sira_no: undefined,
+      randevu_tarihi: null
     },
   });
 
@@ -314,6 +316,30 @@ export function CreateRecordForm() {
                     <FormLabel>Kayıt Numarası</FormLabel>
                     <FormControl>
                       <Input placeholder="Kayıt numarası" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="randevu_tarihi"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Randevu Tarihi (Opsiyonel)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        value={field.value ? field.value.toISOString().slice(0, 10) : ""}
+                        onChange={(e) => {
+                          const date = e.target.value ? new Date(e.target.value) : null;
+                          field.onChange(date);
+                        }}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

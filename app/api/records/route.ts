@@ -104,6 +104,13 @@ export async function POST(request: Request) {
       );
     }
 
+    // Son sıra numarasını bul
+    const lastRecord = await Record.findOne({ corporate: userCorporate._id })
+      .sort({ sira_no: -1 })
+      .select('sira_no');
+
+    const nextSiraNo = (lastRecord?.sira_no || 0) + 1;
+
     // Form verilerini al
     const formData = await request.formData();
     
@@ -201,6 +208,8 @@ export async function POST(request: Request) {
         data: kayitPdfData,
         contentType: kayitPdfContentType
       } : undefined,
+      sira_no: nextSiraNo,
+      randevu_tarihi: formData.get('randevu_tarihi') ? new Date(formData.get('randevu_tarihi') as string) : undefined
     };
 
     console.log('Kayıt verileri hazırlandı:', {

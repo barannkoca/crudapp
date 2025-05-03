@@ -123,12 +123,15 @@ export default function RecordsTable() {
       if (!response.ok) {
         throw new Error("Kayıtlar getirilirken bir hata oluştu");
       }
-      const data: Record[] = await response.json(); // Burada türü belirtiyoruz
+      const data: Record[] = await response.json();
 
-          // Kayıtları kayıt tarihine göre sıralama
-    const sortedData = data.sort((a, b) => {
-      return new Date(a.kayit_tarihi).getTime() - new Date(b.kayit_tarihi).getTime();
-    });
+      // Kayıtları sıra numarasına göre sıralama
+      const sortedData = data.sort((a, b) => {
+        if (a.sira_no === undefined && b.sira_no === undefined) return 0;
+        if (a.sira_no === undefined) return 1;
+        if (b.sira_no === undefined) return -1;
+        return a.sira_no - b.sira_no;
+      });
 
       setRecords(sortedData);
     } catch (err) {
@@ -467,27 +470,28 @@ export default function RecordsTable() {
         </Card>
       )}
 
-      <div className="rounded-lg border border-gray-200 overflow-hidden">
+      <div className="rounded-lg border border-gray-200 overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50/50">
-            <TableHead className="font-semibold">Sıra No</TableHead>
-              <TableHead className="font-semibold">Fotoğraf</TableHead>
-              <TableHead className="font-semibold">Kayıt No</TableHead>
-              <TableHead className="font-semibold">Yabancı Kimlik No</TableHead>
-              <TableHead className="font-semibold">Ad Soyad</TableHead>
-              <TableHead className="font-semibold">Telefon No</TableHead>
-              <TableHead className="font-semibold">Kayıt Tarihi</TableHead>
-              <TableHead className="font-semibold">Geçerlilik Tarihi</TableHead>
-              <TableHead className="font-semibold">Durum</TableHead>
-              <TableHead className="font-semibold">İşlemler</TableHead>
+              <TableHead className="font-semibold w-20 text-center">Sıra No</TableHead>
+              <TableHead className="font-semibold w-20 text-center">Fotoğraf</TableHead>
+              <TableHead className="font-semibold w-32 text-center">Kayıt No</TableHead>
+              <TableHead className="font-semibold w-40 text-center">Yabancı Kimlik No</TableHead>
+              <TableHead className="font-semibold w-48 text-center">Ad Soyad</TableHead>
+              <TableHead className="font-semibold w-40 text-center">Telefon No</TableHead>
+              <TableHead className="font-semibold w-32 text-center">Kayıt Tarihi</TableHead>
+              <TableHead className="font-semibold w-32 text-center">Randevu Tarihi</TableHead>
+              <TableHead className="font-semibold w-32 text-center">Geçerlilik Tarihi</TableHead>
+              <TableHead className="font-semibold w-32 text-center">Durum</TableHead>
+              <TableHead className="font-semibold w-32 text-center">İşlemler</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredRecords.map((record) => (
               <TableRow key={record._id} className="hover:bg-gray-50/50">
-                <TableCell>{"-"}</TableCell>
-                <TableCell>
+                <TableCell className="w-20">{record.sira_no || "-"}</TableCell>
+                <TableCell className="w-20">
                   {record.photo?.data ? (
                     <Button 
                       variant="ghost" 
@@ -509,15 +513,24 @@ export default function RecordsTable() {
                     </div>
                   )}
                 </TableCell>
-                <TableCell className="font-medium">{record.kayit_numarasi}</TableCell>
-                <TableCell>{record.yabanci_kimlik_no || "-"}</TableCell>
-                <TableCell>{`${record.adi} ${record.soyadi}`}</TableCell>
-                <TableCell>{record.telefon_no ? formatPhoneNumber(record.telefon_no) : "-"}</TableCell>                
-                <TableCell>{format(new Date(record.kayit_tarihi), "dd.MM.yyyy", {
+                <TableCell className="w-32 font-medium">{record.kayit_numarasi}</TableCell>
+                <TableCell className="w-40">{record.yabanci_kimlik_no || "-"}</TableCell>
+                <TableCell className="w-48">{`${record.adi} ${record.soyadi}`}</TableCell>
+                <TableCell className="w-40">{record.telefon_no ? formatPhoneNumber(record.telefon_no) : "-"}</TableCell>
+                <TableCell className="w-32">{format(new Date(record.kayit_tarihi), "dd.MM.yyyy", {
                     locale: tr,
                   })}
                 </TableCell>
-                <TableCell>
+                <TableCell className="w-32">
+                  {record.randevu_tarihi ? (
+                    format(new Date(record.randevu_tarihi), "dd.MM.yyyy", {
+                      locale: tr,
+                    })
+                  ) : (
+                    "-"
+                  )}
+                </TableCell>
+                <TableCell className="w-32">
                   {record.gecerlilik_tarihi ? (
                     format(new Date(record.gecerlilik_tarihi), "dd.MM.yyyy", {
                       locale: tr,
@@ -526,7 +539,7 @@ export default function RecordsTable() {
                     "-"
                   )}
                 </TableCell>
-                <TableCell>
+                <TableCell className="w-32">
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium ${
                       record.durum === "onaylandi"
@@ -543,7 +556,7 @@ export default function RecordsTable() {
                       : "Beklemede"}
                   </span>
                 </TableCell>
-                <TableCell>
+                <TableCell className="w-32">
                   <div className="flex space-x-2">
                     {record.durum === "beklemede" ? (
                       <DropdownMenu>
@@ -619,6 +632,13 @@ export default function RecordsTable() {
                               PDF Görüntüle
                             </DropdownMenuItem>
                           )}
+                          <DropdownMenuItem
+                            className="cursor-pointer"
+                            onClick={() => downloadPDF(record._id)}
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            PDF İndir
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50"

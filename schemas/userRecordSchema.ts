@@ -96,7 +96,9 @@ export const userRecordSchema = z.object({
   // Dosya alanları - opsiyonel ve boyut sınırlaması ekleyebiliriz (örnek: 5 MB)
   photo: z.any().optional(),
 
-  kayit_pdf: z.any().optional()
+  kayit_pdf: z.any().optional(),
+  sira_no: z.number().optional(),
+  randevu_tarihi: z.date().nullable().optional()
 })
 
 /**

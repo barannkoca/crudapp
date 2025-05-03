@@ -25,7 +25,7 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
       // PDF görüntüleme modu
       const record = await Record.findOne({
         _id: recordId,
-        user: session.user.id
+        corporate: session.user.corporate
       }).select('kayit_pdf');
 
       if (!record) {

@@ -11,6 +11,7 @@ export interface Record {
   durum: string;
   createdAt: string;
   gecerlilik_tarihi?: string;
+  randevu_tarihi?: string;
   telefon_no?: string;
   eposta?: string;
   yabanci_kimlik_no?: string;
@@ -26,5 +27,7 @@ export interface Record {
   user: {
     _id: string;
     name: string;
-  } | string; 
+  } | string;
+  corporate: string;
+  sira_no?: number;
 } 

@@ -128,6 +128,14 @@ const recordSchema = new mongoose.Schema({
   gecerlilik_tarihi: {
     type: Date,
     default: undefined,
+  },
+  sira_no: {
+    type: Number,
+    default: undefined,
+  },
+  randevu_tarihi: {
+    type: Date,
+    default: undefined,
   }
 }, {
   timestamps: true,

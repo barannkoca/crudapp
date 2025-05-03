@@ -90,6 +90,7 @@ export const authOptions: NextAuthOptions = {
           if (dbUser) {
             session.user.id = dbUser._id.toString();
             session.user.image = dbUser.image || session.user.image;
+            session.user.corporate = dbUser.corporate;
           }
         }
         return session;
