@@ -92,19 +92,8 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
 
     await connectDB();
 
-    const { durum, gecerlilik_tarihi } = await request.json();
+    const { durum, gecerlilik_tarihi, randevu_tarihi } = await request.json();
 
-    if (!durum || !["beklemede", "onaylandi", "reddedildi"].includes(durum)) {
-      return NextResponse.json(
-        { error: "Geçersiz durum değeri" },
-        { 
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        }
-      );
-    }
 
     // Onaylandı durumunda geçerlilik tarihi zorunlu
     if (durum === "onaylandi" && !gecerlilik_tarihi) {
@@ -124,6 +113,9 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     // Eğer onaylandı ise geçerlilik tarihini ekle
     if (durum === "onaylandi" && gecerlilik_tarihi) {
       updateData.gecerlilik_tarihi = new Date(gecerlilik_tarihi);
+    }
+    if (randevu_tarihi) {
+      updateData.randevu_tarihi = new Date(randevu_tarihi);
     }
 
     const record = await Record.findOneAndUpdate(

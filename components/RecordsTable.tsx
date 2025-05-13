@@ -89,8 +89,10 @@ export default function RecordsTable() {
   const [selectedRecord, setSelectedRecord] = useState<Record | null>(null);
   const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState(false);
   const [isApprovalDialogOpen, setIsApprovalDialogOpen] = useState(false);
+  const [isDateDialogOpen, setDateDialogOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [gecerlilikTarihi, setGecerlilikTarihi] = useState<string>("");
+  const [randevuTarihi, setRandevuTarihi] = useState<string>("");
   const [filters, setFilters] = useState<Filters>({
     basvuruTuru: "",
     il: "",
@@ -214,6 +216,49 @@ export default function RecordsTable() {
     }
   };
 
+  const DateUpdate = async (recordId: string, newStatus: 'onaylandi' | 'reddedildi') => {
+    try {
+      setIsUpdating(true);
+      
+      // Onaylama işlemi için geçerlilik tarihi gerekli
+      if (newStatus === 'onaylandi') {
+        if (!randevuTarihi) {
+          toast.error("Randevu tarihi gereklidir");
+          return;
+        }
+      }
+
+      const response = await fetch(`/api/records/${recordId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          randevu_tarihi: randevuTarihi 
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Durum güncellenirken bir hata oluştu');
+      }
+
+      // Kayıtları yeniden yükle
+      await fetchRecords();
+      
+      // Başarı mesajı göster
+      toast.success(newStatus === 'onaylandi' ? 'Kayıt onaylandı' : 'Kayıt reddedildi');
+      
+      // Dialog'u kapat
+      setDateDialogOpen(false);
+      setRandevuTarihi("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Bir hata oluştu');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const openPhotoDialog = (record: Record) => {
     setSelectedRecord(record);
     setIsPhotoDialogOpen(true);
@@ -222,6 +267,11 @@ export default function RecordsTable() {
   const openApprovalDialog = (record: Record) => {
     setSelectedRecord(record);
     setIsApprovalDialogOpen(true);
+  };
+
+  const enterDateDialog = (record: Record) => {
+    setSelectedRecord(record);
+    setDateDialogOpen(true);
   };
 
   const downloadPDF = async (recordId: string) => {
@@ -585,8 +635,18 @@ export default function RecordsTable() {
                           >
                             <XCircle className="h-4 w-4 mr-2" />
                             Reddet
-                          </DropdownMenuItem>
+                          </DropdownMenuItem>                         
                           <DropdownMenuSeparator />
+                          {!record.randevu_tarihi && (
+                              <DropdownMenuItem
+                              className="cursor-pointer"
+                              onClick={() => enterDateDialog(record)}
+                              disabled={isUpdating}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Randevu Tarihi Gir
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem
                             className="cursor-pointer"
                             onClick={() => viewPDF(record._id)}
@@ -623,6 +683,17 @@ export default function RecordsTable() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                        {!record.randevu_tarihi && (
+                              <DropdownMenuItem
+                              className="cursor-pointer"
+                              onClick={() => enterDateDialog(record)}
+                              disabled={isUpdating}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Randevu Tarihi Gir
+                            </DropdownMenuItem>
+                            
+                          )}
                           {record.kayit_pdf && (
                             <DropdownMenuItem
                               className="cursor-pointer"
@@ -742,6 +813,49 @@ export default function RecordsTable() {
             <Button 
               onClick={() => selectedRecord && handleStatusUpdate(selectedRecord._id, 'onaylandi')}
               disabled={isUpdating || !gecerlilikTarihi}
+            >
+              {isUpdating ? "Onaylanıyor..." : "Onayla"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Randevu Tarihi Dialog */}
+      <Dialog open={isDateDialogOpen} onOpenChange={setDateDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Randevu Tarihi Ekle</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="mb-4">
+              <span className="font-medium">{selectedRecord?.adi} {selectedRecord?.soyadi}</span> isimli kayda randevu tarihi eklemek üzeresiniz.
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="gecerlilik-tarihi">Randevu Tarihi</Label>
+              <div className="flex items-center space-x-2">
+                <Calendar className="h-4 w-4 text-gray-500" />
+                <Input
+                  id="gecerlilik-tarihi"
+                  type="date"
+                  value={randevuTarihi}
+                  onChange={(e) => setRandevuTarihi(e.target.value)}
+                  className="flex-1"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setDateDialogOpen(false)}
+              disabled={isUpdating}
+            >
+              İptal
+            </Button>
+            <Button 
+              onClick={() => selectedRecord && DateUpdate(selectedRecord._id, 'onaylandi')}
+              disabled={isUpdating || !randevuTarihi}
             >
               {isUpdating ? "Onaylanıyor..." : "Onayla"}
             </Button>
