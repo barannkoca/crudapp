@@ -49,12 +49,5 @@ export interface ICorporate {
   createdAt?: Date;
 }
 
-// Ensure model is registered
-let Corporate: mongoose.Model<ICorporate>;
-try {
-  Corporate = mongoose.model<ICorporate>('Corporate');
-} catch (error) {
-  Corporate = mongoose.model<ICorporate>('Corporate', corporateSchema);
-}
-
-export { Corporate };
+// Model tekrar tanımlanmasın diye güvenli export
+export const Corporate = mongoose.models.Corporate || mongoose.model<ICorporate>('Corporate', corporateSchema);
