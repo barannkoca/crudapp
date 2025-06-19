@@ -1,11 +1,6 @@
 import mongoose from 'mongoose';
 import { ILLER, ISLEMLER, IKAMET_TURU } from '@/schemas/userRecordSchema';
 
-// Eğer model zaten varsa önce kaldır
-if (mongoose.models.Record) {
-  delete mongoose.models.Record;
-}
-
 const recordSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -142,5 +137,4 @@ const recordSchema = new mongoose.Schema({
   strict: true
 });
 
-// Modeli yeniden oluştur
-export const Record = mongoose.model('Record', recordSchema); 
+export const Record = mongoose.models.Record || mongoose.model('Record', recordSchema); 
