@@ -51,53 +51,16 @@ export const userRecordSchema = z.object({
   // Kayıt numarası - en az 1 karakter
   kayit_numarasi: z.string().min(1, "Kayıt numarası girilmelidir"),
 
-  // İsim - en az 2 karakter
-  adi: z.string().min(2, "Ad en az 2 karakter olmalıdır"),
-
-  // Soyad - en az 2 karakter
-  soyadi: z.string().min(2, "Soyad en az 2 karakter olmalıdır"),
-
-  // Baba Adı - en az 2 karakter
-  baba_adi: z.string().min(2, "Baba adı en az 2 karakter olmalıdır"),
-
-  // Anne Adı - en az 2 karakter
-  anne_adi: z.string().min(2, "Anne adı en az 2 karakter olmalıdır"),
-
-  // Yabancı kimlik no - en az 10 karakter
-  yabanci_kimlik_no: z.string().optional().nullable(),
-
-  // Uyruk - en az 2 karakter
-  uyrugu: z.string().min(1, "Uyruk bilgisi girilmelidir"),
-
-  // Cinsiyet - sadece 'Erkek' veya 'Kadın' seçilebilir
-  cinsiyeti: z.string().min(1, "Cinsiyet seçilmelidir"),
-
-  // Medeni hali - en az 1 karakter (isterseniz enum da yapabilirsiniz)
-  medeni_hali: z.string().min(1, "Medeni hal bilgisi girilmelidir"),
-
-  // Doğum tarihi - tarih olarak parse ediyoruz, gelecekteki tarih girilemez
-  dogum_tarihi: z.date().nullable(),
-
-  // Belge türü - en az 2 karakter (Pasaport, Kimlik vb. isterseniz z.enum yapabilirsiniz)
-  belge_turu: z.string().min(1, "Belge türü girilmelidir"),
-
-  // Belge no - en az 1 karakter
-  belge_no: z.string().min(1, "Belge numarası girilmelidir"),
-
-  // Telefon no - regex ile yalnızca rakam ve en az 10 karakter
-  telefon_no: z.string().min(10, "Telefon numarası en az 10 haneli olmalıdır"),
-
-  // E-posta - geçerli format
-  eposta: z.string().optional().nullable(),
-
   // Açıklama - opsiyonel
   aciklama: z.string().optional(),
 
   // Dosya alanları - opsiyonel ve boyut sınırlaması ekleyebiliriz (örnek: 5 MB)
-  photo: z.any().optional(),
-
   kayit_pdf: z.any().optional(),
-  sira_no: z.number().optional(),
+  
+  // Geçerlilik tarihi - opsiyonel
+  gecerlilik_tarihi: z.date().nullable().optional(),
+  
+  // Randevu tarihi - opsiyonel
   randevu_tarihi: z.date().nullable().optional()
 })
 

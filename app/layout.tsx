@@ -27,10 +27,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Provider>
           <div className="flex flex-col min-h-screen">
             <Navbar /> {/* Navbar bileşeni */}
-            <main className="flex-grow flex justify-center bg-grey">
-              <div className="w-full max-w-7xl px-4 mx-auto">
-                {children}
-              </div>
+            <main className="flex-grow">
+              {children}
             </main>
             <footer className="bg-white/80 backdrop-blur-sm border-t border-gray-100">
               <div className="container mx-auto px-4 py-6">

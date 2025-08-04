@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { pdfToText } from 'pdf-ts';
 import { useRouter } from "next/navigation";
+import { ICustomer } from "@/types/Customer";
 
 import {
   userRecordSchema,
@@ -35,12 +36,14 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileUploadField } from "@/components/fields/FileUploadField";
+import { CustomerSelect } from "@/components/CustomerSelect";
 import { TextExtractionService } from "@/services/textExtractionService";
 import { FormFillService } from "@/services/formFillService";
 
 export function CreateRecordForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<ICustomer | undefined>();
 
   const form = useForm<UserRecordFormData>({
     resolver: zodResolver(userRecordSchema),
@@ -50,23 +53,9 @@ export function CreateRecordForm() {
       ikamet_turu: "",
       kayit_tarihi: null,
       kayit_numarasi: "",
-      adi: "",
-      soyadi: "",
-      baba_adi: "",
-      anne_adi: "",
-      yabanci_kimlik_no: "",
-      uyrugu: "",
-      cinsiyeti: "",
-      medeni_hali: "",
-      dogum_tarihi: null,
-      belge_turu: "",
-      belge_no: "",
-      telefon_no: "",
-      eposta: "",
       aciklama: "",
-      photo: undefined,
       kayit_pdf: undefined,
-      sira_no: undefined,
+      gecerlilik_tarihi: null,
       randevu_tarihi: null
     },
   });
@@ -80,9 +69,17 @@ export function CreateRecordForm() {
   };
 
   async function onSubmit(values: UserRecordFormData) {
+    if (!selectedCustomer) {
+      toast.error("Lütfen bir müşteri seçin");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const formData = new FormData();
+      
+      // Müşteri ID'sini ekle
+      formData.append('musteri_id', selectedCustomer._id || '');
       
       // Form verilerini FormData'ya ekle
       Object.entries(values).forEach(([key, value]) => {
@@ -92,7 +89,7 @@ export function CreateRecordForm() {
         }
 
         // Dosya alanlarını kontrol et
-        if (key === 'photo' || key === 'kayit_pdf') {
+        if (key === 'kayit_pdf') {
           if (value instanceof File) {
             formData.append(key, value);
             console.log(`${key} dosyası eklendi:`, value.name);
@@ -101,7 +98,7 @@ export function CreateRecordForm() {
         }
 
         // Tarih alanlarını kontrol et
-        if (key === 'kayit_tarihi' || key === 'dogum_tarihi') {
+        if (key === 'kayit_tarihi' || key === 'gecerlilik_tarihi' || key === 'randevu_tarihi') {
           if (value instanceof Date) {
             const dateStr = value.toISOString().split('T')[0];
             formData.append(key, dateStr);
@@ -179,29 +176,42 @@ export function CreateRecordForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        {/* Müşteri Seçimi */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Müşteri Seçimi</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CustomerSelect
+              onCustomerSelect={setSelectedCustomer}
+              selectedCustomer={selectedCustomer}
+              label="İkamet İzni Başvurusu Yapılacak Müşteri"
+            />
+          </CardContent>
+        </Card>
+
         {/* Dosya Yükleme Alanları */}
         <Card>
           <CardHeader>
             <CardTitle>Dosya Yükleme</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FileUploadField
-                form={form}
-                fieldName="photo"
-                label="Fotoğraf"
-                accept="image/*"
-              />
+            <div className="grid grid-cols-1 gap-6">
               <FileUploadField
                 form={form}
                 fieldName="kayit_pdf"
                 label="Kayıt PDF"
                 accept="application/pdf"
                 onFileSelect={async (file) => {
-                  const arrayBuffer = await file.arrayBuffer();
-                  const uint8Array = new Uint8Array(arrayBuffer);
-                  const text = await pdfToText(uint8Array);
-                  extractAndFillForm(text);
+                  try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const uint8Array = new Uint8Array(arrayBuffer);
+                    const text = await pdfToText(uint8Array);
+                    extractAndFillForm(text);
+                  } catch (error) {
+                    console.error('PDF işleme hatası:', error);
+                    toast.error('PDF dosyası işlenirken bir hata oluştu');
+                  }
                 }}
               />
             </div>
@@ -211,7 +221,7 @@ export function CreateRecordForm() {
         {/* Temel Bilgiler */}
         <Card>
           <CardHeader>
-            <CardTitle>Temel Bilgiler</CardTitle>
+            <CardTitle>İkamet İzni Bilgileri</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -324,6 +334,30 @@ export function CreateRecordForm() {
 
               <FormField
                 control={form.control}
+                name="gecerlilik_tarihi"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Geçerlilik Tarihi (Opsiyonel)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        value={field.value ? field.value.toISOString().slice(0, 10) : ""}
+                        onChange={(e) => {
+                          const date = e.target.value ? new Date(e.target.value) : null;
+                          field.onChange(date);
+                        }}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="randevu_tarihi"
                 render={({ field }) => (
                   <FormItem>
@@ -349,250 +383,20 @@ export function CreateRecordForm() {
           </CardContent>
         </Card>
 
-        {/* Kişisel Bilgiler */}
+
+
+        {/* Açıklama */}
         <Card>
           <CardHeader>
-            <CardTitle>Kişisel Bilgiler</CardTitle>
+            <CardTitle>Ek Bilgiler</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="adi"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Adı</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Adı" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="soyadi"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Soyadı</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Soyadı" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="baba_adi"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Baba Adı</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Baba adı" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="anne_adi"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Anne Adı</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Anne adı" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="yabanci_kimlik_no"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Yabancı Kimlik No (Opsiyonel)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Yabancı kimlik numarası" 
-                        value={field.value || ''}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        name={field.name}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="uyrugu"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Uyruğu</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Uyruk" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="cinsiyeti"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cinsiyet</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Seçiniz" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Erkek">Erkek</SelectItem>
-                        <SelectItem value="Kadın">Kadın</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="medeni_hali"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Medeni Hali</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Örn. Bekar, Evli" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="dogum_tarihi"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Doğum Tarihi</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        value={field.value ? field.value.toISOString().slice(0, 10) : ""}
-                        onChange={(e) => {
-                          const date = e.target.value ? new Date(e.target.value) : null;
-                          field.onChange(date);
-                        }}
-                        onBlur={field.onBlur}
-                        name={field.name}
-                        ref={field.ref}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* İletişim Bilgileri */}
-        <Card>
-          <CardHeader>
-            <CardTitle>İletişim Bilgileri</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="belge_turu"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Belge Türü</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Örn. Pasaport, Kimlik" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="belge_no"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Belge No</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Belge numarası" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="telefon_no"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telefon No</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Telefon numarası" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="eposta"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>E-posta</FormLabel>
-                    <FormControl>
-                    <Input 
-                      placeholder="E-posta adresi" 
-                      value={field.value || ''}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                    />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Diğer Bilgiler */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Diğer Bilgiler</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               <FormField
                 control={form.control}
                 name="aciklama"
                 render={({ field }) => (
-                  <FormItem className="col-span-full">
+                  <FormItem>
                     <FormLabel>Açıklama</FormLabel>
                     <FormControl>
                       <Textarea 
@@ -613,9 +417,22 @@ export function CreateRecordForm() {
         </Card>
 
         {/* Gönder Butonu */}
-        <div className="flex justify-end">
-          <Button type="submit" size="lg" className="px-8" disabled={isSubmitting}>
-            {isSubmitting ? "Kaydediliyor..." : "Kaydet"}
+        <div className="flex gap-3 pt-3">
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="flex-1 bg-cyan-600 hover:bg-cyan-700"
+          >
+            {isSubmitting ? "Kaydediliyor..." : "İkamet İzni Kaydı Oluştur"}
+          </Button>
+          
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => window.history.back()}
+            className="flex-1"
+          >
+            İptal
           </Button>
         </div>
       </form>

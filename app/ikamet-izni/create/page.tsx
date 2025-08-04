@@ -5,11 +5,7 @@ import { CreateRecordForm } from "@/components/createRecordForm"
 import { motion } from "framer-motion"
 import Link from "next/link"
 
-/**
- * Üst seviye sayfa bileşeninde sadece layout ve form render'ı bulunuyor.
- * Böylece sayfayı daha kolay yönetebilir, test edebilir veya farklı formlar ekleyebilirsiniz.
- */
-export default function CreateUserPage() {
+export default function CreateIkametIzniPage() {
   const [error, setError] = React.useState<string | null>(null);
 
   // Kullanıcı durumunu kontrol et
@@ -35,14 +31,15 @@ export default function CreateUserPage() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="container mx-auto px-4 py-8"
+      className="min-h-screen bg-gray-50"
     >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.2 }}
-        className="bg-white rounded-2xl shadow-lg overflow-hidden"
-      >
+      <div className="container mx-auto px-4 py-6 max-w-2xl">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white rounded-2xl shadow-lg overflow-hidden"
+        >
         {/* Üst Bar */}
         <div className="bg-white border-b border-gray-200">
           <div className="px-6 py-4">
@@ -59,10 +56,10 @@ export default function CreateUserPage() {
                 </Link>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">
-                    Kayıt Oluştur
+                    İkamet İzni Kaydı Oluştur
                   </h1>
                   <p className="text-sm text-gray-600">
-                    Lütfen tüm bilgileri eksiksiz doldurun
+                    Müşteri seçerek ikamet izni başvurusu oluşturun
                   </p>
                   {error && (
                     <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -92,7 +89,8 @@ export default function CreateUserPage() {
             <CreateRecordForm />
           </motion.div>
         </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </motion.div>
   )
-}
+} 

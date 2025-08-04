@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { Record } from "@/models/Record";
+import { Customer } from "@/models/Customer";
 import { User } from "@/models/User";
 import { Corporate } from "@/models/Corporate";
 import connectDB from "@/lib/mongodb";
@@ -116,15 +117,12 @@ export async function POST(request: Request) {
     
     // Zorunlu alanları kontrol et
     const requiredFields = [
+      'musteri_id',
       'kayit_ili',
       'yapilan_islem',
       'ikamet_turu',
       'kayit_tarihi',
-      'kayit_numarasi',
-      'adi',
-      'soyadi',
-      'cinsiyeti',
-      'telefon_no'
+      'kayit_numarasi'
     ];
 
     const missingFields = requiredFields.filter(field => !formData.get(field));
@@ -142,21 +140,12 @@ export async function POST(request: Request) {
     }
 
     // Dosyaları işle
-    const photo = formData.get('photo') as File;
     const kayitPdf = formData.get('kayit_pdf') as File;
 
-    let photoData = null;
-    let photoContentType = null;
     let kayitPdfData = null;
     let kayitPdfContentType = null;
 
     try {
-      if (photo) {
-        const photoBuffer = Buffer.from(await photo.arrayBuffer());
-        photoData = photoBuffer.toString('base64');
-        photoContentType = photo.type;
-        console.log('Fotoğraf başarıyla yüklendi');
-      }
       if (kayitPdf) {
         const kayitPdfBuffer = Buffer.from(await kayitPdf.arrayBuffer());
         kayitPdfData = kayitPdfBuffer.toString('base64');
@@ -176,45 +165,38 @@ export async function POST(request: Request) {
       );
     }
 
+    // Müşteriyi kontrol et
+    const musteriId = formData.get('musteri_id') as string;
+    const musteri = await Customer.findById(musteriId);
+    if (!musteri) {
+      return NextResponse.json(
+        { error: 'Seçilen müşteri bulunamadı' },
+        { status: 404 }
+      );
+    }
+
     // Kayıt verilerini hazırla
     const recordData: any = {
-      user: session.user.id,
-      corporate: userCorporate._id,
+      musteri: musteriId,
+      islem_turu: 'kayit',
+      durum: 'beklemede',
       kayit_ili: formData.get('kayit_ili') as string,
       yapilan_islem: formData.get('yapilan_islem') as string,
       ikamet_turu: formData.get('ikamet_turu') as string,
       kayit_tarihi: new Date(formData.get('kayit_tarihi') as string),
       kayit_numarasi: formData.get('kayit_numarasi') as string,
-      adi: formData.get('adi') as string,
-      soyadi: formData.get('soyadi') as string,
-      baba_adi: formData.get('baba_adi') as string || undefined,
-      anne_adi: formData.get('anne_adi') as string || undefined,
-      yabanci_kimlik_no: formData.get('yabanci_kimlik_no') ? formData.get('yabanci_kimlik_no') as string : undefined,
-      uyrugu: formData.get('uyrugu') as string || undefined,
-      cinsiyeti: formData.get('cinsiyeti') as string,
-      medeni_hali: formData.get('medeni_hali') as string || undefined,
-      dogum_tarihi: formData.get('dogum_tarihi') ? new Date(formData.get('dogum_tarihi') as string) : undefined,
-      belge_turu: formData.get('belge_turu') as string || undefined,
-      belge_no: formData.get('belge_no') as string || undefined,
-      telefon_no: formData.get('telefon_no') as string,
-      eposta: formData.get('eposta') ? formData.get('eposta') as string : undefined,
       aciklama: formData.get('aciklama') as string || undefined,
-      durum: 'beklemede',
-      photo: photoData ? {
-        data: photoData,
-        contentType: photoContentType
-      } : undefined,
       kayit_pdf: kayitPdfData ? {
         data: kayitPdfData,
         contentType: kayitPdfContentType
       } : undefined,
       sira_no: nextSiraNo,
+      gecerlilik_tarihi: formData.get('gecerlilik_tarihi') ? new Date(formData.get('gecerlilik_tarihi') as string) : undefined,
       randevu_tarihi: formData.get('randevu_tarihi') ? new Date(formData.get('randevu_tarihi') as string) : undefined
     };
 
     console.log('Kayıt verileri hazırlandı:', {
       ...recordData,
-      photo: photoData ? 'Var' : 'Yok',
       kayit_pdf: kayitPdfData ? 'Var' : 'Yok'
     });
 
@@ -226,9 +208,12 @@ export async function POST(request: Request) {
       const responseData = {
         _id: record._id,
         kayit_numarasi: record.kayit_numarasi,
-        adi: record.adi,
-        soyadi: record.soyadi,
-        message: 'Kayıt başarıyla oluşturuldu'
+        musteri: {
+          _id: musteri._id,
+          ad: musteri.ad,
+          soyad: musteri.soyad
+        },
+        message: 'İkamet izni kaydı başarıyla oluşturuldu'
       };
       
       return NextResponse.json(responseData, {
@@ -289,10 +274,10 @@ export async function GET(request: Request) {
     }
 
     // Corporate'a ait kayıtları getir
-    const records = await Record.find({ corporate: user.corporate._id })
+    const records = await Record.find({})
       .sort({ createdAt: -1 })
       .select('-kayit_pdf.data')
-      .populate('user', 'name');
+      .populate('musteri', 'ad soyad photo');
 
     return NextResponse.json(records);
   } catch (error) {
