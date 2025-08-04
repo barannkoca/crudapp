@@ -1,5 +1,5 @@
 # CRUD Başvuru Yönetim Sistemi
-
+fundamentals
 Modern web teknolojileri kullanılarak geliştirilmiş, kapsamlı bir başvuru yönetim sistemi. Bu proje, kullanıcı dostu arayüzü ve güçlü backend yapısıyla başvuruların etkin yönetimini sağlar.
 
 ## 🚀 Özellikler
