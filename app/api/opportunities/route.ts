@@ -40,15 +40,7 @@ export async function GET(request: NextRequest) {
     // Toplam sayı
     const total = await Opportunity.countDocuments(filter);
 
-    return NextResponse.json({
-      opportunities,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit)
-      }
-    });
+    return NextResponse.json(opportunities);
 
   } catch (error) {
     console.error('Fırsatlar getirilirken hata:', error);
@@ -69,8 +61,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Yetkilendirme gerekli' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { musteri_id, islem_turu, detaylar, aciklamalar, ucretler, pdf_dosya } = body;
+    let body;
+    let musteri_id, islem_turu, detaylar, aciklamalar, ucretler, pdf_dosya;
+    
+    // FormData kontrolü
+    const contentType = request.headers.get('content-type');
+    if (contentType && contentType.includes('multipart/form-data')) {
+      const formData = await request.formData();
+      musteri_id = formData.get('musteri_id') as string;
+      islem_turu = formData.get('islem_turu') as string;
+      detaylar = JSON.parse(formData.get('detaylar') as string);
+      aciklamalar = JSON.parse(formData.get('aciklamalar') as string);
+      ucretler = JSON.parse(formData.get('ucretler') as string);
+      pdf_dosya = formData.get('pdf_dosya') as File;
+    } else {
+      body = await request.json();
+      ({ musteri_id, islem_turu, detaylar, aciklamalar, ucretler, pdf_dosya } = body);
+    }
 
     // Validasyon
     if (!musteri_id || !islem_turu) {
@@ -99,6 +106,23 @@ export async function POST(request: NextRequest) {
       newOpportunity.sozlesme_turu = detaylar.sozlesme_turu;
       newOpportunity.maas = detaylar.maas;
       newOpportunity.calisma_saati = detaylar.calisma_saati;
+      
+      // Çalışma izni için otomatik sıra no sistemi
+      if (!detaylar.sira_no || detaylar.sira_no === 0) {
+        const currentYear = new Date().getFullYear();
+        const lastOpportunity = await Opportunity.findOne({
+          islem_turu: 'calisma_izni',
+          olusturma_tarihi: {
+            $gte: new Date(currentYear, 0, 1),
+            $lt: new Date(currentYear + 1, 0, 1)
+          }
+        }).sort({ sira_no: -1 });
+        
+        const nextSiraNo = lastOpportunity ? lastOpportunity.sira_no + 1 : 1;
+        newOpportunity.sira_no = nextSiraNo;
+      } else {
+        newOpportunity.sira_no = detaylar.sira_no;
+      }
     }
 
     if (islem_turu === 'ikamet_izni' && detaylar) {
@@ -107,10 +131,21 @@ export async function POST(request: NextRequest) {
       newOpportunity.ikamet_turu = detaylar.ikamet_turu;
       newOpportunity.kayit_tarihi = detaylar.kayit_tarihi;
       newOpportunity.kayit_numarasi = detaylar.kayit_numarasi;
-      newOpportunity.aciklama = detaylar.aciklama;
       newOpportunity.gecerlilik_tarihi = detaylar.gecerlilik_tarihi;
-      newOpportunity.sira_no = detaylar.sira_no;
       newOpportunity.randevu_tarihi = detaylar.randevu_tarihi;
+      
+      // Otomatik sıra no sistemi
+      const currentYear = new Date().getFullYear();
+      const lastOpportunity = await Opportunity.findOne({
+        islem_turu: 'ikamet_izni',
+        olusturma_tarihi: {
+          $gte: new Date(currentYear, 0, 1),
+          $lt: new Date(currentYear + 1, 0, 1)
+        }
+      }).sort({ sira_no: -1 });
+      
+      const nextSiraNo = lastOpportunity ? lastOpportunity.sira_no + 1 : 1;
+      newOpportunity.sira_no = nextSiraNo;
     }
 
     if (islem_turu === 'diger' && detaylar) {
@@ -119,6 +154,35 @@ export async function POST(request: NextRequest) {
       newOpportunity.diger_bitis_tarihi = detaylar.diger_bitis_tarihi;
       newOpportunity.diger_aciklama = detaylar.diger_aciklama;
       newOpportunity.ek_bilgiler = detaylar.ek_bilgiler;
+      
+      // Diğer işlemler için otomatik sıra no sistemi
+      if (!detaylar.sira_no || detaylar.sira_no === 0) {
+        const currentYear = new Date().getFullYear();
+        const lastOpportunity = await Opportunity.findOne({
+          islem_turu: 'diger',
+          olusturma_tarihi: {
+            $gte: new Date(currentYear, 0, 1),
+            $lt: new Date(currentYear + 1, 0, 1)
+          }
+        }).sort({ sira_no: -1 });
+        
+        const nextSiraNo = lastOpportunity ? lastOpportunity.sira_no + 1 : 1;
+        newOpportunity.sira_no = nextSiraNo;
+      } else {
+        newOpportunity.sira_no = detaylar.sira_no;
+      }
+    }
+
+    // PDF dosyası işleme
+    if (pdf_dosya && pdf_dosya instanceof File) {
+      const bytes = await pdf_dosya.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      const base64Data = buffer.toString('base64');
+      
+      newOpportunity.pdf_dosya = {
+        data: base64Data,
+        contentType: pdf_dosya.type
+      };
     }
 
     const savedOpportunity = await newOpportunity.save();

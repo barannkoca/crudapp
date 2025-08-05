@@ -26,10 +26,12 @@ export default function IkametIzniPage() {
       
       if (response.ok) {
         const data = await response.json();
+        
         // Sadece ikamet izni fırsatlarını filtrele ve tip güvenliğini sağla
         const ikametIzniOpportunities = data.filter((opp: any) => 
           opp.islem_turu === IslemTuru.IKAMET_IZNI
         ) as IIkametIzniFirsati[];
+        
         setOpportunities(ikametIzniOpportunities);
       } else {
         setError('Fırsatlar yüklenirken bir hata oluştu');
@@ -140,7 +142,15 @@ export default function IkametIzniPage() {
                 transition={{ duration: 0.3, delay: index * 0.05 }}
                 className="hover:bg-cyan-50 transition-colors duration-200"
               >
-                <TableCell className="font-medium">{opportunity.sira_no || '-'}</TableCell>
+                <TableCell className="font-medium">
+                  {opportunity.sira_no ? (
+                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                      #{opportunity.sira_no}
+                    </span>
+                  ) : (
+                    '-'
+                  )}
+                </TableCell>
                 <TableCell>
                   {opportunity.musteri?.photo && opportunity.musteri.photo.data ? (
                     <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-cyan-200">

@@ -73,13 +73,13 @@ export const CustomerList = memo(({ customers, onCustomerSelect, isLoading }: Cu
   if (customers.length === 0) {
     return (
       <div className="p-4 text-center text-gray-500">
-        Müşteri bulunamadı
+        Müşteri bulunamadı. Arama yapmak için en az 2 karakter yazın.
       </div>
     );
   }
 
   return (
-    <div className="py-2">
+    <div className="py-2 max-h-60 overflow-y-auto">
       {customers.map((customer) => (
         <CustomerItem
           key={customer._id}
