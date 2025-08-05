@@ -30,6 +30,12 @@ const AciklamaSchema = new mongoose.Schema({
   }
 }, { _id: false });
 
+// PDF dosyası şeması
+const PdfDosyaSchema = new mongoose.Schema({
+  data: { type: String, required: true },
+  contentType: { type: String, required: true }
+}, { _id: false });
+
 const OpportunitySchema = new mongoose.Schema({
   // Ana alanlar (tüm fırsat türleri için ortak)
   musteri: {
@@ -51,22 +57,20 @@ const OpportunitySchema = new mongoose.Schema({
   olusturma_tarihi: { type: Date, default: Date.now },
   guncelleme_tarihi: { type: Date },
   
-  // Yeni eklenen alanlar
+  // Ortak alanlar
   aciklamalar: [AciklamaSchema],
   ucretler: [UcretSchema],
-  genel_aciklama: { type: String },
+  pdf_dosya: PdfDosyaSchema, // Ortak PDF alanı
   
-  // Çalışma İzni alanları
+  // İşlem türüne özel detaylar (JSON olarak esnek)
+  detaylar: { type: mongoose.Schema.Types.Mixed },
+  
+  // Çalışma İzni alanları (sadeleştirilmiş)
   isveren: { type: String },
   pozisyon: { type: String },
   sozlesme_turu: { type: String },
-  calisma_baslama_tarihi: { type: Date },
-  calisma_bitis_tarihi: { type: Date },
   maas: { type: Number },
   calisma_saati: { type: Number },
-  is_yeri_adresi: { type: String },
-  is_yeri_telefonu: { type: String },
-  calisma_aciklama: { type: String },
   
   // İkamet İzni alanları (Record.ts ile eşleşen)
   kayit_ili: { type: String },
@@ -78,11 +82,6 @@ const OpportunitySchema = new mongoose.Schema({
   gecerlilik_tarihi: { type: String },
   sira_no: { type: Number },
   randevu_tarihi: { type: String },
-  kayit_pdf: {
-    data: { type: String },
-    contentType: { type: String },
-    _id: false
-  },
   
   // Diğer İşlem alanları
   islem_adi: { type: String },
@@ -110,5 +109,9 @@ OpportunitySchema.index({ islem_adi: 1 }, { sparse: true }); // Diğer işlemler
 // Yeni alanlar için indeksler
 OpportunitySchema.index({ 'ucretler.odeme_durumu': 1 }); // Ödeme durumu filtreleme
 OpportunitySchema.index({ 'aciklamalar.tarih': -1 }); // Açıklama tarihi sıralama
+
+// Detaylar alanı için indeks (gelecekteki esnek alanlar için)
+OpportunitySchema.index({ 'detaylar.isveren': 1 }, { sparse: true });
+OpportunitySchema.index({ 'detaylar.kayit_numarasi': 1 }, { sparse: true });
 
 export const Opportunity = mongoose.models.Opportunity || mongoose.model('Opportunity', OpportunitySchema);

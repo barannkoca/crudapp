@@ -26,6 +26,12 @@ export interface IAciklama {
   onem_derecesi: 'dusuk' | 'orta' | 'yuksek';
 }
 
+// PDF dosyası interface'i
+export interface IPdfDosya {
+  data: string;
+  contentType: string;
+}
+
 // Ana Fırsat Interface'i (Supertype)
 export interface IFirsat {
   _id?: string;
@@ -35,10 +41,10 @@ export interface IFirsat {
   olusturma_tarihi?: Date;
   guncelleme_tarihi?: Date;
   
-  // Yeni eklenen alanlar
+  // Ortak alanlar
   aciklamalar?: IAciklama[];
   ucretler?: IUcret[];
-  genel_aciklama?: string;
+  pdf_dosya?: IPdfDosya; // Ortak PDF alanı
 }
 
 // İşlem Türleri
@@ -58,20 +64,15 @@ export enum FirsatDurumu {
   IPTAL_EDILDI = 'iptal_edildi'
 }
 
-// Çalışma İzni için özel alanlar
+// Çalışma İzni için özel alanlar (sadeleştirilmiş)
 export interface ICalismaIzniFirsati extends IFirsat {
   islem_turu: IslemTuru.CALISMA_IZNI;
   // Çalışma izni özel alanları
-  isveren?: string;
-  pozisyon?: string;
-  sozlesme_turu?: string;
-  calisma_baslama_tarihi?: Date;
-  calisma_bitis_tarihi?: Date;
-  maas?: number;
-  calisma_saati?: number;
-  is_yeri_adresi?: string;
-  is_yeri_telefonu?: string;
-  calisma_aciklama?: string;
+  isveren: string;
+  pozisyon: string;
+  sozlesme_turu: string;
+  maas: number;
+  calisma_saati: number;
 }
 
 // İkamet İzni için özel alanlar (Record.ts ile eşleşen)
@@ -87,10 +88,6 @@ export interface IIkametIzniFirsati extends IFirsat {
   gecerlilik_tarihi?: string;
   sira_no?: number;
   randevu_tarihi?: string;
-  kayit_pdf?: {
-    data: string;
-    contentType: string;
-  };
 }
 
 // Diğer İşlemler için özel alanlar
@@ -117,7 +114,7 @@ export interface IFirsatOlustur {
   detaylar: any; // İşlem türüne göre değişir
   aciklamalar?: IAciklama[];
   ucretler?: IUcret[];
-  genel_aciklama?: string;
+  pdf_dosya?: IPdfDosya;
 }
 
 // Fırsat güncelleme için interface
@@ -126,5 +123,5 @@ export interface IFirsatGuncelle {
   detaylar?: any;
   aciklamalar?: IAciklama[];
   ucretler?: IUcret[];
-  genel_aciklama?: string;
+  pdf_dosya?: IPdfDosya;
 } 
