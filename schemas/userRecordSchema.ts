@@ -28,7 +28,8 @@ export const IKAMET_TURU = [
   "KISA DÖNEM",
   "UZUN DÖNEM",
   "AİLE",
-  "İNSANİ"
+  "İNSANİ",
+  "ÖĞRENCİ"
 ] as const
 
 /**

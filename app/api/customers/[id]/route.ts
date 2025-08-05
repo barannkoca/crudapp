@@ -10,12 +10,13 @@ const customerService = new CustomerService(customerRepository);
 // GET - Tek müşteriyi getir
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
     
-    const customer = await customerService.getCustomerById(params.id);
+    const { id } = await params;
+    const customer = await customerService.getCustomerById(id);
     
     if (!customer) {
       return NextResponse.json({
@@ -44,7 +45,7 @@ export async function GET(
 // PUT - Müşteriyi güncelle
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
@@ -75,8 +76,9 @@ export async function PUT(
       };
     }
 
+    const { id } = await params;
     // Müşteriyi güncelle
-    const updatedCustomer = await customerService.updateCustomer(params.id, customerData);
+    const updatedCustomer = await customerService.updateCustomer(id, customerData);
     
     if (!updatedCustomer) {
       return NextResponse.json({
@@ -105,12 +107,13 @@ export async function PUT(
 // DELETE - Müşteriyi sil
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
     
-    const isDeleted = await customerService.deleteCustomer(params.id);
+    const { id } = await params;
+    const isDeleted = await customerService.deleteCustomer(id);
     
     if (!isDeleted) {
       return NextResponse.json({

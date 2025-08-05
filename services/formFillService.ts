@@ -20,9 +20,7 @@ export class FormFillService {
   public fillForm(extractedData: ExtractedData) {
     Object.entries(extractedData).forEach(([key, value]) => {
       if (value) {
-        if (key === 'dogum_tarihi') {
-          this.setDateValue('dogum_tarihi', value, '/');
-        } else if (key === 'kayit_tarihi') {
+        if (key === 'kayit_tarihi') {
           this.setDateValue('kayit_tarihi', value, '.');
         } else {
           this.form.setValue(key as keyof UserRecordFormData, value);

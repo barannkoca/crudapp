@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo, forwardRef, useImperativeHandle } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -26,16 +26,25 @@ interface CustomerSelectProps {
   label?: string;
 }
 
-export function CustomerSelect({ 
+export interface CustomerSelectRef {
+  getSelectedCustomer: () => ICustomer | undefined;
+}
+
+export const CustomerSelect = forwardRef<CustomerSelectRef, CustomerSelectProps>(({ 
   onCustomerSelect, 
   selectedCustomer, 
   label = "Müşteri Seç" 
-}: CustomerSelectProps) {
+}, ref) => {
   const [customers, setCustomers] = useState<ICustomer[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Ref method'larını expose et
+  useImperativeHandle(ref, () => ({
+    getSelectedCustomer: () => selectedCustomer
+  }));
 
   // Müşterileri getir - useCallback ile optimize edildi
   const fetchCustomers = useCallback(async (search: string = "") => {
@@ -168,4 +177,4 @@ export function CustomerSelect({
       )}
     </div>
   );
-} 
+}); 

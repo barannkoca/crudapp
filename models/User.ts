@@ -23,16 +23,10 @@ const userSchema = new mongoose.Schema({
   },
   image: String,
   googleId: String,
-  corporate: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Corporate',
-    required: function(this: any) {
-      return this.status === 'active';
-    }
-  },
   role: {
     type: String,
-    enum: ['owner', 'admin', 'member']
+    enum: ['admin', 'user'],
+    default: 'user'
   },
   records: [{
     type: mongoose.Schema.Types.ObjectId,

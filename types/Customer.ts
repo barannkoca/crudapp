@@ -7,6 +7,8 @@ export interface ICustomer {
   cinsiyeti: "Erkek" | "Kadın";
   telefon_no?: string;
   eposta?: string;
+  dogum_tarihi?: Date;
+  adres?: string;
   photo?: {
     data?: string;
     contentType?: string;
@@ -23,6 +25,8 @@ export interface ICustomerCreate {
   cinsiyeti: "Erkek" | "Kadın";
   telefon_no?: string;
   eposta?: string;
+  dogum_tarihi?: Date;
+  adres?: string;
   photo?: {
     data?: string;
     contentType?: string;
@@ -37,6 +41,8 @@ export interface ICustomerUpdate {
   cinsiyeti?: "Erkek" | "Kadın";
   telefon_no?: string;
   eposta?: string;
+  dogum_tarihi?: Date;
+  adres?: string;
   photo?: {
     data?: string;
     contentType?: string;

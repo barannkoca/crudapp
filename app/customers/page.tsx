@@ -106,7 +106,8 @@ export default function CustomersPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="hover:bg-cyan-50 transition-colors duration-200"
+                className="hover:bg-cyan-50 transition-colors duration-200 cursor-pointer"
+                onClick={() => router.push(`/customers/${customer._id}`)}
               >
                 <TableCell>
                   {customer.photo?.data ? (

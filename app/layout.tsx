@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import React, { ReactNode } from "react"; // React ve ReactNode import edildi
-import Navbar from "@/components/navbar";
+import React, { ReactNode } from "react";
 import "./globals.css";
 import Provider from "@/components/provider";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import LayoutContent from "@/components/LayoutContent";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,21 +24,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="tr" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="antialiased min-h-screen">
+      <body className="antialiased h-screen overflow-hidden">
         <Provider>
-          <div className="flex flex-col min-h-screen">
-            <Navbar /> {/* Navbar bileşeni */}
-            <main className="flex-grow">
+          <SidebarProvider>
+            <LayoutContent>
               {children}
-            </main>
-            <footer className="bg-white/80 backdrop-blur-sm border-t border-gray-100">
-              <div className="container mx-auto px-4 py-6">
-                <p className="text-center text-gray-600 text-sm">
-                  © 2024 CrudApp. Tüm hakları saklıdır.
-                </p>
-              </div>
-            </footer>
-          </div>
+            </LayoutContent>
+          </SidebarProvider>
         </Provider>
       </body>
     </html>
