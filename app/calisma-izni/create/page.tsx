@@ -3,15 +3,15 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Users, FileText, DollarSign, Upload } from 'lucide-react';
+import { Users, Briefcase, DollarSign, FileText } from 'lucide-react';
 import { OpportunityFormWrapper } from '@/components/OpportunityFormWrapper';
 import { CustomerSelectionStep } from '@/components/opportunity-steps/CustomerSelectionStep';
-import { IkametIzniDetailsStep } from '@/components/opportunity-steps/IkametIzniDetailsStep';
+import { CalismaIzniDetailsStep } from '@/components/opportunity-steps/CalismaIzniDetailsStep';
 import { PricingStep } from '@/components/opportunity-steps/PricingStep';
 import { DocumentUploadStep } from '@/components/opportunity-steps/DocumentUploadStep';
 import { IslemTuruDto } from '@/src/dto/opportunity.dto';
 
-export default function IkametIzniCreatePage() {
+export default function CalismaIzniCreatePage() {
   const router = useRouter();
 
   const steps = [
@@ -23,9 +23,9 @@ export default function IkametIzniCreatePage() {
     },
     {
       id: 'details',
-      title: 'İkamet Detayları',
-      description: 'İkamet bilgileri',
-      icon: <FileText className="w-5 h-5" />
+      title: 'İş Detayları',
+      description: 'Çalışma bilgileri',
+      icon: <Briefcase className="w-5 h-5" />
     },
     {
       id: 'pricing',
@@ -37,30 +37,41 @@ export default function IkametIzniCreatePage() {
       id: 'documents',
       title: 'Belgeler',
       description: 'PDF yükleme',
-      icon: <Upload className="w-5 h-5" />
+      icon: <FileText className="w-5 h-5" />
     }
   ];
 
   const handleSubmit = async (formData: any) => {
     try {
+      // Form validasyonu
       if (!formData.musteri_id) {
         toast.error('Lütfen bir müşteri seçin');
         return;
       }
 
-      if (!formData.detaylar?.yapilan_islem || !formData.detaylar?.ikamet_turu || 
-          !formData.detaylar?.kayit_tarihi || !formData.detaylar?.kayit_numarasi) {
-        toast.error('Lütfen tüm zorunlu ikamet izni detaylarını doldurun');
+      if (!formData.detaylar?.isveren || !formData.detaylar?.pozisyon || 
+          !formData.detaylar?.sozlesme_turu || !formData.detaylar?.maas || 
+          !formData.detaylar?.calisma_saati) {
+        toast.error('Lütfen tüm çalışma izni detaylarını doldurun');
         return;
       }
 
+      // API'ye gönder
       const response = await fetch('/api/opportunities', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           musteri_id: formData.musteri_id,
-          islem_turu: IslemTuruDto.IKAMET_IZNI,
-          detaylar: formData.detaylar,
+          islem_turu: IslemTuruDto.CALISMA_IZNI,
+          detaylar: {
+            isveren: formData.detaylar.isveren,
+            pozisyon: formData.detaylar.pozisyon,
+            sozlesme_turu: formData.detaylar.sozlesme_turu,
+            maas: parseFloat(formData.detaylar.maas),
+            calisma_saati: parseInt(formData.detaylar.calisma_saati)
+          },
           aciklamalar: formData.aciklamalar || [],
           ucretler: formData.ucretler || [],
           pdf_dosya: formData.pdf_dosya
@@ -68,11 +79,11 @@ export default function IkametIzniCreatePage() {
       });
 
       if (response.ok) {
-        toast.success('İkamet izni fırsatı oluşturuldu!');
-        router.push('/ikamet-izni');
+        toast.success('Çalışma izni fırsatı başarıyla oluşturuldu!');
+        router.push('/calisma-izni');
       } else {
         const errorData = await response.json();
-        toast.error(errorData.message || 'Fırsat oluşturulurken hata oluştu');
+        toast.error(errorData.message || 'Fırsat oluşturulurken bir hata oluştu');
       }
     } catch (error) {
       console.error('Form submission error:', error);
@@ -80,19 +91,21 @@ export default function IkametIzniCreatePage() {
     }
   };
 
-  const handleCancel = () => router.push('/ikamet-izni');
+  const handleCancel = () => {
+    router.push('/calisma-izni');
+  };
 
   return (
     <OpportunityFormWrapper
-      title="Yeni İkamet İzni Fırsatı"
-      islemTuru={IslemTuruDto.IKAMET_IZNI}
+      title="Yeni Çalışma İzni Fırsatı"
+      islemTuru={IslemTuruDto.CALISMA_IZNI}
       steps={steps}
       onSubmit={handleSubmit}
       onCancel={handleCancel}
-      backHref="/ikamet-izni"
+      backHref="/calisma-izni"
     >
       <CustomerSelectionStep />
-      <IkametIzniDetailsStep />
+      <CalismaIzniDetailsStep />
       <PricingStep />
       <DocumentUploadStep />
     </OpportunityFormWrapper>

@@ -1,29 +1,31 @@
 # CRUD Başvuru Yönetim Sistemi
-fundamentals
+
 Modern web teknolojileri kullanılarak geliştirilmiş, kapsamlı bir başvuru yönetim sistemi. Bu proje, kullanıcı dostu arayüzü ve güçlü backend yapısıyla başvuruların etkin yönetimini sağlar.
 
 ## 🚀 Özellikler
 
 ### 📋 Başvuru Yönetimi
-- Yeni başvuru oluşturma ve düzenleme
-- PDF ve fotoğraf yükleme desteği
-- Otomatik form doldurma (PDF'den veri çıkarma)
-- Başvuru durumu takibi (Beklemede, Onaylandı, Reddedildi)
-- Geçerlilik tarihi yönetimi
+- **Çoklu Başvuru Türleri**: Çalışma İzni, İkamet İzni, Diğer İşlemler
+- **Dinamik Form Sistemi**: Tür bazlı özelleştirilmiş formlar
+- **Stepper Form UI**: Çok adımlı form navigasyonu
+- **PDF ve Fotoğraf Yükleme**: Güvenli dosya yükleme
+- **Durum Takibi**: Gerçek zamanlı başvuru durumu izleme
+- **Açıklama Sistemi**: Yapılandırılmış not ve açıklama yönetimi
 
-### 🔍 Gelişmiş Filtreleme Sistemi
-- Başvuru türüne göre filtreleme
-- İl bazlı filtreleme
-- Durum filtreleme
-- Tarih aralığı filtreleme
-- Ad-soyad ve kayıt no ile arama
-- SOLID prensiplerine uygun filtreleme mimarisi
+### 🔍 Gelişmiş Filtreleme ve Arama Sistemi
+- **Tür Bazlı Filtreleme**: Çalışma izni, İkamet izni, Diğer işlemler
+- **Genel Arama**: Tüm detaylar içinde anlık arama
+- **Tarih Bazlı Sıralama**: Oluşturma/Güncelleme tarihine göre sıralama
+- **Durum Filtreleme**: Başvuru durumu bazlı filtreleme
+- **Tarih Aralığı**: Esnek tarih aralığı filtreleme
+- **SOLID Mimarili**: Genişletilebilir filtreleme sistemi
 
-### 📊 Veri Görüntüleme
-- Sayfalama sistemi
-- Detaylı başvuru görüntüleme
-- PDF indirme özelliği
-- Responsive tasarım
+### 📊 Veri Görüntüleme ve Analiz
+- **Akıllı Sayfalama**: Performans optimizasyonu ile hızlı yükleme
+- **Polymorphic Veri Yapısı**: Esnek detay alanları
+- **PDF ve Dosya Yönetimi**: Güvenli dosya indirme
+- **İstatistik Dashboard**: Başvuru ve ödeme istatistikleri
+- **Responsive Tasarım**: Tüm cihazlarda uyumlu arayüz
 
 ## 🛠️ Kullanılan Teknolojiler
 
@@ -43,25 +45,38 @@ Modern web teknolojileri kullanılarak geliştirilmiş, kapsamlı bir başvuru y
 - PDF İşleme (pdf-ts)
 
 ### Mimari
-- SOLID Prensipleri
-- Service Pattern
-- Clean Architecture
-- Responsive Design
-- Type-Safe Development
+- **Katmanlı Mimari (Layered Architecture)**
+- **SOLID Prensipleri**
+- **Clean Architecture**
+- **Repository Pattern**
+- **Service Pattern**
+- **DTO Pattern**
+- **Dependency Injection**
+- **Type-Safe Development**
+- **Error Handling Middleware**
 
 ## 🏗️ Proje Yapısı
 
 ```
 ├── app/
-│   ├── api/           # API endpoints
-│   └── pages/         # Sayfa bileşenleri
-├── components/        # UI bileşenleri
-├── services/         # İş mantığı servisleri
-│   ├── filters/      # Filtreleme sistemi
+│   ├── api/           # Next.js API routes
+│   ├── auth/          # Authentication sayfaları
+│   ├── customers/     # Müşteri sayfaları
+│   ├── dashboard/     # Dashboard sayfası
 │   └── ...
+├── src/               # Katmanlı mimari
+│   ├── controllers/   # HTTP istekleri ve API endpoint'leri
+│   ├── services/      # İş mantığı katmanı
+│   ├── repositories/  # Veri erişim katmanı
+│   ├── dto/          # Data Transfer Objects
+│   ├── middlewares/  # Error handling ve middleware'ler
+│   ├── utils/        # Yardımcı fonksiyonlar
+│   └── constants/    # Sistem sabitleri
+├── components/        # React UI bileşenleri
+├── models/           # MongoDB Mongoose modelleri
 ├── types/           # TypeScript tipleri
-├── schemas/         # Veri şemaları
-└── lib/            # Yardımcı fonksiyonlar
+├── schemas/         # Zod validation şemaları
+└── lib/            # Konfigürasyon ve yardımcı fonksiyonlar
 ```
 
 ## 🌟 Öne Çıkan Özellikler

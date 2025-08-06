@@ -62,33 +62,11 @@ const OpportunitySchema = new mongoose.Schema({
   ucretler: [UcretSchema],
   pdf_dosya: PdfDosyaSchema, // Ortak PDF alanı
   
-  // İşlem türüne özel detaylar (JSON olarak esnek)
-  detaylar: { type: mongoose.Schema.Types.Mixed },
-  
-  // Çalışma İzni alanları (sadeleştirilmiş)
-  isveren: { type: String },
-  pozisyon: { type: String },
-  sozlesme_turu: { type: String },
-  maas: { type: Number },
-  calisma_saati: { type: Number },
-  
-  // İkamet İzni alanları (Record.ts ile eşleşen)
-  kayit_ili: { type: String },
-  yapilan_islem: { type: String },
-  ikamet_turu: { type: String },
-  kayit_tarihi: { type: String },
-  kayit_numarasi: { type: String },
-  aciklama: { type: String },
-  gecerlilik_tarihi: { type: String },
-  sira_no: { type: Number },
-  randevu_tarihi: { type: String },
-  
-  // Diğer İşlem alanları
-  islem_adi: { type: String },
-  diger_baslama_tarihi: { type: Date },
-  diger_bitis_tarihi: { type: Date },
-  diger_aciklama: { type: String },
-  ek_bilgiler: { type: String },
+  // İşlem türüne özel detaylar (JSON olarak esnek - tüm özel alanlar burada)
+  detaylar: { 
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
+  },
   
 }, {
   timestamps: true,
@@ -101,17 +79,13 @@ OpportunitySchema.index({ islem_turu: 1, olusturma_tarihi: -1 }); // Fırsat tü
 OpportunitySchema.index({ durum: 1, islem_turu: 1 }); // Durum ve tür filtreleme
 OpportunitySchema.index({ olusturma_tarihi: -1 }); // Genel sıralama
 
-// Sparse indeksler (sadece dolu alanlar için)
-OpportunitySchema.index({ kayit_numarasi: 1 }, { sparse: true }); // İkamet izni için
-OpportunitySchema.index({ isveren: 1 }, { sparse: true }); // Çalışma izni için
-OpportunitySchema.index({ islem_adi: 1 }, { sparse: true }); // Diğer işlemler için
+// Detaylar alanı için indeksler (esnek alanlar)
+OpportunitySchema.index({ 'detaylar.isveren': 1 }, { sparse: true }); // Çalışma izni
+OpportunitySchema.index({ 'detaylar.kayit_numarasi': 1 }, { sparse: true }); // İkamet izni
+OpportunitySchema.index({ 'detaylar.islem_adi': 1 }, { sparse: true }); // Diğer işlemler
 
-// Yeni alanlar için indeksler
+// Ödeme ve açıklama indeksler
 OpportunitySchema.index({ 'ucretler.odeme_durumu': 1 }); // Ödeme durumu filtreleme
 OpportunitySchema.index({ 'aciklamalar.tarih': -1 }); // Açıklama tarihi sıralama
-
-// Detaylar alanı için indeks (gelecekteki esnek alanlar için)
-OpportunitySchema.index({ 'detaylar.isveren': 1 }, { sparse: true });
-OpportunitySchema.index({ 'detaylar.kayit_numarasi': 1 }, { sparse: true });
 
 export const Opportunity = mongoose.models.Opportunity || mongoose.model('Opportunity', OpportunitySchema);

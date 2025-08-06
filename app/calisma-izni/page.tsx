@@ -5,11 +5,12 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { IIkametIzniFirsati, IslemTuru, FirsatDurumu } from "@/types/Opportunity";
+import { Badge } from "@/components/ui/badge";
+import { ICalismaIzniFirsati, IslemTuru, FirsatDurumu } from "@/types/Opportunity";
 import ListPageTemplate from "@/components/ListPageTemplate";
 
-export default function IkametIzniPage() {
-  const [opportunities, setOpportunities] = useState<IIkametIzniFirsati[]>([]);
+export default function CalismaIzniPage() {
+  const [opportunities, setOpportunities] = useState<ICalismaIzniFirsati[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,7 +24,7 @@ export default function IkametIzniPage() {
     try {
       setLoading(true);
       const params = new URLSearchParams({
-        islem_turu: IslemTuru.IKAMET_IZNI,
+        islem_turu: IslemTuru.CALISMA_IZNI,
         sort_by: 'olusturma_tarihi',
         sort_order: 'desc'
       });
@@ -31,13 +32,13 @@ export default function IkametIzniPage() {
       const response = await fetch(`/api/opportunities?${params}`);
       
       if (response.ok) {
-        const result = await response.json();
-        setOpportunities(result.data || []);
+        const data = await response.json();
+        setOpportunities(data.data || []);
       } else {
-        setError('İkamet izni fırsatları yüklenirken bir hata oluştu');
+        setError('Çalışma izni fırsatları yüklenirken bir hata oluştu');
       }
     } catch (error) {
-      setError('İkamet izni fırsatları yüklenirken bir hata oluştu');
+      setError('Çalışma izni fırsatları yüklenirken bir hata oluştu');
     } finally {
       setLoading(false);
     }
@@ -47,7 +48,8 @@ export default function IkametIzniPage() {
     const matchesSearch = searchTerm === "" || 
       opportunity.musteri?.ad?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       opportunity.musteri?.soyad?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      opportunity.detaylar?.kayit_numarasi?.toLowerCase().includes(searchTerm.toLowerCase());
+      opportunity.detaylar?.isveren?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      opportunity.detaylar?.pozisyon?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || opportunity.durum === statusFilter;
     
@@ -77,32 +79,40 @@ export default function IkametIzniPage() {
     return new Date(date).toLocaleDateString('tr-TR');
   };
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('tr-TR', {
+      style: 'currency',
+      currency: 'TRY',
+      minimumFractionDigits: 0
+    }).format(amount);
+  };
+
   return (
     <ListPageTemplate
-      title="İkamet İzni Fırsatları"
+      title="Çalışma İzni Fırsatları"
       subtitle={`Toplam ${opportunities.length} fırsat`}
       totalCount={opportunities.length}
       searchTerm={searchTerm}
       onSearchChange={setSearchTerm}
-      searchPlaceholder="Müşteri adı, soyadı veya kayıt numarası ara..."
-      createButtonText="Yeni Fırsat"
-      createButtonHref="/ikamet-izni/create"
+      searchPlaceholder="Müşteri adı, işveren veya pozisyon ara..."
+      createButtonText="Yeni Çalışma İzni"
+      createButtonHref="/calisma-izni/create"
       backButtonHref="/dashboard"
       loading={loading}
       error={error}
       searchResultsCount={filteredOpportunities.length}
-      emptyStateTitle="Fırsat Bulunamadı"
-      emptyStateDescription="Henüz ikamet izni fırsatı oluşturulmamış."
+      emptyStateTitle="Çalışma İzni Fırsatı Bulunamadı"
+      emptyStateDescription="Henüz çalışma izni fırsatı oluşturulmamış."
       emptyStateIcon={
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-cyan-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-green-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2z" />
         </svg>
       }
     >
       {/* Durum Filtresi */}
       <div className="mb-6">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full md:w-64 border-cyan-200 focus:border-cyan-500 focus:ring-cyan-500">
+          <SelectTrigger className="w-full md:w-64 border-green-200 focus:border-green-500 focus:ring-green-500">
             <SelectValue placeholder="Durum filtresi" />
           </SelectTrigger>
           <SelectContent>
@@ -121,15 +131,16 @@ export default function IkametIzniPage() {
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="bg-cyan-50">
-              <TableHead className="font-semibold text-cyan-700">Fotoğraf</TableHead>
-              <TableHead className="font-semibold text-cyan-700">Ad Soyad</TableHead>
-              <TableHead className="font-semibold text-cyan-700">Kayıt No</TableHead>
-              <TableHead className="font-semibold text-cyan-700">İşlem Türü</TableHead>
-              <TableHead className="font-semibold text-cyan-700">İkamet Türü</TableHead>
-              <TableHead className="font-semibold text-cyan-700">Kayıt Tarihi</TableHead>
-              <TableHead className="font-semibold text-cyan-700">Randevu Tarihi</TableHead>
-              <TableHead className="font-semibold text-cyan-700">Durum</TableHead>
+            <TableRow className="bg-green-50">
+              <TableHead className="font-semibold text-green-700">Fotoğraf</TableHead>
+              <TableHead className="font-semibold text-green-700">Müşteri</TableHead>
+              <TableHead className="font-semibold text-green-700">İşveren</TableHead>
+              <TableHead className="font-semibold text-green-700">Pozisyon</TableHead>
+              <TableHead className="font-semibold text-green-700">Maaş</TableHead>
+              <TableHead className="font-semibold text-green-700">Çalışma Saati</TableHead>
+              <TableHead className="font-semibold text-green-700">Sözleşme</TableHead>
+              <TableHead className="font-semibold text-green-700">Tarih</TableHead>
+              <TableHead className="font-semibold text-green-700">Durum</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -139,11 +150,11 @@ export default function IkametIzniPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="hover:bg-cyan-50 transition-colors duration-200"
+                className="hover:bg-green-50 transition-colors duration-200"
               >
                 <TableCell>
                   {opportunity.musteri?.photo && opportunity.musteri.photo.data ? (
-                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-cyan-200">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-green-200">
                       <img
                         src={`data:${opportunity.musteri.photo.contentType};base64,${opportunity.musteri.photo.data}`}
                         alt={`${opportunity.musteri.ad} ${opportunity.musteri.soyad}`}
@@ -161,8 +172,8 @@ export default function IkametIzniPage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-100 to-cyan-200 flex items-center justify-center border-2 border-cyan-200">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center border-2 border-green-200">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                     </div>
@@ -171,11 +182,22 @@ export default function IkametIzniPage() {
                 <TableCell className="font-medium">
                   {opportunity.musteri?.ad} {opportunity.musteri?.soyad}
                 </TableCell>
-                <TableCell className="font-medium">{opportunity.detaylar?.kayit_numarasi || '-'}</TableCell>
-                <TableCell>{opportunity.detaylar?.yapilan_islem || '-'}</TableCell>
-                <TableCell>{opportunity.detaylar?.ikamet_turu || '-'}</TableCell>
-                <TableCell>{opportunity.detaylar?.kayit_tarihi ? formatDate(opportunity.detaylar.kayit_tarihi) : '-'}</TableCell>
-                <TableCell>{opportunity.detaylar?.randevu_tarihi ? formatDate(opportunity.detaylar.randevu_tarihi) : '-'}</TableCell>
+                <TableCell className="font-medium">{opportunity.detaylar?.isveren || '-'}</TableCell>
+                <TableCell>{opportunity.detaylar?.pozisyon || '-'}</TableCell>
+                <TableCell className="font-medium text-green-600">
+                  {opportunity.detaylar?.maas ? formatCurrency(opportunity.detaylar.maas) : '-'}
+                </TableCell>
+                <TableCell>
+                  {opportunity.detaylar?.calisma_saati ? `${opportunity.detaylar.calisma_saati} saat/hafta` : '-'}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline" className="text-xs">
+                    {opportunity.detaylar?.sozlesme_turu || '-'}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {opportunity.olusturma_tarihi ? formatDate(opportunity.olusturma_tarihi) : '-'}
+                </TableCell>
                 <TableCell>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(opportunity.durum)}`}>
                     {opportunity.durum}
@@ -188,4 +210,4 @@ export default function IkametIzniPage() {
       </div>
     </ListPageTemplate>
   );
-} 
+}

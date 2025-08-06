@@ -44,7 +44,10 @@ export interface IFirsat {
   // Ortak alanlar
   aciklamalar?: IAciklama[];
   ucretler?: IUcret[];
-  pdf_dosya?: IPdfDosya; // Ortak PDF alanı
+  pdf_dosya?: IPdfDosya;
+  
+  // İşlem türüne özel detaylar (esnek yapı)
+  detaylar?: any;
 }
 
 // İşlem Türleri
@@ -64,41 +67,39 @@ export enum FirsatDurumu {
   IPTAL_EDILDI = 'iptal_edildi'
 }
 
-// Çalışma İzni için özel alanlar (sadeleştirilmiş)
+// Çalışma İzni için özel alanlar (detaylar içinde)
 export interface ICalismaIzniFirsati extends IFirsat {
   islem_turu: IslemTuru.CALISMA_IZNI;
-  // Çalışma izni özel alanları
-  isveren: string;
-  pozisyon: string;
-  sozlesme_turu: string;
-  maas: number;
-  calisma_saati: number;
+  detaylar: {
+    isveren: string;
+    pozisyon: string;
+    sozlesme_turu: string;
+    maas: number;
+    calisma_saati: number;
+  };
 }
 
-// İkamet İzni için özel alanlar (Record.ts ile eşleşen)
+// İkamet İzni için özel alanlar (detaylar içinde - kayit_ili kaldırıldı)
 export interface IIkametIzniFirsati extends IFirsat {
   islem_turu: IslemTuru.IKAMET_IZNI;
-  // İkamet izni özel alanları
-  kayit_ili?: string;
-  yapilan_islem?: string;
-  ikamet_turu?: string;
-  kayit_tarihi?: string;
-  kayit_numarasi?: string;
-  aciklama?: string;
-  gecerlilik_tarihi?: string;
-  sira_no?: number;
-  randevu_tarihi?: string;
+  detaylar: {
+    yapilan_islem: string;
+    ikamet_turu: string;
+    kayit_tarihi: string;
+    kayit_numarasi: string;
+    gecerlilik_tarihi?: string;
+    randevu_tarihi?: string;
+  };
 }
 
-// Diğer İşlemler için özel alanlar
+// Diğer İşlemler için özel alanlar (detaylar içinde)
 export interface IDigerFirsati extends IFirsat {
   islem_turu: IslemTuru.DIGER;
-  // Diğer işlem özel alanları
-  islem_adi?: string;
-  diger_baslama_tarihi?: Date;
-  diger_bitis_tarihi?: Date;
-  diger_aciklama?: string;
-  ek_bilgiler?: string;
+  detaylar: {
+    islem_adi: string;
+    baslama_tarihi?: Date;
+    bitis_tarihi?: Date;
+  };
 }
 
 // Union type - Tüm fırsat türleri

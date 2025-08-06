@@ -28,10 +28,7 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'user'],
     default: 'user'
   },
-  records: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Record'
-  }]
+  // records referansı kaldırıldı - Record işlevselliği Opportunity'e entegre edildi
 }, {
   timestamps: true
 });

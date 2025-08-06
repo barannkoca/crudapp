@@ -1,180 +1,213 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo, forwardRef, useImperativeHandle } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Search, User, Mail, Phone } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Search, ChevronDown, User, Check } from "lucide-react";
 import { ICustomer } from "@/types/Customer";
-import dynamic from "next/dynamic";
-
-// Lazy load CustomerList komponenti
-const CustomerList = dynamic(() => import('./CustomerList').then(mod => ({ default: mod.CustomerList })), {
-  loading: () => (
-    <div className="p-4 text-center text-gray-500">
-      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400 mx-auto mb-2"></div>
-      Yükleniyor...
-    </div>
-  ),
-  ssr: false
-});
 
 interface CustomerSelectProps {
   onCustomerSelect: (customer: ICustomer) => void;
   selectedCustomer?: ICustomer;
-  label?: string;
+  placeholder?: string;
 }
 
-export interface CustomerSelectRef {
-  getSelectedCustomer: () => ICustomer | undefined;
-}
-
-export const CustomerSelect = forwardRef<CustomerSelectRef, CustomerSelectProps>(({ 
+export function CustomerSelect({ 
   onCustomerSelect, 
   selectedCustomer, 
-  label = "Müşteri Seç" 
-}, ref) => {
-  const [customers, setCustomers] = useState<ICustomer[]>([]);
+  placeholder = "Müşteri seçin..." 
+}: CustomerSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [customers, setCustomers] = useState<ICustomer[]>([]);
+  const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Ref method'larını expose et
-  useImperativeHandle(ref, () => ({
-    getSelectedCustomer: () => selectedCustomer
-  }));
-
-  // Müşterileri getir - useCallback ile optimize edildi
-  const fetchCustomers = useCallback(async (search: string = "") => {
-    setIsLoading(true);
+  // Fetch customers
+  const fetchCustomers = async (search: string = "") => {
     try {
-      const response = await fetch(`/api/customers/select?search=${search}`);
-      const result = await response.json();
+      setLoading(true);
+      const url = search.length >= 2 
+        ? `/api/customers?search=${encodeURIComponent(search)}&limit=50`
+        : `/api/customers?limit=50`;
       
+      const response = await fetch(url);
       if (response.ok) {
-        console.log('Müşteriler yüklendi:', result.data);
-        setCustomers(result.data);
-      } else {
-        console.error('Müşteriler getirilemedi:', result.message);
+        const data = await response.json();
+        setCustomers(Array.isArray(data) ? data : data.data || []);
       }
     } catch (error) {
-      console.error('Müşteri getirme hatası:', error);
+      console.error('Error fetching customers:', error);
+      setCustomers([]);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, []);
+  };
 
-  // Arama değiştiğinde müşterileri getir - debounce ile optimize edildi
+  // Debounced search
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (searchTerm.length >= 2 || searchTerm.length === 0) {
+      if (isOpen) {
         fetchCustomers(searchTerm);
       }
-    }, 500); // Debounce süresini artırdık
+    }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, fetchCustomers]);
+  }, [searchTerm, isOpen]);
 
-  // Dropdown dışına tıklandığında kapat
+  // Click outside to close
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
+        setIsOpen(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleCustomerSelect = useCallback((customer: ICustomer) => {
+  const handleSelect = (customer: ICustomer) => {
     onCustomerSelect(customer);
-    setShowDropdown(false);
+    setIsOpen(false);
     setSearchTerm("");
-  }, [onCustomerSelect]);
+  };
+
+  const displayText = selectedCustomer 
+    ? `${selectedCustomer.ad} ${selectedCustomer.soyad}`
+    : placeholder;
 
   return (
-    <div className="space-y-2">
-      <Label>{label} *</Label>
-      
-      <div className="relative" ref={dropdownRef}>
-        <div className="flex items-center space-x-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder={selectedCustomer ? `${selectedCustomer.ad} ${selectedCustomer.soyad}` : "Müşteri ara..."}
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setShowDropdown(true);
-              }}
-              onFocus={() => setShowDropdown(true)}
-              className="pl-10"
+    <div className="relative" ref={dropdownRef}>
+      {/* Trigger Button */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`
+          w-full h-12 px-4 py-3 bg-white border border-gray-300 rounded-lg 
+          flex items-center justify-between text-left
+          hover:border-gray-400 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+          transition-all duration-200
+          ${selectedCustomer ? 'text-gray-900' : 'text-gray-500'}
+        `}
+      >
+        <div className="flex items-center space-x-3 flex-1 min-w-0">
+          {selectedCustomer && selectedCustomer.photo?.data ? (
+            <img
+              src={`data:${selectedCustomer.photo.contentType};base64,${selectedCustomer.photo.data}`}
+              alt={displayText}
+              className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-gray-200"
             />
-          </div>
-          
-          {selectedCustomer && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onCustomerSelect(selectedCustomer)}
-            >
-              Seçili
-            </Button>
+          ) : (
+            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <User className="w-4 h-4 text-gray-400" />
+            </div>
           )}
+          <span className="truncate text-base font-medium">{displayText}</span>
         </div>
+        <ChevronDown 
+          className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+            isOpen ? 'transform rotate-180' : ''
+          }`} 
+        />
+      </button>
 
-        {/* Dropdown */}
-        {showDropdown && (
-          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-            <CustomerList
-              customers={customers}
-              onCustomerSelect={handleCustomerSelect}
-              isLoading={isLoading}
-            />
+      {/* Dropdown */}
+      {isOpen && (
+        <div className="absolute z-[9999] w-full min-w-[500px] mt-1 bg-white border border-gray-200 rounded-lg shadow-xl">
+          {/* Search Input */}
+          <div className="p-4 border-b border-gray-100">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Müşteri ara..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                autoFocus
+              />
+            </div>
           </div>
-        )}
-      </div>
 
-      {/* Seçili müşteri bilgileri */}
-      {selectedCustomer && (
-        <Card className="mt-2">
-          <CardContent className="p-3">
-            <div className="flex items-center space-x-3">
-              {selectedCustomer.photo && selectedCustomer.photo.data ? (
-                <img
-                  src={`data:${selectedCustomer.photo.contentType};base64,${selectedCustomer.photo.data}`}
-                  alt={`${selectedCustomer.ad} ${selectedCustomer.soyad}`}
-                  className="w-8 h-8 rounded-full object-cover"
-                  onError={(e) => {
-                    // Fotoğraf yüklenemezse fallback göster
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    target.nextElementSibling?.classList.remove('hidden');
-                  }}
-                />
-              ) : null}
-              <div className={`w-8 h-8 bg-cyan-100 rounded-full flex items-center justify-center ${selectedCustomer.photo && selectedCustomer.photo.data ? 'hidden' : ''}`}>
-                <User className="h-4 w-4 text-cyan-600" />
+          {/* Customer List */}
+          <div className="max-h-80 overflow-y-auto">
+            {loading ? (
+              <div className="p-6 text-center">
+                <div className="inline-block w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+                <span className="ml-3 text-base text-gray-500">Müşteriler aranıyor...</span>
               </div>
-              <div>
-                <div className="font-medium text-gray-900">
-                  {selectedCustomer.ad} {selectedCustomer.soyad}
-                </div>
-                <div className="text-sm text-gray-500">
-                  {selectedCustomer.eposta && `${selectedCustomer.eposta} • `}
-                  {selectedCustomer.telefon_no}
-                </div>
+            ) : customers.length === 0 ? (
+              <div className="p-6 text-center text-base text-gray-500">
+                {searchTerm.length >= 2 ? 'Müşteri bulunamadı' : 'Arama yapmak için en az 2 karakter yazın'}
+              </div>
+            ) : (
+              customers.map((customer) => (
+                <button
+                  key={customer._id}
+                  onClick={() => handleSelect(customer)}
+                  className="w-full px-4 py-4 text-left hover:bg-blue-50 focus:bg-blue-50 focus:outline-none border-b border-gray-100 last:border-b-0 transition-colors duration-150"
+                >
+                  <div className="flex items-center space-x-4">
+                    {/* Avatar */}
+                    {customer.photo?.data ? (
+                      <img
+                        src={`data:${customer.photo.contentType};base64,${customer.photo.data}`}
+                        alt={`${customer.ad} ${customer.soyad}`}
+                        className="w-12 h-12 rounded-full object-cover flex-shrink-0 border-2 border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center flex-shrink-0 border-2 border-gray-200">
+                        <User className="w-6 h-6 text-blue-600" />
+                      </div>
+                    )}
+
+                    {/* Customer Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-base text-gray-900 truncate">
+                        {customer.ad} {customer.soyad}
+                      </div>
+                      <div className="text-sm text-gray-600 truncate mt-1">
+                        {customer.telefon_no && (
+                          <span className="inline-flex items-center mr-4">
+                            📞 {customer.telefon_no}
+                          </span>
+                        )}
+                        {customer.eposta && (
+                          <span className="inline-flex items-center">
+                            ✉️ {customer.eposta}
+                          </span>
+                        )}
+                      </div>
+                      {customer.uyrugu && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          🌍 {customer.uyrugu}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Selected Indicator */}
+                    {selectedCustomer?._id === customer._id && (
+                      <div className="flex-shrink-0">
+                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                          <Check className="w-4 h-4 text-white" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+
+          {/* Footer */}
+          {customers.length > 0 && (
+            <div className="p-3 border-t border-gray-100 bg-gray-50 rounded-b-lg">
+              <div className="text-sm text-gray-600 text-center font-medium">
+                {customers.length} müşteri gösteriliyor
               </div>
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </div>
       )}
     </div>
   );
-}); 
+}
