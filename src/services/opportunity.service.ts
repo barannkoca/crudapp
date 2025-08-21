@@ -10,6 +10,12 @@ import {
   IslemTuruDto
 } from '../dto/opportunity.dto';
 import { BaseResponse, PaginationParams } from '../dto/base.dto';
+import { 
+  DataSanitizer, 
+  SchemaValidator, 
+  DataIntegrityChecker,
+  RateLimiter
+} from '../utils/data-integrity.utils';
 
 import { Document } from 'mongoose';
 
@@ -120,9 +126,21 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
     }
   }
 
-  // Validation metodları
+  // Validation metodları - esnek yaklaşım
   protected async validateCreate(createDto: CreateOpportunityDto): Promise<{ isValid: boolean; errors: any[] }> {
     const errors: any[] = [];
+
+    // Güvenlik kontrolü - sadece kritik olanlar
+    if (createDto.detaylar) {
+      try {
+        const jsonSize = Buffer.byteLength(JSON.stringify(createDto.detaylar), 'utf8');
+        if (jsonSize > 50 * 1024) {
+          errors.push({ field: 'detaylar', message: 'Detaylar alanı çok büyük (max 50KB)' });
+        }
+      } catch (error) {
+        errors.push({ field: 'detaylar', message: 'Detaylar alanında hata' });
+      }
+    }
 
     // Zorunlu alanlar
     if (!createDto.musteri_id) {
@@ -140,56 +158,37 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
       }
     }
 
-    // İşlem türüne özel validasyonlar
+    // İşlem türüne özel validasyonlar - esnek yaklaşım (alanlar opsiyonel)
     if (createDto.islem_turu === IslemTuruDto.CALISMA_IZNI) {
-      if (!createDto.detaylar) {
-        errors.push({ field: 'detaylar', message: 'Çalışma izni detayları zorunludur' });
-      } else {
-        if (!createDto.detaylar.isveren) {
-          errors.push({ field: 'detaylar.isveren', message: 'İşveren bilgisi zorunludur' });
+      // Sadece format kontrolü yap, zorunlu alan yok - sonradan tamamlanabilir
+      if (createDto.detaylar) {
+        if (createDto.detaylar.maas && createDto.detaylar.maas <= 0) {
+          errors.push({ field: 'detaylar.maas', message: 'Maaş pozitif bir değer olmalıdır' });
         }
-        if (!createDto.detaylar.pozisyon) {
-          errors.push({ field: 'detaylar.pozisyon', message: 'Pozisyon bilgisi zorunludur' });
-        }
-        if (!createDto.detaylar.sozlesme_turu) {
-          errors.push({ field: 'detaylar.sozlesme_turu', message: 'Sözleşme türü zorunludur' });
-        }
-        if (!createDto.detaylar.maas || createDto.detaylar.maas <= 0) {
-          errors.push({ field: 'detaylar.maas', message: 'Geçerli bir maaş bilgisi zorunludur' });
-        }
-        if (!createDto.detaylar.calisma_saati || createDto.detaylar.calisma_saati <= 0) {
-          errors.push({ field: 'detaylar.calisma_saati', message: 'Geçerli bir çalışma saati bilgisi zorunludur' });
+        if (createDto.detaylar.calisma_saati && (createDto.detaylar.calisma_saati <= 0 || createDto.detaylar.calisma_saati > 168)) {
+          errors.push({ field: 'detaylar.calisma_saati', message: 'Çalışma saati 1-168 arasında olmalıdır' });
         }
       }
+      // İşveren, pozisyon, sözleşme türü vs. opsiyonel - update ile eklenebilir
     }
 
     if (createDto.islem_turu === IslemTuruDto.IKAMET_IZNI) {
-      if (!createDto.detaylar) {
-        errors.push({ field: 'detaylar', message: 'İkamet izni detayları zorunludur' });
-      } else {
-        if (!createDto.detaylar.yapilan_islem) {
-          errors.push({ field: 'detaylar.yapilan_islem', message: 'Yapılan işlem bilgisi zorunludur' });
-        }
-        if (!createDto.detaylar.ikamet_turu) {
-          errors.push({ field: 'detaylar.ikamet_turu', message: 'İkamet türü zorunludur' });
-        }
-        if (!createDto.detaylar.kayit_tarihi) {
-          errors.push({ field: 'detaylar.kayit_tarihi', message: 'Kayıt tarihi zorunludur' });
-        }
-        if (!createDto.detaylar.kayit_numarasi) {
-          errors.push({ field: 'detaylar.kayit_numarasi', message: 'Kayıt numarası zorunludur' });
+      // Tüm alanlar opsiyonel - sadece varsa format kontrolü yap
+      if (createDto.detaylar && createDto.detaylar.kayit_tarihi) {
+        const sanitizedDate = DataSanitizer.sanitizeDate(createDto.detaylar.kayit_tarihi);
+        if (!sanitizedDate) {
+          errors.push({ field: 'detaylar.kayit_tarihi', message: 'Geçersiz kayıt tarihi formatı' });
         }
       }
+      // Randevu tarihi, ikamet türü, yapılan işlem vs. tamamen opsiyonel
     }
 
     if (createDto.islem_turu === IslemTuruDto.DIGER) {
-      if (!createDto.detaylar) {
-        errors.push({ field: 'detaylar', message: 'İşlem detayları zorunludur' });
-      } else {
-        if (!createDto.detaylar.islem_adi) {
-          errors.push({ field: 'detaylar.islem_adi', message: 'İşlem adı zorunludur' });
-        }
+      // Temel validasyon - sadece işlem adı zorunlu
+      if (!createDto.detaylar || !createDto.detaylar.islem_adi) {
+        errors.push({ field: 'detaylar.islem_adi', message: 'İşlem adı zorunludur' });
       }
+      // Diğer alanlar opsiyonel - sonradan update ile tamamlanabilir
     }
 
     return { isValid: errors.length === 0, errors };

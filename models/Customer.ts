@@ -55,9 +55,33 @@ const customerSchema = new mongoose.Schema({
   strict: true
 });
 
-// Index'ler ekleyelim
+// Index'ler ve constraintler
 customerSchema.index({ ad: 1, soyad: 1 });
-customerSchema.index({ yabanci_kimlik_no: 1 });
-customerSchema.index({ eposta: 1 });
+customerSchema.index({ yabanci_kimlik_no: 1 }, { unique: true, sparse: true });
+customerSchema.index({ eposta: 1 }, { unique: true, sparse: true });
+customerSchema.index({ telefon_no: 1 });
+
+// Pre-save middleware for data integrity
+customerSchema.pre('save', function(next) {
+  // Ad ve soyad'ı sanitize et
+  if (this.ad) {
+    this.ad = this.ad.trim().replace(/[<>]/g, '');
+  }
+  if (this.soyad) {
+    this.soyad = this.soyad.trim().replace(/[<>]/g, '');
+  }
+  
+  // Email'i lowercase yap
+  if (this.eposta) {
+    this.eposta = this.eposta.toLowerCase().trim();
+  }
+  
+  // Telefon numarasını temizle
+  if (this.telefon_no) {
+    this.telefon_no = this.telefon_no.replace(/\D/g, '');
+  }
+  
+  next();
+});
 
 export const Customer = mongoose.models.Customer || mongoose.model('Customer', customerSchema); 

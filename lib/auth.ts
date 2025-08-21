@@ -112,6 +112,11 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
+    maxAge: 8 * 60 * 60, // 8 saat (iş günü)
+    updateAge: 60 * 60,   // 1 saatte bir refresh
+  },
+  jwt: {
+    maxAge: 8 * 60 * 60, // 8 saat
   },
   debug: process.env.NODE_ENV === "development",
 };

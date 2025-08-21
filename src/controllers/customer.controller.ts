@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { BaseController } from './base.controller';
 import { CustomerService } from '../services/customer.service';
 import { CreateCustomerDto, UpdateCustomerDto, CustomerFilterDto } from '../dto/customer.dto';
+import { AuditService } from '../services/audit.service';
 
 export class CustomerController extends BaseController {
   private customerService: CustomerService;
@@ -127,11 +128,37 @@ export class CustomerController extends BaseController {
         createDto = body;
       }
 
+      const startTime = Date.now();
       const result = await this.customerService.create(createDto);
       
       if (!result.success) {
+        // Başarısız işlem audit log
+        await AuditService.logFailure(
+          authResult.session.user.id,
+          authResult.session.user.email,
+          'CREATE',
+          'Customer',
+          'unknown',
+          result.error!,
+          request
+        );
         return this.createErrorResponse(result.error!, 400);
       }
+      
+      // Başarılı işlem audit log
+      await AuditService.logSuccess(
+        authResult.session.user.id,
+        authResult.session.user.email,
+        'CREATE',
+        'Customer',
+        result.data?._id || 'unknown',
+        request,
+        {
+          before: null,
+          after: result.data
+        },
+        Date.now() - startTime
+      );
       
       return this.createSuccessResponse(result.data, result.message, 201);
     }, 'Müşteri oluşturulamadı');
@@ -170,11 +197,40 @@ export class CustomerController extends BaseController {
         updateDto = body;
       }
 
+      // Önce mevcut veriyi al (before değeri için)
+      const existingCustomer = await this.customerService.getById(params.id);
+      const startTime = Date.now();
+      
       const result = await this.customerService.update(params.id, updateDto);
       
       if (!result.success) {
+        // Başarısız güncelleme audit log
+        await AuditService.logFailure(
+          authResult.session.user.id,
+          authResult.session.user.email,
+          'UPDATE',
+          'Customer',
+          params.id,
+          result.error!,
+          request
+        );
         return this.createErrorResponse(result.error!, 400);
       }
+      
+      // Başarılı güncelleme audit log
+      await AuditService.logSuccess(
+        authResult.session.user.id,
+        authResult.session.user.email,
+        'UPDATE',
+        'Customer',
+        params.id,
+        request,
+        {
+          before: existingCustomer.success ? existingCustomer.data : null,
+          after: result.data
+        },
+        Date.now() - startTime
+      );
       
       return this.createSuccessResponse(result.data, result.message);
     }, 'Müşteri güncellenemedi');
@@ -188,11 +244,41 @@ export class CustomerController extends BaseController {
         return authResult.response!;
       }
 
+      // Önce silinecek veriyi al (audit için)
+      const existingCustomer = await this.customerService.getById(params.id);
+      const startTime = Date.now();
+      
       const result = await this.customerService.delete(params.id);
       
       if (!result.success) {
+        // Başarısız silme audit log
+        await AuditService.logFailure(
+          authResult.session.user.id,
+          authResult.session.user.email,
+          'DELETE',
+          'Customer',
+          params.id,
+          result.error!,
+          request,
+          'CRITICAL' // DELETE işlemi kritik seviye
+        );
         return this.createErrorResponse(result.error!, 404);
       }
+      
+      // Başarılı silme audit log - CRITICAL seviye
+      await AuditService.logSuccess(
+        authResult.session.user.id,
+        authResult.session.user.email,
+        'DELETE',
+        'Customer',
+        params.id,
+        request,
+        {
+          before: existingCustomer.success ? existingCustomer.data : null,
+          after: null
+        },
+        Date.now() - startTime
+      );
       
       return this.createSuccessResponse(result.data, result.message);
     }, 'Müşteri silinemedi');

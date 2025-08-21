@@ -26,7 +26,9 @@ import {
   Search,
   Plus,
   Bell,
-  User
+  User,
+  FileText,
+  ClipboardList
 } from "lucide-react"
 import Link from "next/link"
 
@@ -161,23 +163,74 @@ export default function Page() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-green-700">
                 <Briefcase className="h-5 w-5" />
-                Fırsat Yönetimi
+                Çalışma İzni
               </CardTitle>
               <CardDescription>
-                Fırsatlarınızı görüntüleyin ve yeni fırsatlar oluşturun
+                Çalışma izni fırsatlarını yönetin
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button asChild className="w-full">
-                <Link href="/ikamet-izni">
-                  İkamet İzni
+              <Button asChild className="w-full bg-green-600 hover:bg-green-700">
+                <Link href="/calisma-izni">
+                  Çalışma İzni Listesi
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="w-full">
+              <Button asChild variant="outline" className="w-full border-green-600 text-green-600 hover:bg-green-50">
+                <Link href="/calisma-izni/create">
+                  Yeni Çalışma İzni
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* İkinci Satır - İşlem Türleri */}
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-2 mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-cyan-700">
+                <FileText className="h-5 w-5" />
+                İkamet İzni
+              </CardTitle>
+              <CardDescription>
+                İkamet izni fırsatlarını yönetin
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Button asChild className="w-full bg-cyan-600 hover:bg-cyan-700">
+                <Link href="/ikamet-izni">
+                  İkamet İzni Listesi
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="w-full border-cyan-600 text-cyan-600 hover:bg-cyan-50">
                 <Link href="/ikamet-izni/create">
-                  Yeni İzin
+                  Yeni İkamet İzni
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-purple-700">
+                <ClipboardList className="h-5 w-5" />
+                Diğer İşlemler
+              </CardTitle>
+              <CardDescription>
+                Diğer işlem türlerini yönetin
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
+                <Link href="/diger-islemler">
+                  İşlem Listesi
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="w-full border-purple-600 text-purple-600 hover:bg-purple-50">
+                <Link href="/diger-islemler/create">
+                  Yeni İşlem
                 </Link>
               </Button>
             </CardContent>

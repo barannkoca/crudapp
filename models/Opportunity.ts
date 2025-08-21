@@ -73,6 +73,30 @@ const OpportunitySchema = new mongoose.Schema({
   strict: true
 });
 
+// Pre-save middleware for data integrity
+OpportunitySchema.pre('save', function(next) {
+  // Güncelleme tarihini set et
+  this.guncelleme_tarihi = new Date();
+  
+  // Detaylar alanını sanitize et
+  if (this.detaylar) {
+    // Circular reference kontrolü
+    try {
+      JSON.stringify(this.detaylar);
+    } catch (error) {
+      return next(new Error('Detaylar alanında circular reference'));
+    }
+    
+    // JSON size kontrolü (50KB limit)
+    const jsonSize = Buffer.byteLength(JSON.stringify(this.detaylar), 'utf8');
+    if (jsonSize > 50 * 1024) {
+      return next(new Error('Detaylar alanı çok büyük (max 50KB)'));
+    }
+  }
+  
+  next();
+});
+
 // Performans için indeksler
 OpportunitySchema.index({ musteri: 1, islem_turu: 1 }); // Müşteriye ait fırsatları getirirken
 OpportunitySchema.index({ islem_turu: 1, olusturma_tarihi: -1 }); // Fırsat türüne göre sıralama

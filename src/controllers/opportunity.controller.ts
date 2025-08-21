@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { BaseController } from './base.controller';
 import { OpportunityService } from '../services/opportunity.service';
 import { CreateOpportunityDto, UpdateOpportunityDto, OpportunityFilterDto, IslemTuruDto } from '../dto/opportunity.dto';
+import { AuditService } from '../services/audit.service';
 
 export class OpportunityController extends BaseController {
   private opportunityService: OpportunityService;
@@ -114,11 +115,37 @@ export class OpportunityController extends BaseController {
         createDto = body;
       }
 
+      const startTime = Date.now();
       const result = await this.opportunityService.createOpportunity(createDto);
       
       if (!result.success) {
+        // Başarısız fırsat oluşturma audit log
+        await AuditService.logFailure(
+          authResult.session.user.id,
+          authResult.session.user.email,
+          'CREATE',
+          'Opportunity',
+          'unknown',
+          result.error!,
+          request
+        );
         return this.createErrorResponse(result.error!, 400);
       }
+      
+      // Başarılı fırsat oluşturma audit log
+      await AuditService.logSuccess(
+        authResult.session.user.id,
+        authResult.session.user.email,
+        'CREATE',
+        'Opportunity',
+        result.data?._id || 'unknown',
+        request,
+        {
+          before: null,
+          after: result.data
+        },
+        Date.now() - startTime
+      );
       
       return this.createSuccessResponse(result.data, result.message, 201);
     }, 'Fırsat oluşturulamadı');
