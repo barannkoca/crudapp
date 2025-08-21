@@ -42,6 +42,20 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
 
   // Opportunity'e özel metodlar
 
+  // Override getById - müşteri bilgilerini populate et
+  async getById(id: string): Promise<BaseResponse<OpportunityDto>> {
+    try {
+      const result = await this.opportunityRepository.findById(id, 'musteri');
+      if (!result) {
+        return this.createErrorResponse('Fırsat bulunamadı');
+      }
+      return this.createSuccessResponse(this.mapToDto(result), 'Fırsat başarıyla getirildi');
+    } catch (error) {
+      console.error('Opportunity getById error:', error);
+      return this.createErrorResponse('Fırsat getirilemedi');
+    }
+  }
+
   // Filtreleme ile fırsat listesi
   async getOpportunitiesByFilters(
     filters: OpportunityFilterDto, 
@@ -207,16 +221,39 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
 
   // Mapping metodları
   protected mapToDto(entity: IOpportunityDoc): OpportunityDto {
+    // Müşteri bilgilerini düzgün map et
+    let musteriDto = null;
+    if (entity.musteri) {
+      if (typeof entity.musteri === 'object' && entity.musteri._id) {
+        // Populated customer object
+        musteriDto = {
+          _id: entity.musteri._id?.toString(),
+          ad: entity.musteri.ad,
+          soyad: entity.musteri.soyad,
+          kimlik_no: entity.musteri.yabanci_kimlik_no,
+          telefon: entity.musteri.telefon_no,
+          email: entity.musteri.eposta,
+          uyrugu: entity.musteri.uyrugu,
+          cinsiyet: entity.musteri.cinsiyeti,
+          adres: entity.musteri.adres, // Eğer varsa
+          photo: entity.musteri.photo
+        };
+      } else {
+        // Sadece ID
+        musteriDto = { _id: entity.musteri.toString() };
+      }
+    }
+
     return {
       _id: entity._id?.toString(),
-      musteri: entity.musteri,
+      musteri: musteriDto,
       islem_turu: entity.islem_turu as IslemTuruDto,
       durum: entity.durum as any,
       olusturma_tarihi: entity.olusturma_tarihi,
       guncelleme_tarihi: entity.guncelleme_tarihi,
       aciklamalar: entity.aciklamalar,
       ucretler: entity.ucretler,
-      pdf_dosya: entity.pdf_dosya,
+      pdf_dosyalari: entity.pdf_dosyalari || [],
       detaylar: entity.detaylar || {}
     };
   }
@@ -229,7 +266,7 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
       detaylar: createDto.detaylar,
       aciklamalar: createDto.aciklamalar || [],
       ucretler: createDto.ucretler || [],
-      pdf_dosya: createDto.pdf_dosya,
+      pdf_dosyalari: createDto.pdf_dosyalari || [],
       olusturma_tarihi: new Date(),
       guncelleme_tarihi: new Date()
     };
@@ -277,7 +314,7 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
     if (updateDto.detaylar !== undefined) entity.detaylar = updateDto.detaylar;
     if (updateDto.aciklamalar !== undefined) entity.aciklamalar = updateDto.aciklamalar;
     if (updateDto.ucretler !== undefined) entity.ucretler = updateDto.ucretler;
-    if (updateDto.pdf_dosya !== undefined) entity.pdf_dosya = updateDto.pdf_dosya;
+    if (updateDto.pdf_dosyalari !== undefined) entity.pdf_dosyalari = updateDto.pdf_dosyalari;
 
     return entity;
   }

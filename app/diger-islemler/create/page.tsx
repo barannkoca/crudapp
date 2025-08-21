@@ -70,7 +70,7 @@ export default function DigerIslemlerCreatePage() {
           },
           aciklamalar: formData.aciklamalar || [],
           ucretler: formData.ucretler || [],
-          pdf_dosya: formData.pdf_dosya
+          pdf_dosyalari: formData.pdf_dosyalari || []
         }),
       });
 

@@ -87,12 +87,17 @@ export class OpportunityController extends BaseController {
   // POST /api/opportunities - Yeni fırsat
   async createOpportunity(request: NextRequest): Promise<NextResponse> {
     return this.handleRequest(async () => {
+      console.log('🎯 OpportunityController.createOpportunity called');
+      
       const authResult = await this.checkAuth(request);
       if (!authResult.isAuthenticated) {
+        console.log('❌ Authentication failed');
         return authResult.response!;
       }
 
       const { body, formData, contentType } = await this.parseRequestBody(request);
+      console.log('📝 Request Content-Type:', contentType);
+      console.log('📋 Request Body:', body);
       
       let createDto: CreateOpportunityDto;
 
@@ -106,17 +111,40 @@ export class OpportunityController extends BaseController {
           ucretler: formData.get('ucretler') ? JSON.parse(formData.get('ucretler') as string) : undefined
         };
 
-        // PDF dosyası varsa işle
-        const pdfFile = formData.get('pdf_dosya') as File;
-        if (pdfFile && pdfFile.size > 0) {
-          createDto.pdf_dosya = await this.processFileUpload(pdfFile);
+        // PDF dosyaları varsa işle (birden fazla)
+        const pdfFiles = formData.getAll('pdf_dosyalari') as File[];
+        if (pdfFiles && pdfFiles.length > 0) {
+          createDto.pdf_dosyalari = [];
+          for (const pdfFile of pdfFiles) {
+            if (pdfFile && pdfFile.size > 0) {
+              const processedFile = await this.processFileUpload(pdfFile);
+              createDto.pdf_dosyalari.push({
+                ...processedFile,
+                dosya_adi: pdfFile.name,
+                dosya_boyutu: pdfFile.size,
+                yuklenme_tarihi: new Date()
+              });
+            }
+          }
         }
       } else {
         createDto = body;
+        // JSON ile gelen PDF dosyalarını işle
+        if (createDto.pdf_dosyalari && Array.isArray(createDto.pdf_dosyalari)) {
+          // JSON ile gelen veriler zaten işlenmiş durumda, timestamp ekle
+          createDto.pdf_dosyalari = createDto.pdf_dosyalari.map((pdf: any) => ({
+            ...pdf,
+            yuklenme_tarihi: pdf.yuklenme_tarihi || new Date()
+          }));
+        }
       }
 
+      console.log('💾 Final CreateDTO:', createDto);
+      
       const startTime = Date.now();
       const result = await this.opportunityService.createOpportunity(createDto);
+      
+      console.log('🔄 Service Result:', result);
       
       if (!result.success) {
         // Başarısız fırsat oluşturma audit log
@@ -172,13 +200,32 @@ export class OpportunityController extends BaseController {
         if (formData.get('aciklamalar')) updateDto.aciklamalar = JSON.parse(formData.get('aciklamalar') as string);
         if (formData.get('ucretler')) updateDto.ucretler = JSON.parse(formData.get('ucretler') as string);
 
-        // PDF dosyası varsa işle
-        const pdfFile = formData.get('pdf_dosya') as File;
-        if (pdfFile && pdfFile.size > 0) {
-          updateDto.pdf_dosya = await this.processFileUpload(pdfFile);
+        // PDF dosyaları varsa işle (birden fazla)
+        const pdfFiles = formData.getAll('pdf_dosyalari') as File[];
+        if (pdfFiles && pdfFiles.length > 0) {
+          updateDto.pdf_dosyalari = [];
+          for (const pdfFile of pdfFiles) {
+            if (pdfFile && pdfFile.size > 0) {
+              const processedFile = await this.processFileUpload(pdfFile);
+              updateDto.pdf_dosyalari.push({
+                ...processedFile,
+                dosya_adi: pdfFile.name,
+                dosya_boyutu: pdfFile.size,
+                yuklenme_tarihi: new Date()
+              });
+            }
+          }
         }
       } else {
         updateDto = body;
+        // JSON ile gelen PDF dosyalarını işle
+        if (updateDto.pdf_dosyalari && Array.isArray(updateDto.pdf_dosyalari)) {
+          // JSON ile gelen veriler zaten işlenmiş durumda, timestamp ekle
+          updateDto.pdf_dosyalari = updateDto.pdf_dosyalari.map((pdf: any) => ({
+            ...pdf,
+            yuklenme_tarihi: pdf.yuklenme_tarihi || new Date()
+          }));
+        }
       }
 
       const result = await this.opportunityService.update(params.id, updateDto);
@@ -243,6 +290,107 @@ export class OpportunityController extends BaseController {
       
       return this.createSuccessResponse(result.data, result.message);
     }, 'Ödeme istatistikleri alınamadı');
+  }
+
+  // POST /api/opportunities/[id]/upload-pdfs - PDF yükle
+  async uploadPdfs(request: NextRequest, params: { id: string }): Promise<NextResponse> {
+    return this.handleRequest(async () => {
+      const authResult = await this.checkAuth(request);
+      if (!authResult.isAuthenticated) {
+        return authResult.response!;
+      }
+
+      const formData = await request.formData();
+      const files: File[] = [];
+
+      // FormData'dan dosyaları al
+      for (const [key, value] of formData.entries()) {
+        if (key.startsWith('pdf_') && value instanceof File) {
+          files.push(value);
+        }
+      }
+
+      if (files.length === 0) {
+        return this.createErrorResponse('Yüklenecek PDF dosyası bulunamadı', 400);
+      }
+
+      // Dosyaları base64'e çevir
+      const pdfDosyalari: any[] = [];
+      for (const file of files) {
+        const buffer = await file.arrayBuffer();
+        const base64 = Buffer.from(buffer).toString('base64');
+        
+        pdfDosyalari.push({
+          data: base64,
+          contentType: file.type,
+          dosya_adi: file.name,
+          dosya_boyutu: file.size,
+          yuklenme_tarihi: new Date()
+        });
+      }
+
+      // Mevcut opportunity'yi al
+      const opportunity = await this.opportunityService.getById(params.id);
+      if (!opportunity.success || !opportunity.data) {
+        return this.createErrorResponse('Fırsat bulunamadı', 404);
+      }
+
+      // Mevcut PDF'leri koru ve yenilerini ekle
+      const mevcutPdfler = opportunity.data.pdf_dosyalari || [];
+      const guncelPdfler = [...mevcutPdfler, ...pdfDosyalari];
+
+      // Opportunity'yi güncelle
+      const updateResult = await this.opportunityService.update(params.id, {
+        pdf_dosyalari: guncelPdfler
+      });
+
+      if (!updateResult.success) {
+        return this.createErrorResponse(updateResult.error!, 500);
+      }
+
+      return this.createSuccessResponse(updateResult.data, `${files.length} PDF dosyası başarıyla yüklendi`);
+    }, 'PDF dosyaları yüklenemedi');
+  }
+
+  // DELETE /api/opportunities/[id]/delete-pdf/[index] - PDF sil
+  async deletePdf(request: NextRequest, params: { id: string, index: string }): Promise<NextResponse> {
+    return this.handleRequest(async () => {
+      const authResult = await this.checkAuth(request);
+      if (!authResult.isAuthenticated) {
+        return authResult.response!;
+      }
+
+      const pdfIndex = parseInt(params.index);
+      if (isNaN(pdfIndex) || pdfIndex < 0) {
+        return this.createErrorResponse('Geçersiz PDF indeksi', 400);
+      }
+
+      // Mevcut opportunity'yi al
+      const opportunity = await this.opportunityService.getById(params.id);
+      if (!opportunity.success || !opportunity.data) {
+        return this.createErrorResponse('Fırsat bulunamadı', 404);
+      }
+
+      const mevcutPdfler = opportunity.data.pdf_dosyalari || [];
+      
+      if (pdfIndex >= mevcutPdfler.length) {
+        return this.createErrorResponse('PDF bulunamadı', 404);
+      }
+
+      // PDF'i sil
+      const guncelPdfler = mevcutPdfler.filter((_: any, index: number) => index !== pdfIndex);
+
+      // Opportunity'yi güncelle
+      const updateResult = await this.opportunityService.update(params.id, {
+        pdf_dosyalari: guncelPdfler
+      });
+
+      if (!updateResult.success) {
+        return this.createErrorResponse(updateResult.error!, 500);
+      }
+
+      return this.createSuccessResponse(updateResult.data, 'PDF dosyası başarıyla silindi');
+    }, 'PDF dosyası silinemedi');
   }
 
   // Artık tarih bazlı sıralama ve genel arama (search) kullanılıyor

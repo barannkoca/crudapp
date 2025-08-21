@@ -43,8 +43,12 @@ export default function CalismaIzniCreatePage() {
 
   const handleSubmit = async (formData: any) => {
     try {
+      console.log('🔥 Çalışma İzni handleSubmit called');
+      console.log('📋 Received formData:', formData);
+      
       // Form validasyonu
       if (!formData.musteri_id) {
+        console.log('❌ Validation failed: No customer selected');
         toast.error('Lütfen bir müşteri seçin');
         return;
       }
@@ -52,41 +56,53 @@ export default function CalismaIzniCreatePage() {
       if (!formData.detaylar?.isveren || !formData.detaylar?.pozisyon || 
           !formData.detaylar?.sozlesme_turu || !formData.detaylar?.maas || 
           !formData.detaylar?.calisma_saati) {
+        console.log('❌ Validation failed: Missing work permit details');
         toast.error('Lütfen tüm çalışma izni detaylarını doldurun');
         return;
       }
 
+      console.log('✅ Validation passed, sending to API');
+      
+      const payload = {
+        musteri_id: formData.musteri_id,
+        islem_turu: IslemTuruDto.CALISMA_IZNI,
+        detaylar: {
+          isveren: formData.detaylar.isveren,
+          pozisyon: formData.detaylar.pozisyon,
+          sozlesme_turu: formData.detaylar.sozlesme_turu,
+          maas: parseFloat(formData.detaylar.maas),
+          calisma_saati: parseInt(formData.detaylar.calisma_saati)
+        },
+        aciklamalar: formData.aciklamalar || [],
+        ucretler: formData.ucretler || [],
+        pdf_dosyalari: formData.pdf_dosyalari || []
+      };
+      
+      console.log('📤 API Payload:', payload);
+      
       // API'ye gönder
       const response = await fetch('/api/opportunities', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          musteri_id: formData.musteri_id,
-          islem_turu: IslemTuruDto.CALISMA_IZNI,
-          detaylar: {
-            isveren: formData.detaylar.isveren,
-            pozisyon: formData.detaylar.pozisyon,
-            sozlesme_turu: formData.detaylar.sozlesme_turu,
-            maas: parseFloat(formData.detaylar.maas),
-            calisma_saati: parseInt(formData.detaylar.calisma_saati)
-          },
-          aciklamalar: formData.aciklamalar || [],
-          ucretler: formData.ucretler || [],
-          pdf_dosya: formData.pdf_dosya
-        }),
+        body: JSON.stringify(payload),
       });
+      
+      console.log('📡 API Response Status:', response.status);
 
       if (response.ok) {
+        const responseData = await response.json();
+        console.log('✅ API Success Response:', responseData);
         toast.success('Çalışma izni fırsatı başarıyla oluşturuldu!');
         router.push('/calisma-izni');
       } else {
         const errorData = await response.json();
+        console.log('❌ API Error Response:', errorData);
         toast.error(errorData.message || 'Fırsat oluşturulurken bir hata oluştu');
       }
     } catch (error) {
-      console.error('Form submission error:', error);
+      console.error('❌ Form submission error:', error);
       toast.error('Bir hata oluştu, lütfen tekrar deneyin');
     }
   };

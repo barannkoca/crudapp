@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,6 +10,7 @@ import { IIkametIzniFirsati, IslemTuru, FirsatDurumu } from "@/types/Opportunity
 import ListPageTemplate from "@/components/ListPageTemplate";
 
 export default function IkametIzniPage() {
+  const router = useRouter();
   const [opportunities, setOpportunities] = useState<IIkametIzniFirsati[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +79,12 @@ export default function IkametIzniPage() {
     return new Date(date).toLocaleDateString('tr-TR');
   };
 
+  const handleRowClick = (opportunity: IIkametIzniFirsati) => {
+    console.log('🖱️ İkamet İzni Row clicked!', opportunity);
+    console.log('🎯 Navigating to:', `/ikamet-izni/${opportunity._id}`);
+    router.push(`/ikamet-izni/${opportunity._id}`);
+  };
+
   return (
     <ListPageTemplate
       title="İkamet İzni Fırsatları"
@@ -139,7 +147,8 @@ export default function IkametIzniPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="hover:bg-cyan-50 transition-colors duration-200"
+                className="hover:bg-cyan-50 transition-colors duration-200 cursor-pointer"
+                onClick={() => handleRowClick(opportunity)}
               >
                 <TableCell>
                   {opportunity.musteri?.photo && opportunity.musteri.photo.data ? (

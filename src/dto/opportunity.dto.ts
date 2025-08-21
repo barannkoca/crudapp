@@ -43,18 +43,21 @@ export interface AciklamaDto {
 export interface PdfDosyaDto {
   data: string;
   contentType: string;
+  dosya_adi?: string;
+  dosya_boyutu?: number;
+  yuklenme_tarihi?: Date;
 }
 
 export interface OpportunityDto {
   _id?: string;
-  musteri: CustomerDto;
+  musteri: CustomerDto | any; // CustomerDto veya populate edilmiş obje
   islem_turu: IslemTuruDto;
   durum: FirsatDurumuDto;
   olusturma_tarihi?: Date;
   guncelleme_tarihi?: Date;
   aciklamalar?: AciklamaDto[];
   ucretler?: UcretDto[];
-  pdf_dosya?: PdfDosyaDto;
+  pdf_dosyalari?: PdfDosyaDto[]; // Birden fazla PDF dosyası
   detaylar?: any; // İşlem türüne özel detaylar (esnek yapı)
 }
 
@@ -64,7 +67,7 @@ export interface CreateOpportunityDto {
   detaylar?: any;
   aciklamalar?: AciklamaDto[];
   ucretler?: UcretDto[];
-  pdf_dosya?: PdfDosyaDto;
+  pdf_dosyalari?: PdfDosyaDto[]; // Birden fazla PDF dosyası
   // Tarih bazlı sıralama kullanılır (olusturma_tarihi, guncelleme_tarihi)
 }
 
@@ -106,7 +109,7 @@ export interface UpdateOpportunityDto {
   detaylar?: any;
   aciklamalar?: AciklamaDto[];
   ucretler?: UcretDto[];
-  pdf_dosya?: PdfDosyaDto;
+  pdf_dosyalari?: PdfDosyaDto[]; // Birden fazla PDF dosyası
 }
 
 export interface OpportunityFilterDto {

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,6 +11,7 @@ import { ICalismaIzniFirsati, IslemTuru, FirsatDurumu } from "@/types/Opportunit
 import ListPageTemplate from "@/components/ListPageTemplate";
 
 export default function CalismaIzniPage() {
+  const router = useRouter();
   const [opportunities, setOpportunities] = useState<ICalismaIzniFirsati[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +89,12 @@ export default function CalismaIzniPage() {
     }).format(amount);
   };
 
+  const handleRowClick = (opportunity: ICalismaIzniFirsati) => {
+    console.log('🖱️ Row clicked!', opportunity);
+    console.log('🎯 Navigating to:', `/calisma-izni/${opportunity._id}`);
+    router.push(`/calisma-izni/${opportunity._id}`);
+  };
+
   return (
     <ListPageTemplate
       title="Çalışma İzni Fırsatları"
@@ -150,7 +158,8 @@ export default function CalismaIzniPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="hover:bg-green-50 transition-colors duration-200"
+                className="hover:bg-green-50 transition-colors duration-200 cursor-pointer"
+                onClick={() => handleRowClick(opportunity)}
               >
                 <TableCell>
                   {opportunity.musteri?.photo && opportunity.musteri.photo.data ? (

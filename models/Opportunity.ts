@@ -33,7 +33,10 @@ const AciklamaSchema = new mongoose.Schema({
 // PDF dosyası şeması
 const PdfDosyaSchema = new mongoose.Schema({
   data: { type: String, required: true },
-  contentType: { type: String, required: true }
+  contentType: { type: String, required: true },
+  dosya_adi: { type: String },
+  dosya_boyutu: { type: Number },
+  yuklenme_tarihi: { type: Date, default: Date.now }
 }, { _id: false });
 
 const OpportunitySchema = new mongoose.Schema({
@@ -60,7 +63,7 @@ const OpportunitySchema = new mongoose.Schema({
   // Ortak alanlar
   aciklamalar: [AciklamaSchema],
   ucretler: [UcretSchema],
-  pdf_dosya: PdfDosyaSchema, // Ortak PDF alanı
+  pdf_dosyalari: [PdfDosyaSchema], // Birden fazla PDF dosyası
   
   // İşlem türüne özel detaylar (JSON olarak esnek - tüm özel alanlar burada)
   detaylar: { 

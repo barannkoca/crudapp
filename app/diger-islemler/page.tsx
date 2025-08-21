@@ -94,6 +94,12 @@ export default function DigerIslemlerPage() {
     }
   };
 
+  const handleRowClick = (opportunity: IDigerFirsati) => {
+    console.log('🖱️ Diğer İşlemler Row clicked!', opportunity);
+    console.log('🎯 Navigating to:', `/diger-islemler/${opportunity._id}`);
+    window.location.href = `/diger-islemler/${opportunity._id}`;
+  };
+
   return (
     <ListPageTemplate
       title="Diğer İşlemler"
@@ -157,7 +163,8 @@ export default function DigerIslemlerPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="hover:bg-purple-50 transition-colors duration-200"
+                className="hover:bg-purple-50 transition-colors duration-200 cursor-pointer"
+                onClick={() => handleRowClick(opportunity)}
               >
                 <TableCell>
                   {opportunity.musteri?.photo && opportunity.musteri.photo.data ? (
@@ -190,7 +197,12 @@ export default function DigerIslemlerPage() {
                   {opportunity.musteri?.ad} {opportunity.musteri?.soyad}
                 </TableCell>
                 <TableCell className="font-medium text-purple-700">
-                  {opportunity.detaylar?.islem_adi || '-'}
+                  <Link 
+                    href={`/diger-islemler/${opportunity._id}`}
+                    className="hover:underline cursor-pointer"
+                  >
+                    {opportunity.detaylar?.islem_adi || '-'}
+                  </Link>
                 </TableCell>
                 <TableCell className="max-w-48 truncate">
                   {opportunity.detaylar?.aciklama || '-'}

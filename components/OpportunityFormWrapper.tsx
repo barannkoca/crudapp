@@ -37,9 +37,15 @@ export const OpportunityFormWrapper: React.FC<OpportunityFormWrapperProps> = ({
   const isLastStep = currentStep === totalSteps;
 
   const handleNext = () => {
+    console.log('⏭️ handleNext called');
+    console.log('📊 Current step:', currentStep);
+    console.log('📊 Total steps:', totalSteps);
     if (currentStep < totalSteps) {
       setCompletedSteps(prev => [...new Set([...prev, currentStep])]);
       setCurrentStep(prev => prev + 1);
+      console.log('✅ Moving to step:', currentStep + 1);
+    } else {
+      console.log('❌ Cannot move forward, already at last step');
     }
   };
 
@@ -50,15 +56,23 @@ export const OpportunityFormWrapper: React.FC<OpportunityFormWrapperProps> = ({
   };
 
   const handleStepData = (stepData: any) => {
-    setFormData((prev: any) => ({ ...prev, ...stepData }));
+    console.log('📝 handleStepData called with:', stepData);
+    setFormData((prev: any) => {
+      const newFormData = { ...prev, ...stepData };
+      console.log('💾 Updated form data:', newFormData);
+      return newFormData;
+    });
   };
 
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
+      console.log('🚀 FormWrapper handleSubmit called');
+      console.log('📋 Form Data:', { ...formData, islem_turu: islemTuru });
       await onSubmit({ ...formData, islem_turu: islemTuru });
+      console.log('✅ Form submission completed');
     } catch (error) {
-      console.error('Form submission error:', error);
+      console.error('❌ Form submission error:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -80,6 +94,13 @@ export const OpportunityFormWrapper: React.FC<OpportunityFormWrapperProps> = ({
       opacity: 0
     })
   };
+
+  // Debug console logs for render
+  console.log('🔄 OpportunityFormWrapper render');
+  console.log('📊 Current step:', currentStep);
+  console.log('📊 Total steps:', totalSteps); 
+  console.log('📊 Is last step:', isLastStep);
+  console.log('📊 Steps array:', steps);
 
   return (
     <div className="container mx-auto px-4 py-4 max-w-6xl">
@@ -168,7 +189,14 @@ export const OpportunityFormWrapper: React.FC<OpportunityFormWrapperProps> = ({
 
             {isLastStep ? (
               <Button
-                onClick={handleSubmit}
+                onClick={() => {
+                  console.log('🖱️ Tamamla button clicked!');
+                  console.log('📊 Current step:', currentStep);
+                  console.log('📊 Total steps:', totalSteps);
+                  console.log('📊 Is last step:', isLastStep);
+                  console.log('📊 Is submitting:', isSubmitting);
+                  handleSubmit();
+                }}
                 disabled={isSubmitting}
                 className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
               >
