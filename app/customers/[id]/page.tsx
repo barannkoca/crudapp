@@ -9,6 +9,10 @@ import { FirsatTuru, IslemTuru, FirsatDurumu } from "@/types/Opportunity";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function CustomerDetailPage() {
   const params = useParams();
@@ -16,6 +20,11 @@ export default function CustomerDetailPage() {
   const [customer, setCustomer] = useState<ICustomer | null>(null);
   const [opportunities, setOpportunities] = useState<FirsatTuru[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProcessType, setSelectedProcessType] = useState<IslemTuru | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editData, setEditData] = useState<any>(null);
 
   useEffect(() => {
     if (params.id) {
@@ -31,6 +40,17 @@ export default function CustomerDetailPage() {
       
       if (response.ok) {
         setCustomer(result.data);
+        // Sadece edit mode kapalıysa editData'yı güncelle
+        if (!editMode) {
+          setEditData({
+            ad: result.data.ad,
+            soyad: result.data.soyad,
+            telefon_no: result.data.telefon_no,
+            eposta: result.data.eposta,
+            dogum_tarihi: result.data.dogum_tarihi,
+            adres: result.data.adres
+          });
+        }
       } else {
         toast.error("Müşteri bilgileri yüklenemedi");
         router.push('/customers');
@@ -90,6 +110,58 @@ export default function CustomerDetailPage() {
     }
   };
 
+  const handleCreateNewProcess = () => {
+    if (!selectedProcessType) {
+      toast.error("Lütfen bir işlem türü seçin");
+      return;
+    }
+
+    switch (selectedProcessType) {
+      case IslemTuru.CALISMA_IZNI:
+        router.push(`/calisma-izni/create?customerId=${params.id}`);
+        break;
+      case IslemTuru.IKAMET_IZNI:
+        router.push(`/ikamet-izni/create?customerId=${params.id}`);
+        break;
+      case IslemTuru.DIGER:
+        router.push(`/diger-islemler/create?customerId=${params.id}`);
+        break;
+      default:
+        toast.error("Geçersiz işlem türü");
+    }
+    setIsDialogOpen(false);
+    setSelectedProcessType(null);
+  };
+
+  const saveCustomerChanges = async () => {
+    if (!customer || !editData) return;
+    
+    try {
+      setSaving(true);
+      const response = await fetch(`/api/customers/${customer._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(editData)
+      });
+
+      if (response.ok) {
+        // Sadece customer state'ini güncelle, editData'yı değil
+        const updatedCustomer = { ...customer, ...editData };
+        setCustomer(updatedCustomer);
+        setEditMode(false);
+        toast.success("Müşteri bilgileri başarıyla güncellendi");
+      } else {
+        toast.error("Değişiklikler kaydedilirken hata oluştu");
+      }
+    } catch (error) {
+      toast.error("Değişiklikler kaydedilirken hata oluştu");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -138,11 +210,45 @@ export default function CustomerDetailPage() {
             >
               Geri Dön
             </Button>
-            <Button 
-              onClick={() => router.push(`/customers/${params.id}/edit`)}
-            >
-              Düzenle
-            </Button>
+            {editMode ? (
+              <>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setEditMode(false);
+                    setEditData({
+                      ad: customer.ad,
+                      soyad: customer.soyad,
+                      telefon_no: customer.telefon_no,
+                      eposta: customer.eposta,
+                      dogum_tarihi: customer.dogum_tarihi,
+                      adres: customer.adres
+                    });
+                  }}
+                >
+                  İptal
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={saveCustomerChanges} 
+                  disabled={saving}
+                >
+                  {saving ? 'Kaydediliyor...' : 'Kaydet'}
+                </Button>
+              </>
+            ) : (
+              <Button 
+                size="sm" 
+                onClick={() => setEditMode(true)}
+                className="bg-cyan-600 hover:bg-cyan-700"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Düzenle
+              </Button>
+            )}
           </div>
         </div>
 
@@ -172,10 +278,32 @@ export default function CustomerDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Ad Soyad</label>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {customer.ad} {customer.soyad}
-                  </p>
+                  <label className="text-sm font-medium text-gray-500">Ad</label>
+                  {editMode ? (
+                    <Input
+                      value={editData?.ad || ''}
+                      onChange={(e) => setEditData({...editData, ad: e.target.value})}
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="text-lg font-semibold text-gray-900">
+                      {customer.ad}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Soyad</label>
+                  {editMode ? (
+                    <Input
+                      value={editData?.soyad || ''}
+                      onChange={(e) => setEditData({...editData, soyad: e.target.value})}
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="text-lg font-semibold text-gray-900">
+                      {customer.soyad}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Cinsiyet</label>
@@ -193,21 +321,56 @@ export default function CustomerDetailPage() {
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Telefon</label>
-                  <p className="text-lg text-gray-900">{customer.telefon_no || '-'}</p>
+                  {editMode ? (
+                    <Input
+                      value={editData?.telefon_no || ''}
+                      onChange={(e) => setEditData({...editData, telefon_no: e.target.value})}
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="text-lg text-gray-900">{customer.telefon_no || '-'}</p>
+                  )}
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">E-posta</label>
-                  <p className="text-lg text-gray-900">{customer.eposta || '-'}</p>
+                  {editMode ? (
+                    <Input
+                      type="email"
+                      value={editData?.eposta || ''}
+                      onChange={(e) => setEditData({...editData, eposta: e.target.value})}
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="text-lg text-gray-900">{customer.eposta || '-'}</p>
+                  )}
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Doğum Tarihi</label>
-                  <p className="text-lg text-gray-900">
-                    {customer.dogum_tarihi ? new Date(customer.dogum_tarihi).toLocaleDateString('tr-TR') : '-'}
-                  </p>
+                  {editMode ? (
+                    <Input
+                      type="date"
+                      value={editData?.dogum_tarihi ? new Date(editData.dogum_tarihi).toISOString().split('T')[0] : ''}
+                      onChange={(e) => setEditData({...editData, dogum_tarihi: e.target.value})}
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="text-lg text-gray-900">
+                      {customer.dogum_tarihi ? new Date(customer.dogum_tarihi).toLocaleDateString('tr-TR') : '-'}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Adres</label>
-                  <p className="text-lg text-gray-900">{customer.adres || '-'}</p>
+                  {editMode ? (
+                    <Textarea
+                      value={editData?.adres || ''}
+                      onChange={(e) => setEditData({...editData, adres: e.target.value})}
+                      className="mt-1"
+                      rows={3}
+                    />
+                  ) : (
+                    <p className="text-lg text-gray-900">{customer.adres || '-'}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -219,12 +382,38 @@ export default function CustomerDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>İşlemler ve İzinler</span>
-              <Button 
-                size="sm"
-                onClick={() => router.push(`/customers/${params.id}/opportunities/create`)}
-              >
-                Yeni İşlem Ekle
-              </Button>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm">
+                    Yeni İşlem Ekle
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>İşlem Türü Seçin</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <Select onValueChange={(value) => setSelectedProcessType(value as IslemTuru)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="İşlem türü seçin" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={IslemTuru.CALISMA_IZNI}>Çalışma İzni</SelectItem>
+                        <SelectItem value={IslemTuru.IKAMET_IZNI}>İkamet İzni</SelectItem>
+                        <SelectItem value={IslemTuru.DIGER}>Diğer İşlem</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                        İptal
+                      </Button>
+                      <Button onClick={handleCreateNewProcess}>
+                        Devam Et
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -235,9 +424,38 @@ export default function CustomerDetailPage() {
                 </svg>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Henüz İşlem Bulunmuyor</h3>
                 <p className="text-gray-500 mb-4">Bu müşteri için henüz herhangi bir işlem veya izin kaydı oluşturulmamış.</p>
-                <Button onClick={() => router.push(`/customers/${params.id}/opportunities/create`)}>
-                  İlk İşlemi Oluştur
-                </Button>
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      İlk İşlemi Oluştur
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>İşlem Türü Seçin</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <Select onValueChange={(value) => setSelectedProcessType(value as IslemTuru)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="İşlem türü seçin" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={IslemTuru.CALISMA_IZNI}>Çalışma İzni</SelectItem>
+                          <SelectItem value={IslemTuru.IKAMET_IZNI}>İkamet İzni</SelectItem>
+                          <SelectItem value={IslemTuru.DIGER}>Diğer İşlem</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                          İptal
+                        </Button>
+                        <Button onClick={handleCreateNewProcess}>
+                          Devam Et
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -259,7 +477,22 @@ export default function CustomerDetailPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: index * 0.05 }}
                         className="hover:bg-cyan-50 transition-colors duration-200 cursor-pointer"
-                        onClick={() => router.push(`/opportunities/${opportunity._id}`)}
+                        onClick={() => {
+                          const id = (opportunity as any)._id;
+                          switch (opportunity.islem_turu) {
+                            case IslemTuru.CALISMA_IZNI:
+                              router.push(`/calisma-izni/${id}`);
+                              break;
+                            case IslemTuru.IKAMET_IZNI:
+                              router.push(`/ikamet-izni/${id}`);
+                              break;
+                            case IslemTuru.DIGER:
+                              router.push(`/diger-islemler/${id}`);
+                              break;
+                            default:
+                              router.push(`/opportunities/${id}`);
+                          }
+                        }}
                       >
                         <TableCell className="font-medium">
                           {getProcessTypeText(opportunity.islem_turu)}
@@ -270,8 +503,8 @@ export default function CustomerDetailPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm">
-                          {opportunity.islem_turu === IslemTuru.IKAMET_IZNI && opportunity.kayit_tarihi 
-                            ? new Date(opportunity.kayit_tarihi).toLocaleDateString('tr-TR')
+                          {opportunity.islem_turu === IslemTuru.IKAMET_IZNI && opportunity.detaylar?.kayit_tarihi 
+                            ? new Date(opportunity.detaylar.kayit_tarihi).toLocaleDateString('tr-TR')
                             : '-'
                           }
                         </TableCell>
@@ -288,17 +521,20 @@ export default function CustomerDetailPage() {
                               variant="outline"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                router.push(`/opportunities/${opportunity._id}/edit`);
-                              }}
-                            >
-                              Düzenle
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                router.push(`/opportunities/${opportunity._id}`);
+                                const id = (opportunity as any)._id;
+                                switch (opportunity.islem_turu) {
+                                  case IslemTuru.CALISMA_IZNI:
+                                    router.push(`/calisma-izni/${id}`);
+                                    break;
+                                  case IslemTuru.IKAMET_IZNI:
+                                    router.push(`/ikamet-izni/${id}`);
+                                    break;
+                                  case IslemTuru.DIGER:
+                                    router.push(`/diger-islemler/${id}`);
+                                    break;
+                                  default:
+                                    router.push(`/opportunities/${id}`);
+                                }
                               }}
                             >
                               Görüntüle
