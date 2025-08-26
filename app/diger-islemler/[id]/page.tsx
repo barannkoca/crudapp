@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { IDigerFirsati, FirsatDurumu, ParaBirimi } from '@/types/Opportunity';
+import { formatDate } from '@/lib/utils';
 
 export default function DigerIslemlerDetailPage() {
   const params = useParams();
@@ -161,16 +162,7 @@ export default function DigerIslemlerDetailPage() {
     }
   };
 
-  const formatDate = (date: string | Date) => {
-    if (!date) return 'Belirtilmemiş';
-    return new Date(date).toLocaleDateString('tr-TR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+
 
   const formatCurrency = (amount: number) => {
     if (!amount) return 'Belirtilmemiş';

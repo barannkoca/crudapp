@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { IIkametIzniFirsati, IslemTuru, FirsatDurumu } from "@/types/Opportunity";
 import ListPageTemplate from "@/components/ListPageTemplate";
+import { formatDate } from '@/lib/utils';
 
 export default function IkametIzniPage() {
   const router = useRouter();
@@ -16,10 +17,14 @@ export default function IkametIzniPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchOpportunities();
-  }, []);
+  }, [currentPage, searchTerm, statusFilter]);
 
   const fetchOpportunities = async () => {
     try {
@@ -27,14 +32,26 @@ export default function IkametIzniPage() {
       const params = new URLSearchParams({
         islem_turu: IslemTuru.IKAMET_IZNI,
         sort_by: 'olusturma_tarihi',
-        sort_order: 'desc'
+        sort_order: 'desc',
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString()
       });
+      
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
+      
+      if (statusFilter !== 'all') {
+        params.append('durum', statusFilter);
+      }
       
       const response = await fetch(`/api/opportunities?${params}`);
       
       if (response.ok) {
         const result = await response.json();
         setOpportunities(result.data || []);
+        setTotalCount(result.total || result.data.length);
+        setTotalPages(result.totalPages || Math.ceil((result.total || result.data.length) / itemsPerPage));
       } else {
         setError('İkamet izni fırsatları yüklenirken bir hata oluştu');
       }
@@ -45,16 +62,12 @@ export default function IkametIzniPage() {
     }
   };
 
-  const filteredOpportunities = opportunities.filter(opportunity => {
-    const matchesSearch = searchTerm === "" || 
-      opportunity.musteri?.ad?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      opportunity.musteri?.soyad?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      opportunity.detaylar?.kayit_numarasi?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || opportunity.durum === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  // Server-side filtering yapıldığı için client-side filtering kaldırıldı
+
+  // Arama veya filtre değiştiğinde sayfa 1'e dön
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
 
   const getStatusColor = (status: FirsatDurumu) => {
     switch (status) {
@@ -75,9 +88,7 @@ export default function IkametIzniPage() {
     }
   };
 
-  const formatDate = (date: string | Date) => {
-    return new Date(date).toLocaleDateString('tr-TR');
-  };
+
 
   const handleRowClick = (opportunity: IIkametIzniFirsati) => {
     console.log('🖱️ İkamet İzni Row clicked!', opportunity);
@@ -89,7 +100,7 @@ export default function IkametIzniPage() {
     <ListPageTemplate
       title="İkamet İzni Fırsatları"
       subtitle={`Toplam ${opportunities.length} fırsat`}
-      totalCount={opportunities.length}
+      totalCount={totalCount}
       searchTerm={searchTerm}
       onSearchChange={setSearchTerm}
       searchPlaceholder="Müşteri adı, soyadı veya kayıt numarası ara..."
@@ -98,7 +109,7 @@ export default function IkametIzniPage() {
       backButtonHref="/dashboard"
       loading={loading}
       error={error}
-      searchResultsCount={filteredOpportunities.length}
+      searchResultsCount={opportunities.length}
       emptyStateTitle="Fırsat Bulunamadı"
       emptyStateDescription="Henüz ikamet izni fırsatı oluşturulmamış."
       emptyStateIcon={
@@ -106,6 +117,10 @@ export default function IkametIzniPage() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
       }
+      showPagination={true}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
     >
       {/* Durum Filtresi */}
       <div className="mb-6">
@@ -141,7 +156,7 @@ export default function IkametIzniPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredOpportunities.map((opportunity, index) => (
+            {opportunities.map((opportunity, index) => (
               <motion.tr
                 key={opportunity._id}
                 initial={{ opacity: 0, y: 10 }}

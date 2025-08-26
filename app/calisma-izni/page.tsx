@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { ICalismaIzniFirsati, IslemTuru, FirsatDurumu } from "@/types/Opportunity";
 import ListPageTemplate from "@/components/ListPageTemplate";
+import { formatDate } from '@/lib/utils';
 
 export default function CalismaIzniPage() {
   const router = useRouter();
@@ -17,10 +18,14 @@ export default function CalismaIzniPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchOpportunities();
-  }, []);
+  }, [currentPage, searchTerm, statusFilter]);
 
   const fetchOpportunities = async () => {
     try {
@@ -28,14 +33,26 @@ export default function CalismaIzniPage() {
       const params = new URLSearchParams({
         islem_turu: IslemTuru.CALISMA_IZNI,
         sort_by: 'olusturma_tarihi',
-        sort_order: 'desc'
+        sort_order: 'desc',
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString()
       });
+      
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
+      
+      if (statusFilter !== 'all') {
+        params.append('durum', statusFilter);
+      }
       
       const response = await fetch(`/api/opportunities?${params}`);
       
       if (response.ok) {
         const data = await response.json();
         setOpportunities(data.data || []);
+        setTotalCount(data.total || data.data.length);
+        setTotalPages(data.totalPages || Math.ceil((data.total || data.data.length) / itemsPerPage));
       } else {
         setError('Çalışma izni fırsatları yüklenirken bir hata oluştu');
       }
@@ -46,17 +63,12 @@ export default function CalismaIzniPage() {
     }
   };
 
-  const filteredOpportunities = opportunities.filter(opportunity => {
-    const matchesSearch = searchTerm === "" || 
-      opportunity.musteri?.ad?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      opportunity.musteri?.soyad?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      opportunity.detaylar?.isveren?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      opportunity.detaylar?.pozisyon?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || opportunity.durum === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  // Server-side filtering yapıldığı için client-side filtering kaldırıldı
+
+  // Arama veya filtre değiştiğinde sayfa 1'e dön
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
 
   const getStatusColor = (status: FirsatDurumu) => {
     switch (status) {
@@ -77,9 +89,7 @@ export default function CalismaIzniPage() {
     }
   };
 
-  const formatDate = (date: string | Date) => {
-    return new Date(date).toLocaleDateString('tr-TR');
-  };
+
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('tr-TR', {
@@ -99,7 +109,7 @@ export default function CalismaIzniPage() {
     <ListPageTemplate
       title="Çalışma İzni Fırsatları"
       subtitle={`Toplam ${opportunities.length} fırsat`}
-      totalCount={opportunities.length}
+      totalCount={totalCount}
       searchTerm={searchTerm}
       onSearchChange={setSearchTerm}
       searchPlaceholder="Müşteri adı, işveren veya pozisyon ara..."
@@ -108,7 +118,7 @@ export default function CalismaIzniPage() {
       backButtonHref="/dashboard"
       loading={loading}
       error={error}
-      searchResultsCount={filteredOpportunities.length}
+      searchResultsCount={opportunities.length}
       emptyStateTitle="Çalışma İzni Fırsatı Bulunamadı"
       emptyStateDescription="Henüz çalışma izni fırsatı oluşturulmamış."
       emptyStateIcon={
@@ -116,6 +126,10 @@ export default function CalismaIzniPage() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2z" />
         </svg>
       }
+      showPagination={true}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
     >
       {/* Durum Filtresi */}
       <div className="mb-6">
@@ -152,7 +166,7 @@ export default function CalismaIzniPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredOpportunities.map((opportunity, index) => (
+            {opportunities.map((opportunity, index) => (
               <motion.tr
                 key={opportunity._id}
                 initial={{ opacity: 0, y: 10 }}

@@ -10,6 +10,21 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { IIkametIzniFirsati, FirsatDurumu, ParaBirimi } from '@/types/Opportunity';
+import { formatDate } from '@/lib/utils';
+
+// Tarih değerini güvenli bir şekilde formatlayan yardımcı fonksiyon
+const formatDateForInput = (dateValue: unknown): string => {
+  if (!dateValue) return '';
+  
+  try {
+    const date = new Date(dateValue as string | number | Date);
+    if (isNaN(date.getTime())) return '';
+    return date.toISOString().split('T')[0];
+  } catch (error) {
+    console.error('Tarih formatlanırken hata:', error);
+    return '';
+  }
+};
 
 export default function IkametIzniDetailPage() {
   const params = useParams();
@@ -19,7 +34,12 @@ export default function IkametIzniDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [editData, setEditData] = useState<any>(null);
+  const [editData, setEditData] = useState<{
+    durum?: string;
+    detaylar?: Record<string, unknown>;
+    ucretler?: Array<Record<string, unknown>>;
+    aciklamalar?: Array<Record<string, unknown>>;
+  } | null>(null);
   const [uploadingPdfs, setUploadingPdfs] = useState(false);
   const [pdfFiles, setPdfFiles] = useState<File[]>([]);
 
@@ -80,11 +100,13 @@ export default function IkametIzniDetailPage() {
   };
 
   const addUcret = () => {
+    if (!editData) return;
     const newUcret = {
       miktar: 0,
       para_birimi: ParaBirimi.TRY,
       aciklama: '',
-      odeme_durumu: 'beklemede' as const
+      odeme_durumu: 'beklemede' as const,
+      odeme_tarihi: null
     };
     setEditData({
       ...editData,
@@ -92,14 +114,14 @@ export default function IkametIzniDetailPage() {
     });
   };
 
-  const updateUcret = (index: number, field: string, value: any) => {
+  const updateUcret = (index: number, field: string, value: unknown) => {
     const updatedUcretler = [...editData.ucretler];
     updatedUcretler[index] = { ...updatedUcretler[index], [field]: value };
     setEditData({ ...editData, ucretler: updatedUcretler });
   };
 
   const removeUcret = (index: number) => {
-    const updatedUcretler = editData.ucretler.filter((_: any, i: number) => i !== index);
+    const updatedUcretler = editData.ucretler.filter((_: unknown, i: number) => i !== index);
     setEditData({ ...editData, ucretler: updatedUcretler });
   };
 
@@ -107,7 +129,7 @@ export default function IkametIzniDetailPage() {
     const newAciklama = {
       baslik: '',
       icerik: '',
-      tarih: new Date(),
+      tarih: new Date().toISOString(),
       onem_derecesi: 'orta' as const
     };
     setEditData({
@@ -116,14 +138,14 @@ export default function IkametIzniDetailPage() {
     });
   };
 
-  const updateAciklama = (index: number, field: string, value: any) => {
+  const updateAciklama = (index: number, field: string, value: unknown) => {
     const updatedAciklamalar = [...editData.aciklamalar];
     updatedAciklamalar[index] = { ...updatedAciklamalar[index], [field]: value };
     setEditData({ ...editData, aciklamalar: updatedAciklamalar });
   };
 
   const removeAciklama = (index: number) => {
-    const updatedAciklamalar = editData.aciklamalar.filter((_: any, i: number) => i !== index);
+    const updatedAciklamalar = editData.aciklamalar.filter((_: unknown, i: number) => i !== index);
     setEditData({ ...editData, aciklamalar: updatedAciklamalar });
   };
 
@@ -146,16 +168,7 @@ export default function IkametIzniDetailPage() {
     }
   };
 
-  const formatDate = (date: string | Date) => {
-    if (!date) return 'Belirtilmemiş';
-    return new Date(date).toLocaleDateString('tr-TR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+
 
   const formatCurrency = (amount: number) => {
     if (!amount) return 'Belirtilmemiş';
@@ -166,14 +179,14 @@ export default function IkametIzniDetailPage() {
     }).format(amount);
   };
 
-  const downloadPdf = (pdf: any, index: number) => {
+  const downloadPdf = (pdf: { contentType: string; data: string; dosya_adi?: string }, index: number) => {
     const link = document.createElement('a');
     link.href = `data:${pdf.contentType};base64,${pdf.data}`;
     link.download = pdf.dosya_adi || `ikamet-izni-${index + 1}.pdf`;
     link.click();
   };
 
-  const viewPdf = (pdf: any) => {
+  const viewPdf = (pdf: { contentType: string; data: string }) => {
     try {
       const blob = new Blob([Uint8Array.from(atob(pdf.data), c => c.charCodeAt(0))], {
         type: pdf.contentType
@@ -514,9 +527,7 @@ export default function IkametIzniDetailPage() {
                         {editMode ? (
                           <Input
                             type="date"
-                            value={editData.detaylar?.kayit_tarihi ? 
-                              new Date(editData.detaylar.kayit_tarihi).toISOString().split('T')[0] : ''
-                            }
+                            value={formatDateForInput(editData.detaylar?.kayit_tarihi)}
                             onChange={(e) => setEditData({
                               ...editData,
                               detaylar: { ...editData.detaylar, kayit_tarihi: e.target.value }
@@ -534,9 +545,7 @@ export default function IkametIzniDetailPage() {
                         {editMode ? (
                           <Input
                             type="date"
-                            value={editData.detaylar?.randevu_tarihi ? 
-                              new Date(editData.detaylar.randevu_tarihi).toISOString().split('T')[0] : ''
-                            }
+                            value={formatDateForInput(editData.detaylar?.randevu_tarihi)}
                             onChange={(e) => setEditData({
                               ...editData,
                               detaylar: { ...editData.detaylar, randevu_tarihi: e.target.value }
@@ -554,9 +563,7 @@ export default function IkametIzniDetailPage() {
                         {editMode ? (
                           <Input
                             type="date"
-                            value={editData.detaylar?.gecerlilik_tarihi ? 
-                              new Date(editData.detaylar.gecerlilik_tarihi).toISOString().split('T')[0] : ''
-                            }
+                            value={formatDateForInput(editData.detaylar?.gecerlilik_tarihi)}
                             onChange={(e) => setEditData({
                               ...editData,
                               detaylar: { ...editData.detaylar, gecerlilik_tarihi: e.target.value }
@@ -775,9 +782,7 @@ export default function IkametIzniDetailPage() {
                             </Select>
                             <Input
                               type="date"
-                              value={ucret.odeme_tarihi ? 
-                                new Date(ucret.odeme_tarihi).toISOString().split('T')[0] : ''
-                              }
+                              value={formatDateForInput(ucret.odeme_tarihi)}
                               onChange={(e) => updateUcret(index, 'odeme_tarihi', e.target.value)}
                               placeholder="Ödeme Tarihi"
                             />

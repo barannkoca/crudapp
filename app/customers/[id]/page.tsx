@@ -504,13 +504,33 @@ export default function CustomerDetailPage() {
                         </TableCell>
                         <TableCell className="text-sm">
                           {opportunity.islem_turu === IslemTuru.IKAMET_IZNI && opportunity.detaylar?.kayit_tarihi 
-                            ? new Date(opportunity.detaylar.kayit_tarihi).toLocaleDateString('tr-TR')
+                            ? (() => {
+                                try {
+                                  const dateData = opportunity.detaylar.kayit_tarihi;
+                                  const date = dateData && typeof dateData === 'object' && (dateData as any).$date 
+                                    ? new Date((dateData as any).$date) 
+                                    : new Date(dateData);
+                                  return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('tr-TR');
+                                } catch {
+                                  return '-';
+                                }
+                              })()
                             : '-'
                           }
                         </TableCell>
                         <TableCell className="text-sm">
                           {opportunity.olusturma_tarihi 
-                            ? new Date(opportunity.olusturma_tarihi).toLocaleDateString('tr-TR')
+                            ? (() => {
+                                try {
+                                  const dateData = opportunity.olusturma_tarihi;
+                                  const date = dateData && typeof dateData === 'object' && (dateData as any).$date 
+                                    ? new Date((dateData as any).$date) 
+                                    : new Date(dateData);
+                                  return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('tr-TR');
+                                } catch {
+                                  return '-';
+                                }
+                              })()
                             : '-'
                           }
                         </TableCell>

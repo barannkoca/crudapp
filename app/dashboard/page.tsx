@@ -86,11 +86,11 @@ export default function Page() {
   };
 
   const getStatusCount = (status: string) => {
-    return stats.opportunities.byStatus[status] || 0;
+    return (stats.opportunities.byStatus as Record<string, number>)[status] || 0;
   };
 
   const getTypeCount = (type: string) => {
-    return stats.opportunities.byType[type] || 0;
+    return (stats.opportunities.byType as Record<string, number>)[type] || 0;
   };
 
   const formatCurrency = (amount: number) => {

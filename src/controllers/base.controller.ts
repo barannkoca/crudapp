@@ -45,11 +45,11 @@ export abstract class BaseController {
     const { searchParams } = new URL(request.url);
     
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const limit = parseInt(searchParams.get('limit') || '100'); // Default 100'e çıkardık
     
     return {
       page: Math.max(1, page),
-      limit: Math.min(100, Math.max(1, limit)) // Max 100, min 1
+      limit: Math.min(1000, Math.max(1, limit)) // Max 1000'e çıkardık, min 1
     };
   }
 

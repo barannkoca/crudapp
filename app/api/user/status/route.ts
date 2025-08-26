@@ -19,7 +19,7 @@ export async function GET() {
     await connectDB();
 
     // Kullanıcı durumunu getir
-    const user = await User.findById(session.user.id).select('status');
+    const user = await (User as any).findById(session.user.id).select('status');
 
     if (!user) {
       return NextResponse.json(
@@ -29,10 +29,11 @@ export async function GET() {
     }
 
     return NextResponse.json({ status: user.status });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Kullanıcı durumu alınamadı:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Kullanıcı durumu alınamadı';
     return NextResponse.json(
-      { error: error.message || 'Kullanıcı durumu alınamadı' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

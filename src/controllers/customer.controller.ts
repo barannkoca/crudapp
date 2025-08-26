@@ -23,6 +23,9 @@ export class CustomerController extends BaseController {
       const pagination = this.parsePaginationParams(request);
       const queryParams = this.parseQueryParams(request);
       
+      console.log('🔍 CustomerController - Pagination:', pagination);
+      console.log('🔍 CustomerController - QueryParams:', queryParams);
+      
       // Arama var mı kontrol et
       if (queryParams.search) {
         const result = await this.customerService.searchCustomers(
@@ -34,7 +37,14 @@ export class CustomerController extends BaseController {
           return this.createErrorResponse(result.error!);
         }
         
-        return this.createSuccessResponse(result.data, result.message);
+        // Pagination bilgilerini response'a ekle
+        return NextResponse.json({
+          success: true,
+          data: result.data || [],
+          total: result.pagination?.total || (result.data?.length || 0),
+          totalPages: result.pagination?.totalPages || Math.ceil((result.pagination?.total || (result.data?.length || 0)) / pagination.limit),
+          message: result.message
+        });
       }
 
       // Filtreleme parametrelerini hazırla
@@ -55,7 +65,14 @@ export class CustomerController extends BaseController {
         return this.createErrorResponse(result.error!);
       }
       
-      return this.createSuccessResponse(result.data, result.message);
+      // Pagination bilgilerini response'a ekle
+      return NextResponse.json({
+        success: true,
+        data: result.data || [],
+        total: result.pagination?.total || (result.data?.length || 0),
+        totalPages: result.pagination?.totalPages || Math.ceil((result.pagination?.total || (result.data?.length || 0)) / pagination.limit),
+        message: result.message
+      });
     }, 'Müşteriler getirilemedi');
   }
 

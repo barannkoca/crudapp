@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 
-export default function page() {
+export default function Page() {
   const { data: session, status } = useSession();
 
   useEffect(() => {

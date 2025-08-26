@@ -41,7 +41,14 @@ export class OpportunityController extends BaseController {
         return this.createErrorResponse(result.error!);
       }
       
-      return this.createSuccessResponse(result.data, result.message);
+      // Pagination bilgilerini response'a ekle
+      return NextResponse.json({
+        success: true,
+        data: result.data || [],
+        total: result.pagination?.total || (result.data?.length || 0),
+        totalPages: result.pagination?.totalPages || Math.ceil((result.pagination?.total || (result.data?.length || 0)) / pagination.limit),
+        message: result.message
+      });
     }, 'Fırsatlar getirilemedi');
   }
 
@@ -78,7 +85,14 @@ export class OpportunityController extends BaseController {
         return this.createErrorResponse(result.error!);
       }
       
-      return this.createSuccessResponse(result.data, result.message);
+      // Pagination bilgilerini response'a ekle
+      return NextResponse.json({
+        success: true,
+        data: result.data || [],
+        total: result.pagination?.total || (result.data?.length || 0),
+        totalPages: result.pagination?.totalPages || Math.ceil((result.pagination?.total || (result.data?.length || 0)) / pagination.limit),
+        message: result.message
+      });
     }, 'Müşteri fırsatları getirilemedi');
   }
 

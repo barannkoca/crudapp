@@ -62,7 +62,6 @@ export const authOptions: NextAuthOptions = {
               name: user.name,
               image: user.image,
               googleId: user.id,
-              corporate: undefined,
               role: undefined
             });
             user.id = newUser._id.toString();
@@ -90,7 +89,6 @@ export const authOptions: NextAuthOptions = {
           if (dbUser) {
             session.user.id = dbUser._id.toString();
             session.user.image = dbUser.image || session.user.image;
-            session.user.corporate = dbUser.corporate;
           }
         }
         return session;

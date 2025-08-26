@@ -68,6 +68,7 @@ async function importTestData() {
             yapilan_islem: record.yapilan_islem || null,
             ikamet_turu: record.ikamet_turu || null,
             kayit_tarihi: record.kayit_tarihi || null,
+            randevu_tarihi: record.randevu_tarihi || null,
             kayit_numarasi: record.kayit_numarasi || null,
             baba_adi: record.baba_adi || null,
             anne_adi: record.anne_adi || null,

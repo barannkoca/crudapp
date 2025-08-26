@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { IDigerFirsati, IslemTuru, FirsatDurumu } from "@/types/Opportunity";
 import ListPageTemplate from "@/components/ListPageTemplate";
+import { formatDate } from '@/lib/utils';
 
 export default function DigerIslemlerPage() {
   const [opportunities, setOpportunities] = useState<IDigerFirsati[]>([]);
@@ -16,10 +17,14 @@ export default function DigerIslemlerPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchOpportunities();
-  }, []);
+  }, [currentPage, searchTerm, statusFilter]);
 
   const fetchOpportunities = async () => {
     try {
@@ -27,14 +32,26 @@ export default function DigerIslemlerPage() {
       const params = new URLSearchParams({
         islem_turu: IslemTuru.DIGER,
         sort_by: 'olusturma_tarihi',
-        sort_order: 'desc'
+        sort_order: 'desc',
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString()
       });
+      
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
+      
+      if (statusFilter !== 'all') {
+        params.append('durum', statusFilter);
+      }
       
       const response = await fetch(`/api/opportunities?${params}`);
       
       if (response.ok) {
         const data = await response.json();
         setOpportunities(data.data || []);
+        setTotalCount(data.total || data.data.length);
+        setTotalPages(data.totalPages || Math.ceil((data.total || data.data.length) / itemsPerPage));
       } else {
         setError('Diğer işlemler yüklenirken bir hata oluştu');
       }
@@ -45,17 +62,12 @@ export default function DigerIslemlerPage() {
     }
   };
 
-  const filteredOpportunities = opportunities.filter(opportunity => {
-    const matchesSearch = searchTerm === "" || 
-      opportunity.musteri?.ad?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      opportunity.musteri?.soyad?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      opportunity.detaylar?.islem_adi?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      opportunity.detaylar?.aciklama?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || opportunity.durum === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  // Server-side filtering yapıldığı için client-side filtering kaldırıldı
+
+  // Arama veya filtre değiştiğinde sayfa 1'e dön
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
 
   const getStatusColor = (status: FirsatDurumu) => {
     switch (status) {
@@ -76,9 +88,7 @@ export default function DigerIslemlerPage() {
     }
   };
 
-  const formatDate = (date: string | Date) => {
-    return new Date(date).toLocaleDateString('tr-TR');
-  };
+
 
   const getIslemDurumColor = (durum?: string) => {
     switch (durum?.toLowerCase()) {
@@ -105,7 +115,7 @@ export default function DigerIslemlerPage() {
     <ListPageTemplate
       title="Diğer İşlemler"
       subtitle={`Toplam ${opportunities.length} işlem`}
-      totalCount={opportunities.length}
+      totalCount={totalCount}
       searchTerm={searchTerm}
       onSearchChange={setSearchTerm}
       searchPlaceholder="Müşteri adı, işlem adı veya açıklama ara..."
@@ -114,7 +124,7 @@ export default function DigerIslemlerPage() {
       backButtonHref="/dashboard"
       loading={loading}
       error={error}
-      searchResultsCount={filteredOpportunities.length}
+      searchResultsCount={opportunities.length}
       emptyStateTitle="İşlem Bulunamadı"
       emptyStateDescription="Henüz diğer işlem oluşturulmamış."
       emptyStateIcon={
@@ -122,6 +132,10 @@ export default function DigerIslemlerPage() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
         </svg>
       }
+      showPagination={true}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
     >
       {/* Durum Filtresi */}
       <div className="mb-6">
@@ -158,7 +172,7 @@ export default function DigerIslemlerPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredOpportunities.map((opportunity, index) => (
+            {opportunities.map((opportunity, index) => (
               <motion.tr
                 key={opportunity._id}
                 initial={{ opacity: 0, y: 10 }}

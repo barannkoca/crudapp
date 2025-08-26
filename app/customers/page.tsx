@@ -13,18 +13,34 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<ICustomer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchCustomers();
-  }, []);
+  }, [currentPage, searchTerm]);
 
   const fetchCustomers = async () => {
     try {
-      const response = await fetch('/api/customers');
+      setLoading(true);
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString()
+      });
+      
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
+      
+      const response = await fetch(`/api/customers?${params}`);
       const result = await response.json();
       
       if (response.ok) {
         setCustomers(result.data);
+        setTotalCount(result.total || result.data.length);
+        setTotalPages(result.totalPages || Math.ceil((result.total || result.data.length) / itemsPerPage));
       } else {
         toast.error("Müşteriler yüklenemedi");
       }
@@ -66,11 +82,16 @@ export default function CustomersPage() {
     customer.yabanci_kimlik_no?.includes(searchTerm)
   );
 
+  // Arama yapıldığında sayfa 1'e dön
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   return (
     <ListPageTemplate
       title="Müşteri Yönetimi"
       subtitle="Toplam {count} müşteri kaydı"
-      totalCount={customers.length}
+      totalCount={totalCount}
       searchTerm={searchTerm}
       onSearchChange={setSearchTerm}
       searchPlaceholder="Müşteri adı, soyadı, e-posta, telefon veya kimlik no ile ara..."
@@ -85,6 +106,10 @@ export default function CustomersPage() {
           ? "Arama kriterlerinize uygun müşteri bulunamadı." 
           : "Henüz müşteri kaydı oluşturulmamış."
       }
+      showPagination={true}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
     >
       <div className="overflow-x-auto">
         <Table>
@@ -100,7 +125,7 @@ export default function CustomersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredCustomers.map((customer, index) => (
+            {customers.map((customer, index) => (
               <motion.tr
                 key={customer._id}
                 initial={{ opacity: 0, y: 10 }}

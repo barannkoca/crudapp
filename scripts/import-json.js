@@ -35,9 +35,6 @@ async function importJsonData() {
       if (cleanedRecord.user && cleanedRecord.user.$oid) {
         cleanedRecord.user = cleanedRecord.user.$oid;
       }
-      if (cleanedRecord.corporate && cleanedRecord.corporate.$oid) {
-        cleanedRecord.corporate = cleanedRecord.corporate.$oid;
-      }
       
       // $date alanlarını Date objesine çevir
       if (cleanedRecord.kayit_tarihi && cleanedRecord.kayit_tarihi.$date) {

@@ -1,20 +1,24 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "./button";
-import { PaginationState } from "@/types/Pagination";
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
 
 interface PaginationProps {
-  state: PaginationState;
+  currentPage: number;
+  totalPages: number;
   onPageChange: (page: number) => void;
+  className?: string;
 }
 
-export function Pagination({ state, onPageChange }: PaginationProps) {
-  const { currentPage, totalPages } = state;
-
+export function Pagination({ currentPage, totalPages, onPageChange, className }: PaginationProps) {
   const renderPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
     if (endPage - startPage + 1 < maxVisiblePages) {
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
@@ -38,14 +42,28 @@ export function Pagination({ state, onPageChange }: PaginationProps) {
   };
 
   return (
-    <div className="flex items-center justify-center space-x-2 py-4">
+    <div className={cn("flex items-center justify-center space-x-2 py-4", className)}>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onPageChange(1)}
+        disabled={currentPage === 1}
+        className="flex items-center gap-1"
+      >
+        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className="h-4 w-4 -ml-2" />
+        İlk
+      </Button>
+
       <Button
         variant="outline"
         size="sm"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
+        className="flex items-center gap-1"
       >
         <ChevronLeft className="h-4 w-4" />
+        Önceki
       </Button>
 
       {renderPageNumbers()}
@@ -55,8 +73,22 @@ export function Pagination({ state, onPageChange }: PaginationProps) {
         size="sm"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
+        className="flex items-center gap-1"
       >
+        Sonraki
         <ChevronRight className="h-4 w-4" />
+      </Button>
+
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onPageChange(totalPages)}
+        disabled={currentPage === totalPages}
+        className="flex items-center gap-1"
+      >
+        Son
+        <ChevronRight className="h-4 w-4" />
+        <ChevronRight className="h-4 w-4 -mr-2" />
       </Button>
 
       <div className="text-sm text-gray-500 ml-4">

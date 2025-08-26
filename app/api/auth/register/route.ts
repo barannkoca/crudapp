@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     }
 
     // Email kullanımda mı kontrol et
-    const existingUser = await User.findOne({ email });
+    const existingUser = await (User as any).findOne({ email });
     if (existingUser) {
       return NextResponse.json(
         { error: 'Bu email adresi zaten kullanımda' },
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
 
     // Yeni kullanıcı oluştur
     try {
-      const user = await User.create({
+      const user = await (User as any).create({
         email,
         name,
         password: hashedPassword,
@@ -63,11 +63,11 @@ export async function POST(request: Request) {
           name: user.name,
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Kullanıcı oluşturma hatası:', error);
       
       // MongoDB hata kodlarını kontrol et
-      if (error.code === 11000) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
         return NextResponse.json(
           { error: 'Bu email adresi zaten kullanımda' },
           { status: 400 }

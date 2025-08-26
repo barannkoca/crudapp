@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "migrate:cloud": "node scripts/migrate-to-cloud.js",
+    "migrate:validate": "node scripts/migrate-to-cloud.js validate",
+    "migrate:local": "node scripts/migrate-database.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",

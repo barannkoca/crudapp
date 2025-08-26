@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 
 interface ListPageTemplateProps {
   title: string;
@@ -24,6 +25,11 @@ interface ListPageTemplateProps {
   emptyStateDescription: string;
   showSearchResults?: boolean;
   searchResultsCount?: number;
+  // Pagination props
+  currentPage?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+  showPagination?: boolean;
 }
 
 export default function ListPageTemplate({
@@ -43,7 +49,12 @@ export default function ListPageTemplate({
   emptyStateTitle,
   emptyStateDescription,
   showSearchResults = true,
-  searchResultsCount = 0
+  searchResultsCount = 0,
+  // Pagination props
+  currentPage = 1,
+  totalPages = 1,
+  onPageChange,
+  showPagination = false
 }: ListPageTemplateProps) {
   if (loading) {
     return (
@@ -139,6 +150,22 @@ export default function ListPageTemplate({
                   )}
                   <h3 className="text-lg font-medium mb-2">{emptyStateTitle}</h3>
                   <p className="text-muted-foreground">{emptyStateDescription}</p>
+                </div>
+              )}
+
+              {/* Pagination */}
+              {showPagination && onPageChange && (
+                <div className="mt-6">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={onPageChange}
+                  />
+                  
+                  {/* Toplam kayıt bilgisi */}
+                  <div className="text-center mt-2 text-sm text-muted-foreground">
+                    Toplam {totalCount} kayıt
+                  </div>
                 </div>
               )}
             </CardContent>
