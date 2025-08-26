@@ -3,7 +3,7 @@ require('dotenv').config();
 
 // MongoDB Cloud (Atlas) bağlantı bilgileri
 const LOCAL_MONGODB_URI = process.env.LOCAL_MONGODB_URI || 'mongodb://localhost:27017/crudapp';
-const CLOUD_MONGODB_URI = process.env.MONGODB_URI; // Cloud URI
+const CLOUD_MONGODB_URI = process.env.MONGODB_URI + '/crudapp'; // Cloud URI with database name
 const LOCAL_DB_NAME = process.env.LOCAL_DB_NAME || 'crudapp';
 const CLOUD_DB_NAME = process.env.DB_NAME || 'crudapp';
 
