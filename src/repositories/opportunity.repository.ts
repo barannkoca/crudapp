@@ -147,6 +147,41 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
     };
   }
 
+  // Son aktiviteler
+  async getRecentActivities(): Promise<any[]> {
+    const activities = await this.aggregate([
+      { $sort: { guncelleme_tarihi: -1 } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: 'customers',
+          localField: 'musteri',
+          foreignField: '_id',
+          as: 'musteri'
+        }
+      },
+      { $unwind: { path: '$musteri', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          id: '$_id',
+          type: '$islem_turu',
+          status: '$durum',
+          customerName: {
+            $concat: [
+              { $ifNull: ['$musteri.ad', ''] },
+              ' ',
+              { $ifNull: ['$musteri.soyad', ''] }
+            ]
+          },
+          createdAt: '$olusturma_tarihi',
+          updatedAt: '$guncelleme_tarihi'
+        }
+      }
+    ]);
+
+    return activities;
+  }
+
   // Ödeme durumu istatistikleri
   async getPaymentStats(): Promise<{
     totalRevenue: number;

@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -31,8 +32,74 @@ import {
   ClipboardList
 } from "lucide-react"
 import Link from "next/link"
+import { toast } from "sonner"
 
 export default function Page() {
+  const [stats, setStats] = useState({
+    customers: {
+      total: 0,
+      recentlyAdded: 0
+    },
+    opportunities: {
+      total: 0,
+      byStatus: {},
+      byType: {},
+      recentlyAdded: 0
+    },
+    payments: {
+      totalRevenue: 0,
+      pendingPayments: 0,
+      paidAmount: 0
+    }
+  });
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
+  const fetchDashboardStats = async () => {
+    try {
+      setLoading(true);
+      
+      // Paralel olarak tüm istatistikleri çek
+      const [customerStats, opportunityStats, paymentStats, activities] = await Promise.all([
+        fetch('/api/customers/stats').then(res => res.json()),
+        fetch('/api/opportunities/stats').then(res => res.json()),
+        fetch('/api/opportunities/payment-stats').then(res => res.json()),
+        fetch('/api/opportunities/recent').then(res => res.json())
+      ]);
+
+      setStats({
+        customers: customerStats.data || { total: 0, recentlyAdded: 0 },
+        opportunities: opportunityStats.data || { total: 0, byStatus: {}, byType: {}, recentlyAdded: 0 },
+        payments: paymentStats.data || { totalRevenue: 0, pendingPayments: 0, paidAmount: 0 }
+      });
+      setRecentActivities(activities.data || []);
+    } catch (error) {
+      console.error('Dashboard stats error:', error);
+      toast.error('İstatistikler yüklenirken hata oluştu');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusCount = (status: string) => {
+    return stats.opportunities.byStatus[status] || 0;
+  };
+
+  const getTypeCount = (type: string) => {
+    return stats.opportunities.byType[type] || 0;
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('tr-TR', {
+      style: 'currency',
+      currency: 'TRY'
+    }).format(amount);
+  };
+
   return (
     <div className="flex flex-col w-full">
       {/* Header */}
@@ -88,35 +155,41 @@ export default function Page() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">1,234</div>
+              <div className="text-2xl font-bold">
+                {loading ? '...' : stats.customers.total.toLocaleString()}
+              </div>
               <p className="text-xs text-muted-foreground">
-                +20.1% geçen aydan
+                Son 7 günde {stats.customers.recentlyAdded} yeni müşteri
               </p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Aktif Fırsatlar</CardTitle>
+              <CardTitle className="text-sm font-medium">Toplam Fırsat</CardTitle>
               <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">89</div>
+              <div className="text-2xl font-bold">
+                {loading ? '...' : stats.opportunities.total.toLocaleString()}
+              </div>
               <p className="text-xs text-muted-foreground">
-                +12.3% geçen aydan
+                Son 7 günde {stats.opportunities.recentlyAdded} yeni fırsat
               </p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tamamlanan İzinler</CardTitle>
+              <CardTitle className="text-sm font-medium">Tamamlanan İşlemler</CardTitle>
               <FileCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">456</div>
+              <div className="text-2xl font-bold">
+                {loading ? '...' : getStatusCount('tamamlandi').toLocaleString()}
+              </div>
               <p className="text-xs text-muted-foreground">
-                +8.2% geçen aydan
+                Beklemede: {getStatusCount('beklemede')} | İşlemde: {getStatusCount('islemde')}
               </p>
             </CardContent>
           </Card>
@@ -127,9 +200,11 @@ export default function Page() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₺45,231</div>
+              <div className="text-2xl font-bold">
+                {loading ? '...' : formatCurrency(stats.payments.totalRevenue)}
+              </div>
               <p className="text-xs text-muted-foreground">
-                +15.4% geçen aydan
+                Ödenen: {formatCurrency(stats.payments.paidAmount)}
               </p>
             </CardContent>
           </Card>
@@ -248,27 +323,33 @@ export default function Page() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Yeni müşteri eklendi</p>
-                    <p className="text-xs text-muted-foreground">Ahmet Yılmaz - 2 saat önce</p>
+                {loading ? (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+                    <p className="text-sm text-muted-foreground mt-2">Yükleniyor...</p>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">İkamet izni fırsatı oluşturuldu</p>
-                    <p className="text-xs text-muted-foreground">Fatma Demir - 4 saat önce</p>
+                ) : recentActivities.length === 0 ? (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-muted-foreground">Henüz aktivite bulunmuyor</p>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Çalışma izni tamamlandı</p>
-                    <p className="text-xs text-muted-foreground">Mehmet Kaya - 1 gün önce</p>
-                  </div>
-                </div>
+                ) : (
+                  recentActivities.map((activity: any, index: number) => (
+                    <div key={activity.id || index} className="flex items-center gap-3">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">
+                          {activity.type === 'calisma_izni' && 'Çalışma İzni'}
+                          {activity.type === 'ikamet_izni' && 'İkamet İzni'}
+                          {activity.type === 'diger' && 'Diğer İşlem'}
+                          {' '}{activity.status === 'tamamlandi' ? 'tamamlandı' : 'güncellendi'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {activity.customerName} - {new Date(activity.updatedAt).toLocaleDateString('tr-TR')}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>

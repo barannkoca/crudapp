@@ -95,6 +95,8 @@ export class CustomerController extends BaseController {
     }, 'Müşteri getirilemedi');
   }
 
+
+
   // POST /api/customers - Yeni müşteri
   async createCustomer(request: NextRequest): Promise<NextResponse> {
     return this.handleRequest(async () => {

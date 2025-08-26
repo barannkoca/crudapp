@@ -104,6 +104,17 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
     }
   }
 
+  // Son aktiviteler
+  async getRecentActivities(): Promise<BaseResponse<any>> {
+    try {
+      const activities = await this.opportunityRepository.getRecentActivities();
+      return this.createSuccessResponse(activities);
+    } catch (error) {
+      console.error('Recent activities error:', error);
+      return this.createErrorResponse('Son aktiviteler alınamadı');
+    }
+  }
+
   // Ödeme istatistikleri
   async getPaymentStats(): Promise<BaseResponse<any>> {
     try {
