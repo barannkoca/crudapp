@@ -18,6 +18,7 @@ interface ListPageTemplateProps {
   createButtonHref: string;
   backButtonHref: string;
   loading: boolean;
+  searchLoading?: boolean;
   error?: string | null;
   children: ReactNode;
   emptyStateIcon?: ReactNode;
@@ -43,6 +44,7 @@ export default function ListPageTemplate({
   createButtonHref,
   backButtonHref,
   loading,
+  searchLoading = false,
   error,
   children,
   emptyStateIcon,
@@ -110,17 +112,26 @@ export default function ListPageTemplate({
         {/* Arama */}
         <div className="mb-6">
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
+            <div className="flex-1 relative">
               <Input
                 placeholder={searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="w-full"
+                className="w-full pr-10"
               />
+              {searchLoading && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                </div>
+              )}
             </div>
             {showSearchResults && (
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <span>{searchResultsCount} sonuç bulundu</span>
+                {searchLoading ? (
+                  <span>Aranıyor...</span>
+                ) : (
+                  <span>{searchResultsCount} sonuç bulundu</span>
+                )}
               </div>
             )}
           </div>

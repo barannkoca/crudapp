@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -15,17 +15,46 @@ export default function CalismaIzniPage() {
   const router = useRouter();
   const [opportunities, setOpportunities] = useState<ICalismaIzniFirsati[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms gecikme
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Search loading state
+  useEffect(() => {
+    if (searchTerm !== debouncedSearchTerm) {
+      setSearchLoading(true);
+    } else {
+      setSearchLoading(false);
+    }
+  }, [searchTerm, debouncedSearchTerm]);
+
   useEffect(() => {
     fetchOpportunities();
-  }, [currentPage, searchTerm, statusFilter]);
+  }, [currentPage, debouncedSearchTerm]);
+
+  // Status filter değiştiğinde ayrı useEffect
+  useEffect(() => {
+    if (currentPage === 1) {
+      fetchOpportunities();
+    } else {
+      setCurrentPage(1);
+    }
+  }, [statusFilter]);
 
   const fetchOpportunities = async () => {
     try {
@@ -38,8 +67,8 @@ export default function CalismaIzniPage() {
         limit: itemsPerPage.toString()
       });
       
-      if (searchTerm) {
-        params.append('search', searchTerm);
+      if (debouncedSearchTerm) {
+        params.append('search', debouncedSearchTerm);
       }
       
       if (statusFilter !== 'all') {
@@ -65,10 +94,10 @@ export default function CalismaIzniPage() {
 
   // Server-side filtering yapıldığı için client-side filtering kaldırıldı
 
-  // Arama veya filtre değiştiğinde sayfa 1'e dön
+  // Arama değiştiğinde sayfa 1'e dön
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter]);
+  }, [debouncedSearchTerm]);
 
   const getStatusColor = (status: FirsatDurumu) => {
     switch (status) {
@@ -108,7 +137,7 @@ export default function CalismaIzniPage() {
   return (
     <ListPageTemplate
       title="Çalışma İzni Fırsatları"
-      subtitle={`Toplam ${opportunities.length} fırsat`}
+      subtitle={`Toplam {count} fırsat`}
       totalCount={totalCount}
       searchTerm={searchTerm}
       onSearchChange={setSearchTerm}
@@ -117,10 +146,15 @@ export default function CalismaIzniPage() {
       createButtonHref="/calisma-izni/create"
       backButtonHref="/dashboard"
       loading={loading}
+      searchLoading={searchLoading}
       error={error}
-      searchResultsCount={opportunities.length}
+      searchResultsCount={debouncedSearchTerm ? opportunities.length : totalCount}
       emptyStateTitle="Çalışma İzni Fırsatı Bulunamadı"
-      emptyStateDescription="Henüz çalışma izni fırsatı oluşturulmamış."
+      emptyStateDescription={
+        debouncedSearchTerm 
+          ? "Arama kriterlerinize uygun çalışma izni fırsatı bulunamadı." 
+          : "Henüz çalışma izni fırsatı oluşturulmamış."
+      }
       emptyStateIcon={
         <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-green-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2z" />

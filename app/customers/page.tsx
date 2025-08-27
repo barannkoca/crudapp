@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -12,15 +12,35 @@ export default function CustomersPage() {
   const router = useRouter();
   const [customers, setCustomers] = useState<ICustomer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms gecikme
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Search loading state
+  useEffect(() => {
+    if (searchTerm !== debouncedSearchTerm) {
+      setSearchLoading(true);
+    } else {
+      setSearchLoading(false);
+    }
+  }, [searchTerm, debouncedSearchTerm]);
+
   useEffect(() => {
     fetchCustomers();
-  }, [currentPage, searchTerm]);
+  }, [currentPage, debouncedSearchTerm]);
 
   const fetchCustomers = async () => {
     try {
@@ -30,8 +50,8 @@ export default function CustomersPage() {
         limit: itemsPerPage.toString()
       });
       
-      if (searchTerm) {
-        params.append('search', searchTerm);
+      if (debouncedSearchTerm) {
+        params.append('search', debouncedSearchTerm);
       }
       
       const response = await fetch(`/api/customers?${params}`);
@@ -74,18 +94,19 @@ export default function CustomersPage() {
     }
   };
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.ad.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.soyad.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.eposta?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.telefon_no?.includes(searchTerm) ||
-    customer.yabanci_kimlik_no?.includes(searchTerm)
-  );
+  // Client-side filtering artık gerekli değil çünkü server-side search kullanıyoruz
+  // const filteredCustomers = customers.filter(customer =>
+  //   customer.ad.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //   customer.soyad.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //   customer.eposta?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //   customer.telefon_no?.includes(searchTerm) ||
+  //   customer.yabanci_kimlik_no?.includes(searchTerm)
+  // );
 
   // Arama yapıldığında sayfa 1'e dön
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [debouncedSearchTerm]);
 
   return (
     <ListPageTemplate
@@ -99,10 +120,11 @@ export default function CustomersPage() {
       createButtonHref="/customers/create"
       backButtonHref="/dashboard"
       loading={loading}
-      searchResultsCount={filteredCustomers.length}
+      searchLoading={searchLoading}
+      searchResultsCount={debouncedSearchTerm ? customers.length : totalCount}
       emptyStateTitle="Müşteri Bulunamadı"
       emptyStateDescription={
-        searchTerm 
+        debouncedSearchTerm 
           ? "Arama kriterlerinize uygun müşteri bulunamadı." 
           : "Henüz müşteri kaydı oluşturulmamış."
       }

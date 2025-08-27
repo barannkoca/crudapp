@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -14,17 +14,46 @@ import { formatDate } from '@/lib/utils';
 export default function DigerIslemlerPage() {
   const [opportunities, setOpportunities] = useState<IDigerFirsati[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms gecikme
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Search loading state
+  useEffect(() => {
+    if (searchTerm !== debouncedSearchTerm) {
+      setSearchLoading(true);
+    } else {
+      setSearchLoading(false);
+    }
+  }, [searchTerm, debouncedSearchTerm]);
+
   useEffect(() => {
     fetchOpportunities();
-  }, [currentPage, searchTerm, statusFilter]);
+  }, [currentPage, debouncedSearchTerm]);
+
+  // Status filter değiştiğinde ayrı useEffect
+  useEffect(() => {
+    if (currentPage === 1) {
+      fetchOpportunities();
+    } else {
+      setCurrentPage(1);
+    }
+  }, [statusFilter]);
 
   const fetchOpportunities = async () => {
     try {
@@ -37,8 +66,8 @@ export default function DigerIslemlerPage() {
         limit: itemsPerPage.toString()
       });
       
-      if (searchTerm) {
-        params.append('search', searchTerm);
+      if (debouncedSearchTerm) {
+        params.append('search', debouncedSearchTerm);
       }
       
       if (statusFilter !== 'all') {
@@ -64,10 +93,10 @@ export default function DigerIslemlerPage() {
 
   // Server-side filtering yapıldığı için client-side filtering kaldırıldı
 
-  // Arama veya filtre değiştiğinde sayfa 1'e dön
+  // Arama değiştiğinde sayfa 1'e dön
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter]);
+  }, [debouncedSearchTerm]);
 
   const getStatusColor = (status: FirsatDurumu) => {
     switch (status) {
@@ -114,7 +143,7 @@ export default function DigerIslemlerPage() {
   return (
     <ListPageTemplate
       title="Diğer İşlemler"
-      subtitle={`Toplam ${opportunities.length} işlem`}
+      subtitle={`Toplam {count} işlem`}
       totalCount={totalCount}
       searchTerm={searchTerm}
       onSearchChange={setSearchTerm}
@@ -123,10 +152,15 @@ export default function DigerIslemlerPage() {
       createButtonHref="/diger-islemler/create"
       backButtonHref="/dashboard"
       loading={loading}
+      searchLoading={searchLoading}
       error={error}
-      searchResultsCount={opportunities.length}
+      searchResultsCount={debouncedSearchTerm ? opportunities.length : totalCount}
       emptyStateTitle="İşlem Bulunamadı"
-      emptyStateDescription="Henüz diğer işlem oluşturulmamış."
+      emptyStateDescription={
+        debouncedSearchTerm 
+          ? "Arama kriterlerinize uygun işlem bulunamadı." 
+          : "Henüz diğer işlem oluşturulmamış."
+      }
       emptyStateIcon={
         <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-purple-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
