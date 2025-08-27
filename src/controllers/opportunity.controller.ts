@@ -167,8 +167,8 @@ export class OpportunityController extends BaseController {
           authResult.session.user.email,
           'CREATE',
           'Opportunity',
-          'unknown',
           result.error!,
+          undefined, // resourceId undefined çünkü kayıt oluşturulamadı
           request
         );
         return this.createErrorResponse(result.error!, 400);
@@ -180,7 +180,7 @@ export class OpportunityController extends BaseController {
         authResult.session.user.email,
         'CREATE',
         'Opportunity',
-        result.data?._id || 'unknown',
+        result.data?._id,
         request,
         {
           before: null,

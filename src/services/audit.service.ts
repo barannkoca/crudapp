@@ -6,7 +6,7 @@ export interface AuditLogData {
   userEmail: string;
   action: 'CREATE' | 'UPDATE' | 'DELETE' | 'VIEW' | 'LOGIN' | 'LOGOUT';
   resourceType: 'Customer' | 'Opportunity' | 'User';
-  resourceId: string;
+  resourceId?: string; // Başarısız işlemlerde undefined olabilir
   changes?: {
     before?: any;
     after?: any;
@@ -68,7 +68,7 @@ export class AuditService {
     userEmail: string,
     action: AuditLogData['action'],
     resourceType: AuditLogData['resourceType'],
-    resourceId: string,
+    resourceId?: string,
     request?: NextRequest,
     changes?: AuditLogData['changes'],
     duration?: number
@@ -92,8 +92,8 @@ export class AuditService {
     userEmail: string,
     action: AuditLogData['action'],
     resourceType: AuditLogData['resourceType'],
-    resourceId: string,
     errorMessage: string,
+    resourceId?: string,
     request?: NextRequest,
     securityLevel: AuditLogData['securityLevel'] = 'HIGH'
   ): Promise<void> {
@@ -145,7 +145,7 @@ export class AuditService {
       userEmail: 'system@security',
       action: 'VIEW', // Güvenlik olayları için VIEW kullanıyoruz
       resourceType: 'User',
-      resourceId: 'security-event',
+      resourceId: undefined, // Güvenlik olayları için resourceId gerekli değil
       success: false,
       errorMessage: description,
       securityLevel
@@ -158,7 +158,7 @@ export class AuditService {
     limit: number = 50
   ): Promise<any[]> {
     try {
-      return await AuditLog.find({ userId })
+      return await (AuditLog as any).find({ userId })
         .sort({ timestamp: -1 })
         .limit(limit)
         .populate('userId', 'name email')
@@ -172,11 +172,11 @@ export class AuditService {
   // Kaynak geçmişini getir
   static async getResourceHistory(
     resourceType: AuditLogData['resourceType'],
-    resourceId: string,
+    resourceId?: string,
     limit: number = 20
   ): Promise<any[]> {
     try {
-      return await AuditLog.find({ resourceType, resourceId })
+      return await (AuditLog as any).find({ resourceType, resourceId })
         .sort({ timestamp: -1 })
         .limit(limit)
         .populate('userId', 'name email')
@@ -262,7 +262,7 @@ export class AuditService {
     try {
       const since = new Date(Date.now() - timeWindowMinutes * 60 * 1000);
       
-      const recentLogs = await AuditLog.find({
+      const recentLogs = await (AuditLog as any).find({
         userId,
         timestamp: { $gte: since }
       }).lean();

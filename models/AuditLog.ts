@@ -28,7 +28,7 @@ const auditLogSchema = new mongoose.Schema({
   },
   resourceId: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true
+    required: false // Başarısız işlemlerde null olabilir (örn: CREATE işlemi başarısız olduğunda)
   },
   
   // Değişiklik detayları

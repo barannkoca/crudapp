@@ -157,8 +157,8 @@ export class CustomerController extends BaseController {
           authResult.session.user.email,
           'CREATE',
           'Customer',
-          'unknown',
           result.error!,
+          undefined, // resourceId undefined çünkü kayıt oluşturulamadı
           request
         );
         return this.createErrorResponse(result.error!, 400);
@@ -170,7 +170,7 @@ export class CustomerController extends BaseController {
         authResult.session.user.email,
         'CREATE',
         'Customer',
-        result.data?._id || 'unknown',
+        result.data?._id,
         request,
         {
           before: null,
