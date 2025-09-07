@@ -6,7 +6,6 @@ import { FilterQuery } from 'mongoose';
 import { Document } from 'mongoose';
 
 interface IOpportunityDoc extends Document {
-  _id: string;
   musteri: any;
   islem_turu: string;
   durum: string;
@@ -18,7 +17,7 @@ interface IOpportunityDoc extends Document {
 
 export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
   constructor() {
-    super(Opportunity);
+    super(Opportunity as any);
   }
 
   // Filtreleme ile fırsatları getir
@@ -47,6 +46,11 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
       filter.olusturma_tarihi = {};
       if (filters.date_from) filter.olusturma_tarihi.$gte = filters.date_from;
       if (filters.date_to) filter.olusturma_tarihi.$lte = filters.date_to;
+    }
+
+    // Ödeme durumu filtresi
+    if (filters.payment_status) {
+      filter['ucretler.odeme_durumu'] = filters.payment_status;
     }
 
     // Dinamik sıralama - varsayılan olarak oluşturma tarihine göre azalan
@@ -191,7 +195,8 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
     byType: { [key: string]: { total: number; paid: number; pending: number } };
   }> {
     const paymentStats = await this.aggregate([
-      { $unwind: { path: '$ucretler', preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: '$ucretler', preserveNullAndEmptyArrays: false } },
+      { $match: { 'ucretler.miktar': { $exists: true, $ne: null, $gt: 0 } } },
       {
         $group: {
           _id: {

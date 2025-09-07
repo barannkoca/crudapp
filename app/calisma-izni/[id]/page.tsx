@@ -150,14 +150,6 @@ export default function CalismaIzniDetailPage() {
 
 
 
-  const formatCurrency = (amount: number) => {
-    if (!amount) return 'Belirtilmemiş';
-    return new Intl.NumberFormat('tr-TR', {
-      style: 'currency',
-      currency: 'TRY',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
 
   const downloadPdf = (pdf: any, index: number) => {
     const link = document.createElement('a');
@@ -481,85 +473,49 @@ export default function CalismaIzniDetailPage() {
                         )}
                       </div>
                       <div>
-                        <span className="font-medium text-gray-600">Sözleşme Türü:</span>
+                        <span className="font-medium text-gray-600">Kayıt Tarihi:</span>
                         {editMode ? (
                           <Input
-                            value={editData.detaylar?.sozlesme_turu || ''}
+                            type="date"
+                            value={editData.detaylar?.kayit_tarihi ? 
+                              new Date(editData.detaylar.kayit_tarihi).toISOString().split('T')[0] : ''
+                            }
                             onChange={(e) => setEditData({
                               ...editData,
-                              detaylar: { ...editData.detaylar, sozlesme_turu: e.target.value }
+                              detaylar: { ...editData.detaylar, kayit_tarihi: e.target.value }
                             })}
-                            placeholder="Sözleşme türü girin"
                             className="mt-1"
                           />
                         ) : (
-                          <div className="mt-1">
-                            <Badge variant="outline" className="text-sm">
-                              {opportunity.detaylar?.sozlesme_turu || 'Belirtilmemiş'}
-                            </Badge>
-                          </div>
+                          <p className="text-lg font-semibold">
+                            {opportunity.detaylar?.kayit_tarihi ? 
+                              formatDate(opportunity.detaylar.kayit_tarihi) : 'Belirtilmemiş'
+                            }
+                          </p>
                         )}
                       </div>
                     </div>
                     <div className="space-y-3">
                       <div>
-                        <span className="font-medium text-gray-600">Maaş:</span>
-                        {editMode ? (
-                          <Input
-                            type="number"
-                            value={editData.detaylar?.maas || ''}
-                            onChange={(e) => setEditData({
-                              ...editData,
-                              detaylar: { ...editData.detaylar, maas: parseFloat(e.target.value) || 0 }
-                            })}
-                            placeholder="Maaş miktarı"
-                            className="mt-1"
-                          />
-                        ) : (
-                          opportunity.detaylar?.maas && (
-                            <p className="text-lg font-semibold text-green-600">
-                              {formatCurrency(opportunity.detaylar.maas)}
-                            </p>
-                          )
-                        )}
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600">Çalışma Saati:</span>
-                        {editMode ? (
-                          <Input
-                            type="number"
-                            value={editData.detaylar?.calisma_saati || ''}
-                            onChange={(e) => setEditData({
-                              ...editData,
-                              detaylar: { ...editData.detaylar, calisma_saati: parseFloat(e.target.value) || 0 }
-                            })}
-                            placeholder="Haftalık saat"
-                            className="mt-1"
-                          />
-                        ) : (
-                          opportunity.detaylar?.calisma_saati && (
-                            <p className="text-lg">{opportunity.detaylar.calisma_saati} saat/hafta</p>
-                          )
-                        )}
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600">İş Başlama Tarihi:</span>
+                        <span className="font-medium text-gray-600">Çalışma İzni Bitiş Tarihi:</span>
                         {editMode ? (
                           <Input
                             type="date"
-                            value={editData.detaylar?.is_baslama_tarihi ? 
-                              new Date(editData.detaylar.is_baslama_tarihi).toISOString().split('T')[0] : ''
+                            value={editData.detaylar?.calisma_izni_bitis_tarihi ? 
+                              new Date(editData.detaylar.calisma_izni_bitis_tarihi).toISOString().split('T')[0] : ''
                             }
                             onChange={(e) => setEditData({
                               ...editData,
-                              detaylar: { ...editData.detaylar, is_baslama_tarihi: e.target.value }
+                              detaylar: { ...editData.detaylar, calisma_izni_bitis_tarihi: e.target.value }
                             })}
                             className="mt-1"
                           />
                         ) : (
-                          opportunity.detaylar?.is_baslama_tarihi && (
-                            <p className="text-lg">{formatDate(opportunity.detaylar.is_baslama_tarihi)}</p>
-                          )
+                          <p className="text-lg font-semibold">
+                            {opportunity.detaylar?.calisma_izni_bitis_tarihi ? 
+                              formatDate(opportunity.detaylar.calisma_izni_bitis_tarihi) : 'Belirtilmemiş'
+                            }
+                          </p>
                         )}
                       </div>
                     </div>
@@ -777,7 +733,11 @@ export default function CalismaIzniDetailPage() {
                           <>
                             <div className="flex justify-between items-center mb-2">
                               <span className="font-medium text-lg">
-                                {formatCurrency(ucret.miktar)} {ucret.para_birimi}
+                                {ucret.miktar ? new Intl.NumberFormat('tr-TR', {
+                                  style: 'currency',
+                                  currency: 'TRY',
+                                  minimumFractionDigits: 0
+                                }).format(ucret.miktar) : 'Belirtilmemiş'} {ucret.para_birimi}
                               </span>
                               <Badge variant={ucret.odeme_durumu === 'odendi' ? 'default' : 'secondary'}>
                                 {ucret.odeme_durumu}

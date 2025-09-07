@@ -56,7 +56,7 @@ const customerSchema = new mongoose.Schema({
 });
 
 // Index'ler ve constraintler
-customerSchema.index({ ad: 1, soyad: 1 });
+customerSchema.index({ ad: 1, soyad: 1 }, { unique: true }); // Ad soyad kombinasyonu benzersiz olmalı
 customerSchema.index({ yabanci_kimlik_no: 1 }, { unique: true, sparse: true });
 customerSchema.index({ eposta: 1 }, { unique: true, sparse: true });
 customerSchema.index({ telefon_no: 1 });

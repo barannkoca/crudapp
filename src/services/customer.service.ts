@@ -34,7 +34,7 @@ export class CustomerService extends BaseService<ICustomerDoc, CustomerDto, Crea
       const { data, total } = await this.customerRepository.searchCustomers(searchTerm, pagination);
       const customers = data.map(this.mapToDto.bind(this));
       
-      return this.createPaginatedResponse(customers, { ...pagination, total }, 'Arama tamamlandı');
+      return this.createPaginatedResponse(customers, { ...pagination, total }, 'Arama tamamlandı') as CustomersResponse;
     } catch (error) {
       console.error('Customer search error:', error);
       return this.createErrorResponse('Arama yapılamadı') as CustomersResponse;
@@ -50,7 +50,7 @@ export class CustomerService extends BaseService<ICustomerDoc, CustomerDto, Crea
       const { data, total } = await this.customerRepository.findByFilters(filters, pagination);
       const customers = data.map(this.mapToDto.bind(this));
       
-      return this.createPaginatedResponse(customers, { ...pagination, total });
+      return this.createPaginatedResponse(customers, { ...pagination, total }) as CustomersResponse;
     } catch (error) {
       console.error('Customer filter error:', error);
       return this.createErrorResponse('Müşteriler getirilemedi') as CustomersResponse;
@@ -95,6 +95,7 @@ export class CustomerService extends BaseService<ICustomerDoc, CustomerDto, Crea
       return this.createErrorResponse('Müşteri getirilemedi');
     }
   }
+
 
   // Müşteri istatistikleri
   async getCustomerStats(): Promise<BaseResponse<any>> {
@@ -147,10 +148,16 @@ export class CustomerService extends BaseService<ICustomerDoc, CustomerDto, Crea
       }
     }
 
+    // Ad soyad kombinasyonu benzersizlik kontrolü
+    const existingByAdSoyad = await this.customerRepository.findByAdSoyad(createDto.ad.trim(), createDto.soyad.trim());
+    if (existingByAdSoyad) {
+      errors.push({ field: 'ad', message: 'Bu ad ve soyada sahip müşteri zaten kayıtlı' });
+    }
+
     return { isValid: errors.length === 0, errors };
   }
 
-  protected async validateUpdate(updateDto: UpdateCustomerDto): Promise<{ isValid: boolean; errors: any[] }> {
+  protected async validateUpdate(updateDto: UpdateCustomerDto, existingId?: string): Promise<{ isValid: boolean; errors: any[] }> {
     const errors: any[] = [];
 
     // Email formatı kontrolü
@@ -169,6 +176,24 @@ export class CustomerService extends BaseService<ICustomerDoc, CustomerDto, Crea
     }
     if (updateDto.soyad !== undefined && !updateDto.soyad?.trim()) {
       errors.push({ field: 'soyad', message: 'Soyad alanı boş olamaz' });
+    }
+
+    // Ad soyad kombinasyonu benzersizlik kontrolü (sadece ad veya soyad değişiyorsa)
+    if ((updateDto.ad !== undefined || updateDto.soyad !== undefined) && existingId) {
+      // Mevcut müşteriyi al
+      const existingCustomer = await this.customerRepository.findById(existingId);
+      if (existingCustomer) {
+        const newAd = updateDto.ad !== undefined ? updateDto.ad.trim() : existingCustomer.ad;
+        const newSoyad = updateDto.soyad !== undefined ? updateDto.soyad.trim() : existingCustomer.soyad;
+        
+        // Eğer ad veya soyad değişiyorsa kontrol et
+        if (newAd !== existingCustomer.ad || newSoyad !== existingCustomer.soyad) {
+          const existingByAdSoyad = await this.customerRepository.findByAdSoyad(newAd, newSoyad);
+          if (existingByAdSoyad && existingByAdSoyad._id.toString() !== existingId) {
+            errors.push({ field: 'ad', message: 'Bu ad ve soyada sahip müşteri zaten kayıtlı' });
+          }
+        }
+      }
     }
 
     return { isValid: errors.length === 0, errors };

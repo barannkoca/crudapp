@@ -1,8 +1,8 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,19 +11,64 @@ import { ICalismaIzniFirsati, IslemTuru, FirsatDurumu } from "@/types/Opportunit
 import ListPageTemplate from "@/components/ListPageTemplate";
 import { formatDate } from '@/lib/utils';
 
-export default function CalismaIzniPage() {
+function CalismaIzniPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // URL'den başlangıç değerlerini al
+  const initialPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
+  const initialSearch = searchParams.get('search') || "";
+  const initialStatus = searchParams.get('status') || "all";
+
   const [opportunities, setOpportunities] = useState<ICalismaIzniFirsati[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(initialSearch);
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
+  const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
+
+  // URL parametrelerinin değişip değişmediğini kontrol et
+  const [urlParams, setUrlParams] = useState({
+    page: initialPage,
+    search: initialSearch,
+    status: initialStatus
+  });
+
+  // URL'i güncelle
+  const updateURL = useCallback((params: { page?: number; search?: string; status?: string }) => {
+    const url = new URL(window.location.href);
+    
+    if (params.page !== undefined) {
+      if (params.page === 1) {
+        url.searchParams.delete('page');
+      } else {
+        url.searchParams.set('page', params.page.toString());
+      }
+    }
+    
+    if (params.search !== undefined) {
+      if (params.search === '') {
+        url.searchParams.delete('search');
+      } else {
+        url.searchParams.set('search', params.search);
+      }
+    }
+    
+    if (params.status !== undefined) {
+      if (params.status === 'all') {
+        url.searchParams.delete('status');
+      } else {
+        url.searchParams.set('status', params.status);
+      }
+    }
+    
+    router.replace(url.pathname + url.search, { scroll: false });
+  }, [router]);
 
   // Debounce search term
   useEffect(() => {
@@ -43,36 +88,59 @@ export default function CalismaIzniPage() {
     }
   }, [searchTerm, debouncedSearchTerm]);
 
+  // URL'i güncelle - arama değişiklikleri
+  useEffect(() => {
+    updateURL({ search: debouncedSearchTerm });
+  }, [debouncedSearchTerm, updateURL]);
+
+  // URL'i güncelle - filtre değişiklikleri
+  useEffect(() => {
+    updateURL({ status: statusFilter });
+  }, [statusFilter, updateURL]);
+
+  // URL parametreleri değiştiğinde state'i güncelle
+  useEffect(() => {
+    const newPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
+    const newSearch = searchParams.get('search') || "";
+    const newStatus = searchParams.get('status') || "all";
+
+    // URL parametreleri değiştiyse state'i güncelle
+    if (newPage !== urlParams.page || newSearch !== urlParams.search || newStatus !== urlParams.status) {
+      setCurrentPage(newPage);
+      setSearchTerm(newSearch);
+      setDebouncedSearchTerm(newSearch);
+      setStatusFilter(newStatus);
+      setUrlParams({ page: newPage, search: newSearch, status: newStatus });
+    }
+  }, [searchParams, urlParams]);
+
   useEffect(() => {
     fetchOpportunities();
-  }, [currentPage, debouncedSearchTerm]);
-
-  // Status filter değiştiğinde ayrı useEffect
-  useEffect(() => {
-    if (currentPage === 1) {
-      fetchOpportunities();
-    } else {
-      setCurrentPage(1);
-    }
-  }, [statusFilter]);
+  }, [searchParams]); // URL parametreleri değiştiğinde fetch yap
 
   const fetchOpportunities = async () => {
     try {
       setLoading(true);
+      
+      // URL'den güncel değerleri al
+      const urlPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
+      const urlSearch = searchParams.get('search') || "";
+      const urlStatus = searchParams.get('status') || "all";
+      
       const params = new URLSearchParams({
         islem_turu: IslemTuru.CALISMA_IZNI,
         sort_by: 'olusturma_tarihi',
         sort_order: 'desc',
-        page: currentPage.toString(),
+        page: urlPage.toString(),
         limit: itemsPerPage.toString()
       });
       
-      if (debouncedSearchTerm) {
-        params.append('search', debouncedSearchTerm);
+      if (urlSearch) {
+        params.append('search', urlSearch);
       }
       
-      if (statusFilter !== 'all') {
-        params.append('durum', statusFilter);
+      if (urlStatus !== 'all') {
+        params.append('durum', urlStatus);
       }
       
       const response = await fetch(`/api/opportunities?${params}`);
@@ -94,10 +162,14 @@ export default function CalismaIzniPage() {
 
   // Server-side filtering yapıldığı için client-side filtering kaldırıldı
 
-  // Arama değiştiğinde sayfa 1'e dön
+  // Arama değiştiğinde sayfa 1'e dön - sadece yeni arama yapıldığında
   useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearchTerm]);
+    // Eğer arama terimi değiştiyse ve bu URL'den gelmiyorsa sayfa 1'e dön
+    const urlSearch = searchParams.get('search') || "";
+    if (debouncedSearchTerm !== urlSearch && debouncedSearchTerm !== initialSearch) {
+      handlePageChange(1);
+    }
+  }, [debouncedSearchTerm, initialSearch, searchParams]);
 
   const getStatusColor = (status: FirsatDurumu) => {
     switch (status) {
@@ -120,18 +192,17 @@ export default function CalismaIzniPage() {
 
 
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('tr-TR', {
-      style: 'currency',
-      currency: 'TRY',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
 
   const handleRowClick = (opportunity: ICalismaIzniFirsati) => {
     console.log('🖱️ Row clicked!', opportunity);
     console.log('🎯 Navigating to:', `/calisma-izni/${opportunity._id}`);
     router.push(`/calisma-izni/${opportunity._id}`);
+  };
+
+  // Pagination için özel handler
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    updateURL({ page });
   };
 
   return (
@@ -163,7 +234,7 @@ export default function CalismaIzniPage() {
       showPagination={true}
       currentPage={currentPage}
       totalPages={totalPages}
-      onPageChange={setCurrentPage}
+      onPageChange={handlePageChange}
     >
       {/* Durum Filtresi */}
       <div className="mb-6">
@@ -185,18 +256,15 @@ export default function CalismaIzniPage() {
 
       {/* Tablo */}
       <div className="overflow-x-auto">
-        <Table>
+        <Table className="min-w-full">
           <TableHeader>
             <TableRow className="bg-green-50">
-              <TableHead className="font-semibold text-green-700">Fotoğraf</TableHead>
-              <TableHead className="font-semibold text-green-700">Müşteri</TableHead>
-              <TableHead className="font-semibold text-green-700">İşveren</TableHead>
-              <TableHead className="font-semibold text-green-700">Pozisyon</TableHead>
-              <TableHead className="font-semibold text-green-700">Maaş</TableHead>
-              <TableHead className="font-semibold text-green-700">Çalışma Saati</TableHead>
-              <TableHead className="font-semibold text-green-700">Sözleşme</TableHead>
-              <TableHead className="font-semibold text-green-700">Tarih</TableHead>
-              <TableHead className="font-semibold text-green-700">Durum</TableHead>
+              <TableHead className="font-semibold text-green-700 w-20">Fotoğraf</TableHead>
+              <TableHead className="font-semibold text-green-700 w-48">Müşteri</TableHead>
+              <TableHead className="font-semibold text-green-700 w-40">Pozisyon</TableHead>
+              <TableHead className="font-semibold text-green-700 w-32">Kayıt Tarihi</TableHead>
+              <TableHead className="font-semibold text-green-700 w-36">İzin Bitiş Tarihi</TableHead>
+              <TableHead className="font-semibold text-green-700 w-28">Durum</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -209,7 +277,7 @@ export default function CalismaIzniPage() {
                 className="hover:bg-green-50 transition-colors duration-200 cursor-pointer"
                 onClick={() => handleRowClick(opportunity)}
               >
-                <TableCell>
+                <TableCell className="w-20">
                   {opportunity.musteri?.photo && opportunity.musteri.photo.data ? (
                     <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-green-200">
                       <img
@@ -236,26 +304,17 @@ export default function CalismaIzniPage() {
                     </div>
                   )}
                 </TableCell>
-                <TableCell className="font-medium">
+                <TableCell className="font-medium w-48">
                   {opportunity.musteri?.ad} {opportunity.musteri?.soyad}
                 </TableCell>
-                <TableCell className="font-medium">{opportunity.detaylar?.isveren || '-'}</TableCell>
-                <TableCell>{opportunity.detaylar?.pozisyon || '-'}</TableCell>
-                <TableCell className="font-medium text-green-600">
-                  {opportunity.detaylar?.maas ? formatCurrency(opportunity.detaylar.maas) : '-'}
+                <TableCell className="w-40">{opportunity.detaylar?.pozisyon || '-'}</TableCell>
+                <TableCell className="w-32">
+                  {opportunity.detaylar?.kayit_tarihi ? formatDate(opportunity.detaylar.kayit_tarihi) : '-'}
                 </TableCell>
-                <TableCell>
-                  {opportunity.detaylar?.calisma_saati ? `${opportunity.detaylar.calisma_saati} saat/hafta` : '-'}
+                <TableCell className="w-36">
+                  {opportunity.detaylar?.calisma_izni_bitis_tarihi ? formatDate(opportunity.detaylar.calisma_izni_bitis_tarihi) : '-'}
                 </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="text-xs">
-                    {opportunity.detaylar?.sozlesme_turu || '-'}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {opportunity.olusturma_tarihi ? formatDate(opportunity.olusturma_tarihi) : '-'}
-                </TableCell>
-                <TableCell>
+                <TableCell className="w-28">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(opportunity.durum)}`}>
                     {opportunity.durum}
                   </span>
@@ -266,5 +325,13 @@ export default function CalismaIzniPage() {
         </Table>
       </div>
     </ListPageTemplate>
+  );
+}
+
+export default function CalismaIzniPage() {
+  return (
+    <Suspense fallback={<div>Yükleniyor...</div>}>
+      <CalismaIzniPageContent />
+    </Suspense>
   );
 }

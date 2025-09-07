@@ -54,8 +54,7 @@ export default function CalismaIzniCreatePage() {
       }
 
       if (!formData.detaylar?.isveren || !formData.detaylar?.pozisyon || 
-          !formData.detaylar?.sozlesme_turu || !formData.detaylar?.maas || 
-          !formData.detaylar?.calisma_saati) {
+          !formData.detaylar?.kayit_tarihi || !formData.detaylar?.calisma_izni_bitis_tarihi) {
         console.log('❌ Validation failed: Missing work permit details');
         toast.error('Lütfen tüm çalışma izni detaylarını doldurun');
         return;
@@ -69,9 +68,8 @@ export default function CalismaIzniCreatePage() {
         detaylar: {
           isveren: formData.detaylar.isveren,
           pozisyon: formData.detaylar.pozisyon,
-          sozlesme_turu: formData.detaylar.sozlesme_turu,
-          maas: parseFloat(formData.detaylar.maas),
-          calisma_saati: parseInt(formData.detaylar.calisma_saati)
+          kayit_tarihi: formData.detaylar.kayit_tarihi,
+          calisma_izni_bitis_tarihi: formData.detaylar.calisma_izni_bitis_tarihi
         },
         aciklamalar: formData.aciklamalar || [],
         ucretler: formData.ucretler || [],

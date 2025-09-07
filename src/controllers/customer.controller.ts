@@ -356,4 +356,5 @@ export class CustomerController extends BaseController {
       return this.createSuccessResponse(result.data, result.message);
     }, 'Müşteri getirilemedi');
   }
+
 }

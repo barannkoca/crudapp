@@ -20,7 +20,6 @@ import {
 import { Document } from 'mongoose';
 
 interface IOpportunityDoc extends Document {
-  _id: string;
   musteri: any;
   islem_turu: string;
   durum: string;
@@ -65,7 +64,7 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
       const { data, total } = await this.opportunityRepository.findByFilters(filters, pagination);
       const opportunities = data.map(this.mapToDto.bind(this));
       
-      return this.createPaginatedResponse(opportunities, { ...pagination, total });
+      return this.createPaginatedResponse(opportunities, { ...pagination, total }) as OpportunitiesResponse;
     } catch (error) {
       console.error('Opportunity filter error:', error);
       return this.createErrorResponse('Fırsatlar getirilemedi') as OpportunitiesResponse;
@@ -81,7 +80,7 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
       const { data, total } = await this.opportunityRepository.findByCustomer(customerId, pagination);
       const opportunities = data.map(this.mapToDto.bind(this));
       
-      return this.createPaginatedResponse(opportunities, { ...pagination, total });
+      return this.createPaginatedResponse(opportunities, { ...pagination, total }) as OpportunitiesResponse;
     } catch (error) {
       console.error('Customer opportunities error:', error);
       return this.createErrorResponse('Müşteri fırsatları getirilemedi') as OpportunitiesResponse;
@@ -142,7 +141,7 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
       const result = await this.opportunityRepository.create(data);
       
       // Müşteri bilgilerini populate et
-      const populatedResult = await this.opportunityRepository.findById(result._id, 'musteri');
+      const populatedResult = await this.opportunityRepository.findById(result._id as string, 'musteri');
       
       return this.createSuccessResponse(this.mapToDto(populatedResult!), 'Fırsat başarıyla oluşturuldu');
     } catch (error) {

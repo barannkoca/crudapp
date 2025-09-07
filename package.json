@@ -9,7 +9,8 @@
     "lint": "next lint",
     "migrate:cloud": "node scripts/migrate-to-cloud.js",
     "migrate:validate": "node scripts/migrate-to-cloud.js validate",
-    "migrate:local": "node scripts/migrate-database.js"
+    "migrate:local": "node scripts/migrate-database.js",
+    "migrate:calisma-izni": "node scripts/migrate-calisma-izni-fields.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",

@@ -1,8 +1,8 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,19 +10,64 @@ import { IIkametIzniFirsati, IslemTuru, FirsatDurumu } from "@/types/Opportunity
 import ListPageTemplate from "@/components/ListPageTemplate";
 import { formatDate } from '@/lib/utils';
 
-export default function IkametIzniPage() {
+function IkametIzniPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // URL'den başlangıç değerlerini al
+  const initialPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
+  const initialSearch = searchParams.get('search') || "";
+  const initialStatus = searchParams.get('status') || "all";
+
   const [opportunities, setOpportunities] = useState<IIkametIzniFirsati[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(initialSearch);
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
+  const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
+
+  // URL parametrelerinin değişip değişmediğini kontrol et
+  const [urlParams, setUrlParams] = useState({
+    page: initialPage,
+    search: initialSearch,
+    status: initialStatus
+  });
+
+
+  // URL'i güncelle
+  const updateURL = useCallback((params: { page?: number; search?: string; status?: string }) => {
+    const url = new URL(window.location.href);
+    
+    if (params.page !== undefined) {
+      if (params.page === 1) {
+        url.searchParams.delete('page');
+      } else {
+        url.searchParams.set('page', params.page.toString());
+      }
+    }
+    
+    if (params.search !== undefined) {
+      if (params.search === '') {
+        url.searchParams.delete('search');
+      } else {
+        url.searchParams.set('search', params.search);
+      }
+    }
+    
+    if (params.status !== undefined) {
+      if (params.status === 'all') {
+        url.searchParams.delete('status');
+      } else {
+        url.searchParams.set('status', params.status);
+      }
+    }
+    
+    router.replace(url.pathname + url.search, { scroll: false });
+  }, [router]);
 
   // Debounce search term
   useEffect(() => {
@@ -42,36 +87,61 @@ export default function IkametIzniPage() {
     }
   }, [searchTerm, debouncedSearchTerm]);
 
+
+  // URL'i güncelle - arama değişiklikleri
+  useEffect(() => {
+    updateURL({ search: debouncedSearchTerm });
+  }, [debouncedSearchTerm, updateURL]);
+
+  // URL'i güncelle - filtre değişiklikleri
+  useEffect(() => {
+    updateURL({ status: statusFilter });
+  }, [statusFilter, updateURL]);
+
+  // URL parametreleri değiştiğinde state'i güncelle
+  useEffect(() => {
+    const newPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
+    const newSearch = searchParams.get('search') || "";
+    const newStatus = searchParams.get('status') || "all";
+
+    // URL parametreleri değiştiyse state'i güncelle
+    if (newPage !== urlParams.page || newSearch !== urlParams.search || newStatus !== urlParams.status) {
+      setCurrentPage(newPage);
+      setSearchTerm(newSearch);
+      setDebouncedSearchTerm(newSearch);
+      setStatusFilter(newStatus);
+      setUrlParams({ page: newPage, search: newSearch, status: newStatus });
+    }
+  }, [searchParams, urlParams]);
+
   useEffect(() => {
     fetchOpportunities();
-  }, [currentPage, debouncedSearchTerm]);
+  }, [searchParams]); // URL parametreleri değiştiğinde fetch yap
 
-  // Status filter değiştiğinde ayrı useEffect
-  useEffect(() => {
-    if (currentPage === 1) {
-      fetchOpportunities();
-    } else {
-      setCurrentPage(1);
-    }
-  }, [statusFilter]);
 
   const fetchOpportunities = async () => {
     try {
       setLoading(true);
+      
+      // URL'den güncel değerleri al
+      const urlPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
+      const urlSearch = searchParams.get('search') || "";
+      const urlStatus = searchParams.get('status') || "all";
+      
       const params = new URLSearchParams({
         islem_turu: IslemTuru.IKAMET_IZNI,
         sort_by: 'olusturma_tarihi',
         sort_order: 'desc',
-        page: currentPage.toString(),
+        page: urlPage.toString(),
         limit: itemsPerPage.toString()
       });
       
-      if (debouncedSearchTerm) {
-        params.append('search', debouncedSearchTerm);
+      if (urlSearch) {
+        params.append('search', urlSearch);
       }
       
-      if (statusFilter !== 'all') {
-        params.append('durum', statusFilter);
+      if (urlStatus !== 'all') {
+        params.append('durum', urlStatus);
       }
       
       const response = await fetch(`/api/opportunities?${params}`);
@@ -93,10 +163,14 @@ export default function IkametIzniPage() {
 
   // Server-side filtering yapıldığı için client-side filtering kaldırıldı
 
-  // Arama değiştiğinde sayfa 1'e dön
+  // Arama değiştiğinde sayfa 1'e dön - sadece yeni arama yapıldığında
   useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearchTerm]);
+    // Eğer arama terimi değiştiyse ve bu URL'den gelmiyorsa sayfa 1'e dön
+    const urlSearch = searchParams.get('search') || "";
+    if (debouncedSearchTerm !== urlSearch && debouncedSearchTerm !== initialSearch) {
+      handlePageChange(1);
+    }
+  }, [debouncedSearchTerm, initialSearch, searchParams]);
 
   const getStatusColor = (status: FirsatDurumu) => {
     switch (status) {
@@ -123,6 +197,12 @@ export default function IkametIzniPage() {
     console.log('🖱️ İkamet İzni Row clicked!', opportunity);
     console.log('🎯 Navigating to:', `/ikamet-izni/${opportunity._id}`);
     router.push(`/ikamet-izni/${opportunity._id}`);
+  };
+
+  // Pagination için özel handler
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    updateURL({ page });
   };
 
   return (
@@ -154,7 +234,7 @@ export default function IkametIzniPage() {
       showPagination={true}
       currentPage={currentPage}
       totalPages={totalPages}
-      onPageChange={setCurrentPage}
+      onPageChange={handlePageChange}
     >
       {/* Durum Filtresi */}
       <div className="mb-6">
@@ -182,10 +262,10 @@ export default function IkametIzniPage() {
               <TableHead className="font-semibold text-cyan-700">Fotoğraf</TableHead>
               <TableHead className="font-semibold text-cyan-700">Ad Soyad</TableHead>
               <TableHead className="font-semibold text-cyan-700">Kayıt No</TableHead>
-              <TableHead className="font-semibold text-cyan-700">İşlem Türü</TableHead>
-              <TableHead className="font-semibold text-cyan-700">İkamet Türü</TableHead>
               <TableHead className="font-semibold text-cyan-700">Kayıt Tarihi</TableHead>
               <TableHead className="font-semibold text-cyan-700">Randevu Tarihi</TableHead>
+              <TableHead className="font-semibold text-cyan-700">Geçerlilik Tarihi</TableHead>
+
               <TableHead className="font-semibold text-cyan-700">Durum</TableHead>
             </TableRow>
           </TableHeader>
@@ -230,10 +310,9 @@ export default function IkametIzniPage() {
                   {opportunity.musteri?.ad} {opportunity.musteri?.soyad}
                 </TableCell>
                 <TableCell className="font-medium">{opportunity.detaylar?.kayit_numarasi || '-'}</TableCell>
-                <TableCell>{opportunity.detaylar?.yapilan_islem || '-'}</TableCell>
-                <TableCell>{opportunity.detaylar?.ikamet_turu || '-'}</TableCell>
                 <TableCell>{opportunity.detaylar?.kayit_tarihi ? formatDate(opportunity.detaylar.kayit_tarihi) : '-'}</TableCell>
                 <TableCell>{opportunity.detaylar?.randevu_tarihi ? formatDate(opportunity.detaylar.randevu_tarihi) : '-'}</TableCell>
+                <TableCell>{opportunity.detaylar?.gecerlilik_tarihi ? formatDate(opportunity.detaylar.gecerlilik_tarihi) : '-'}</TableCell>
                 <TableCell>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(opportunity.durum)}`}>
                     {opportunity.durum}
@@ -245,5 +324,13 @@ export default function IkametIzniPage() {
         </Table>
       </div>
     </ListPageTemplate>
+  );
+}
+
+export default function IkametIzniPage() {
+  return (
+    <Suspense fallback={<div>Yükleniyor...</div>}>
+      <IkametIzniPageContent />
+    </Suspense>
   );
 } 

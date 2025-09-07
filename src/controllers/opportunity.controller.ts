@@ -32,6 +32,7 @@ export class OpportunityController extends BaseController {
         search: queryParams.search,
         sort_by: queryParams.sort_by as 'olusturma_tarihi' | 'guncelleme_tarihi',
         sort_order: queryParams.sort_order as 'asc' | 'desc',
+        payment_status: queryParams.payment_status as 'beklemede' | 'odendi' | 'iptal_edildi',
         ...dateRange
       });
 
@@ -288,24 +289,6 @@ export class OpportunityController extends BaseController {
     }, 'İstatistikler alınamadı');
   }
 
-  // GET /api/opportunities/recent - Son aktiviteler
-  async getRecentActivities(request: NextRequest): Promise<NextResponse> {
-    return this.handleRequest(async () => {
-      const authResult = await this.checkAuth(request);
-      if (!authResult.isAuthenticated) {
-        return authResult.response!;
-      }
-
-      const result = await this.opportunityService.getRecentActivities();
-      
-      if (!result.success) {
-        return this.createErrorResponse(result.error!);
-      }
-      
-      return this.createSuccessResponse(result.data, result.message);
-    }, 'Son aktiviteler alınamadı');
-  }
-
   // GET /api/opportunities/payment-stats - Ödeme istatistikleri
   async getPaymentStats(request: NextRequest): Promise<NextResponse> {
     return this.handleRequest(async () => {
@@ -322,6 +305,24 @@ export class OpportunityController extends BaseController {
       
       return this.createSuccessResponse(result.data, result.message);
     }, 'Ödeme istatistikleri alınamadı');
+  }
+
+  // GET /api/opportunities/recent - Son aktiviteler
+  async getRecentActivities(request: NextRequest): Promise<NextResponse> {
+    return this.handleRequest(async () => {
+      const authResult = await this.checkAuth(request);
+      if (!authResult.isAuthenticated) {
+        return authResult.response!;
+      }
+
+      const result = await this.opportunityService.getRecentActivities();
+      
+      if (!result.success) {
+        return this.createErrorResponse(result.error!);
+      }
+      
+      return this.createSuccessResponse(result.data, result.message);
+    }, 'Son aktiviteler alınamadı');
   }
 
   // POST /api/opportunities/[id]/upload-pdfs - PDF yükle

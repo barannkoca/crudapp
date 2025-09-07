@@ -76,9 +76,8 @@ export interface ICalismaIzniFirsati extends IFirsat {
   detaylar?: {
     isveren?: string;
     pozisyon?: string;
-    sozlesme_turu?: string;
-    maas?: number;
-    calisma_saati?: number;
+    kayit_tarihi?: string | Date;
+    calisma_izni_bitis_tarihi?: string | Date;
     is_baslama_tarihi?: Date;
     notlar?: string;
   };

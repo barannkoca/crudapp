@@ -88,7 +88,7 @@ export abstract class BaseService<T extends Document, TDto, TCreateDto, TUpdateD
   // Kayıt güncelle
   async update(id: string, updateDto: TUpdateDto): Promise<BaseResponse<TDto>> {
     try {
-      const validationResult = await this.validateUpdate(updateDto);
+      const validationResult = await this.validateUpdate(updateDto, id);
       if (!validationResult.isValid) {
         return this.createErrorResponse(validationResult.errors.map(e => e.message).join(', '));
       }
@@ -135,5 +135,5 @@ export abstract class BaseService<T extends Document, TDto, TCreateDto, TUpdateD
   protected abstract mapCreateDtoToEntity(createDto: TCreateDto): Promise<Partial<T>> | Partial<T>;
   protected abstract mapUpdateDtoToEntity(updateDto: TUpdateDto): Promise<Partial<T>> | Partial<T>;
   protected abstract validateCreate(createDto: TCreateDto): Promise<{ isValid: boolean; errors: any[] }>;
-  protected abstract validateUpdate(updateDto: TUpdateDto): Promise<{ isValid: boolean; errors: any[] }>;
+  protected abstract validateUpdate(updateDto: TUpdateDto, existingId?: string): Promise<{ isValid: boolean; errors: any[] }>;
 }

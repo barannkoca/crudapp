@@ -1,8 +1,9 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,18 +12,64 @@ import { IDigerFirsati, IslemTuru, FirsatDurumu } from "@/types/Opportunity";
 import ListPageTemplate from "@/components/ListPageTemplate";
 import { formatDate } from '@/lib/utils';
 
-export default function DigerIslemlerPage() {
+function DigerIslemlerPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // URL'den başlangıç değerlerini al
+  const initialPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
+  const initialSearch = searchParams.get('search') || "";
+  const initialStatus = searchParams.get('status') || "all";
+
   const [opportunities, setOpportunities] = useState<IDigerFirsati[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(initialSearch);
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
+  const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
+
+  // URL parametrelerinin değişip değişmediğini kontrol et
+  const [urlParams, setUrlParams] = useState({
+    page: initialPage,
+    search: initialSearch,
+    status: initialStatus
+  });
+
+  // URL'i güncelle
+  const updateURL = useCallback((params: { page?: number; search?: string; status?: string }) => {
+    const url = new URL(window.location.href);
+    
+    if (params.page !== undefined) {
+      if (params.page === 1) {
+        url.searchParams.delete('page');
+      } else {
+        url.searchParams.set('page', params.page.toString());
+      }
+    }
+    
+    if (params.search !== undefined) {
+      if (params.search === '') {
+        url.searchParams.delete('search');
+      } else {
+        url.searchParams.set('search', params.search);
+      }
+    }
+    
+    if (params.status !== undefined) {
+      if (params.status === 'all') {
+        url.searchParams.delete('status');
+      } else {
+        url.searchParams.set('status', params.status);
+      }
+    }
+    
+    router.replace(url.pathname + url.search, { scroll: false });
+  }, [router]);
 
   // Debounce search term
   useEffect(() => {
@@ -42,36 +89,59 @@ export default function DigerIslemlerPage() {
     }
   }, [searchTerm, debouncedSearchTerm]);
 
+  // URL'i güncelle - arama değişiklikleri
+  useEffect(() => {
+    updateURL({ search: debouncedSearchTerm });
+  }, [debouncedSearchTerm, updateURL]);
+
+  // URL'i güncelle - filtre değişiklikleri
+  useEffect(() => {
+    updateURL({ status: statusFilter });
+  }, [statusFilter, updateURL]);
+
+  // URL parametreleri değiştiğinde state'i güncelle
+  useEffect(() => {
+    const newPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
+    const newSearch = searchParams.get('search') || "";
+    const newStatus = searchParams.get('status') || "all";
+
+    // URL parametreleri değiştiyse state'i güncelle
+    if (newPage !== urlParams.page || newSearch !== urlParams.search || newStatus !== urlParams.status) {
+      setCurrentPage(newPage);
+      setSearchTerm(newSearch);
+      setDebouncedSearchTerm(newSearch);
+      setStatusFilter(newStatus);
+      setUrlParams({ page: newPage, search: newSearch, status: newStatus });
+    }
+  }, [searchParams, urlParams]);
+
   useEffect(() => {
     fetchOpportunities();
-  }, [currentPage, debouncedSearchTerm]);
-
-  // Status filter değiştiğinde ayrı useEffect
-  useEffect(() => {
-    if (currentPage === 1) {
-      fetchOpportunities();
-    } else {
-      setCurrentPage(1);
-    }
-  }, [statusFilter]);
+  }, [searchParams]); // URL parametreleri değiştiğinde fetch yap
 
   const fetchOpportunities = async () => {
     try {
       setLoading(true);
+      
+      // URL'den güncel değerleri al
+      const urlPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
+      const urlSearch = searchParams.get('search') || "";
+      const urlStatus = searchParams.get('status') || "all";
+      
       const params = new URLSearchParams({
         islem_turu: IslemTuru.DIGER,
         sort_by: 'olusturma_tarihi',
         sort_order: 'desc',
-        page: currentPage.toString(),
+        page: urlPage.toString(),
         limit: itemsPerPage.toString()
       });
       
-      if (debouncedSearchTerm) {
-        params.append('search', debouncedSearchTerm);
+      if (urlSearch) {
+        params.append('search', urlSearch);
       }
       
-      if (statusFilter !== 'all') {
-        params.append('durum', statusFilter);
+      if (urlStatus !== 'all') {
+        params.append('durum', urlStatus);
       }
       
       const response = await fetch(`/api/opportunities?${params}`);
@@ -93,10 +163,14 @@ export default function DigerIslemlerPage() {
 
   // Server-side filtering yapıldığı için client-side filtering kaldırıldı
 
-  // Arama değiştiğinde sayfa 1'e dön
+  // Arama değiştiğinde sayfa 1'e dön - sadece yeni arama yapıldığında
   useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearchTerm]);
+    // Eğer arama terimi değiştiyse ve bu URL'den gelmiyorsa sayfa 1'e dön
+    const urlSearch = searchParams.get('search') || "";
+    if (debouncedSearchTerm !== urlSearch && debouncedSearchTerm !== initialSearch) {
+      handlePageChange(1);
+    }
+  }, [debouncedSearchTerm, initialSearch, searchParams]);
 
   const getStatusColor = (status: FirsatDurumu) => {
     switch (status) {
@@ -137,7 +211,13 @@ export default function DigerIslemlerPage() {
   const handleRowClick = (opportunity: IDigerFirsati) => {
     console.log('🖱️ Diğer İşlemler Row clicked!', opportunity);
     console.log('🎯 Navigating to:', `/diger-islemler/${opportunity._id}`);
-    window.location.href = `/diger-islemler/${opportunity._id}`;
+    router.push(`/diger-islemler/${opportunity._id}`);
+  };
+
+  // Pagination için özel handler
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    updateURL({ page });
   };
 
   return (
@@ -169,7 +249,7 @@ export default function DigerIslemlerPage() {
       showPagination={true}
       currentPage={currentPage}
       totalPages={totalPages}
-      onPageChange={setCurrentPage}
+      onPageChange={handlePageChange}
     >
       {/* Durum Filtresi */}
       <div className="mb-6">
@@ -284,5 +364,13 @@ export default function DigerIslemlerPage() {
         </Table>
       </div>
     </ListPageTemplate>
+  );
+}
+
+export default function DigerIslemlerPage() {
+  return (
+    <Suspense fallback={<div>Yükleniyor...</div>}>
+      <DigerIslemlerPageContent />
+    </Suspense>
   );
 }

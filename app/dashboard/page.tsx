@@ -196,12 +196,12 @@ export default function Page() {
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Toplam Gelir</CardTitle>
+              <CardTitle className="text-sm font-medium">Bekleyen Ödemeler</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {loading ? '...' : formatCurrency(stats.payments.totalRevenue)}
+                {loading ? '...' : formatCurrency(stats.payments.pendingPayments)}
               </div>
               <p className="text-xs text-muted-foreground">
                 Ödenen: {formatCurrency(stats.payments.paidAmount)}
@@ -238,25 +238,43 @@ export default function Page() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-green-700">
-                <Briefcase className="h-5 w-5" />
-                Çalışma İzni
+              <CardTitle className="flex items-center gap-2 text-orange-700">
+                <DollarSign className="h-5 w-5" />
+                Bekleyen Ödemeler
               </CardTitle>
               <CardDescription>
-                Çalışma izni fırsatlarını yönetin
+                Ödeme bekleyen işlemlerin detayları
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <Button asChild className="w-full bg-green-600 hover:bg-green-700">
-                <Link href="/calisma-izni">
-                  Çalışma İzni Listesi
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="w-full border-green-600 text-green-600 hover:bg-green-50">
-                <Link href="/calisma-izni/create">
-                  Yeni Çalışma İzni
-                </Link>
-              </Button>
+            <CardContent>
+              {loading ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500 mx-auto"></div>
+                  <p className="text-sm text-muted-foreground mt-2">Yükleniyor...</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Bekleyen Tutar:</span>
+                    <span className="text-lg font-bold text-orange-600">
+                      {formatCurrency(stats.payments.pendingPayments)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Ödenen Tutar:</span>
+                    <span className="text-lg font-bold text-green-600">
+                      {formatCurrency(stats.payments.paidAmount)}
+                    </span>
+                  </div>
+                  <div className="pt-2 border-t">
+                    <Button asChild variant="outline" className="w-full border-orange-600 text-orange-600 hover:bg-orange-50">
+                      <Link href="/bekleyen-odemeler">
+                        Bekleyen Ödemeleri Görüntüle
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

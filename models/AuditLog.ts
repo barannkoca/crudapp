@@ -65,8 +65,7 @@ const auditLogSchema = new mongoose.Schema({
   // Zaman bilgileri
   timestamp: {
     type: Date,
-    default: Date.now,
-    index: true
+    default: Date.now
   },
   
   duration: Number // İşlem süresi (ms)

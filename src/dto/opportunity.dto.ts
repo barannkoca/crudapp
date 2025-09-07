@@ -123,6 +123,8 @@ export interface OpportunityFilterDto {
   // Tarih bazlı sıralama için sort_by ve sort_order eklendi
   sort_by?: 'olusturma_tarihi' | 'guncelleme_tarihi';
   sort_order?: 'asc' | 'desc';
+  // Ödeme durumu filtresi
+  payment_status?: 'beklemede' | 'odendi' | 'iptal_edildi';
 }
 
 // Sıra numarası DTO'ları kaldırıldı - Tarih bazlı sıralama kullanılacak

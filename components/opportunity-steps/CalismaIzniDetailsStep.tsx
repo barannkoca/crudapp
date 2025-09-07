@@ -4,9 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Briefcase } from 'lucide-react';
-import { CALISMA_IZNI_SOZLESME_TURLERI } from '@/src/constants';
 
 interface CalismaIzniDetailsStepProps {
   onDataChange?: (data: any) => void;
@@ -20,9 +18,8 @@ export const CalismaIzniDetailsStep: React.FC<CalismaIzniDetailsStepProps> = ({
   const [details, setDetails] = useState({
     isveren: '',
     pozisyon: '',
-    sozlesme_turu: '',
-    maas: '',
-    calisma_saati: ''
+    kayit_tarihi: '',
+    calisma_izni_bitis_tarihi: ''
   });
 
   useEffect(() => {
@@ -36,8 +33,6 @@ export const CalismaIzniDetailsStep: React.FC<CalismaIzniDetailsStepProps> = ({
     setDetails(newDetails);
     onDataChange?.({ detaylar: newDetails });
   };
-
-  const sozlesmeTurleri = CALISMA_IZNI_SOZLESME_TURLERI;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -69,60 +64,32 @@ export const CalismaIzniDetailsStep: React.FC<CalismaIzniDetailsStepProps> = ({
         />
       </div>
 
-      {/* Sözleşme Türü */}
+      {/* Kayıt Tarihi */}
       <div>
-        <Label htmlFor="sozlesme_turu" className="text-sm font-medium">
-          Sözleşme Türü *
-        </Label>
-        <Select value={details.sozlesme_turu} onValueChange={(value) => handleChange('sozlesme_turu', value)}>
-          <SelectTrigger className="mt-1 h-9">
-            <SelectValue placeholder="Sözleşme türü seçin..." />
-          </SelectTrigger>
-          <SelectContent>
-            {sozlesmeTurleri.map((tur) => (
-              <SelectItem key={tur} value={tur}>
-                {tur}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Maaş */}
-      <div>
-        <Label htmlFor="maas" className="text-sm font-medium">
-          Maaş (TL) *
+        <Label htmlFor="kayit_tarihi" className="text-sm font-medium">
+          Kayıt Tarihi *
         </Label>
         <Input
-          id="maas"
-          type="number"
-          value={details.maas}
-          onChange={(e) => handleChange('maas', e.target.value)}
-          placeholder="Aylık maaş..."
+          id="kayit_tarihi"
+          type="date"
+          value={details.kayit_tarihi}
+          onChange={(e) => handleChange('kayit_tarihi', e.target.value)}
           className="mt-1 h-9"
-          min="0"
-          step="0.01"
         />
       </div>
 
-      {/* Çalışma Saati */}
-      <div className="md:col-span-2">
-        <Label htmlFor="calisma_saati" className="text-sm font-medium">
-          Haftalık Çalışma Saati *
+      {/* Çalışma İzni Bitiş Tarihi */}
+      <div>
+        <Label htmlFor="calisma_izni_bitis_tarihi" className="text-sm font-medium">
+          Çalışma İzni Bitiş Tarihi *
         </Label>
         <Input
-          id="calisma_saati"
-          type="number"
-          value={details.calisma_saati}
-          onChange={(e) => handleChange('calisma_saati', e.target.value)}
-          placeholder="Haftalık çalışma saati..."
+          id="calisma_izni_bitis_tarihi"
+          type="date"
+          value={details.calisma_izni_bitis_tarihi}
+          onChange={(e) => handleChange('calisma_izni_bitis_tarihi', e.target.value)}
           className="mt-1 h-9"
-          min="1"
-          max="168"
         />
-        <p className="text-xs text-gray-500 mt-1">
-          1-168 saat arası
-        </p>
       </div>
     </div>
   );

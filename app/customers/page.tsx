@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ICustomer } from "@/types/Customer";
@@ -8,17 +8,52 @@ import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import ListPageTemplate from "@/components/ListPageTemplate";
 
-export default function CustomersPage() {
+function CustomersPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // URL'den başlangıç değerlerini al
+  const initialPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
+  const initialSearch = searchParams.get('search') || "";
+
   const [customers, setCustomers] = useState<ICustomer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(initialSearch);
+  const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
+
+  // URL parametrelerinin değişip değişmediğini kontrol et
+  const [urlParams, setUrlParams] = useState({
+    page: initialPage,
+    search: initialSearch
+  });
+
+  // URL'i güncelle
+  const updateURL = useCallback((params: { page?: number; search?: string }) => {
+    const url = new URL(window.location.href);
+    
+    if (params.page !== undefined) {
+      if (params.page === 1) {
+        url.searchParams.delete('page');
+      } else {
+        url.searchParams.set('page', params.page.toString());
+      }
+    }
+    
+    if (params.search !== undefined) {
+      if (params.search === '') {
+        url.searchParams.delete('search');
+      } else {
+        url.searchParams.set('search', params.search);
+      }
+    }
+    
+    router.replace(url.pathname + url.search, { scroll: false });
+  }, [router]);
 
   // Debounce search term
   useEffect(() => {
@@ -38,20 +73,44 @@ export default function CustomersPage() {
     }
   }, [searchTerm, debouncedSearchTerm]);
 
+  // URL'i güncelle - arama değişiklikleri
+  useEffect(() => {
+    updateURL({ search: debouncedSearchTerm });
+  }, [debouncedSearchTerm, updateURL]);
+
+  // URL parametreleri değiştiğinde state'i güncelle
+  useEffect(() => {
+    const newPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
+    const newSearch = searchParams.get('search') || "";
+
+    // URL parametreleri değiştiyse state'i güncelle
+    if (newPage !== urlParams.page || newSearch !== urlParams.search) {
+      setCurrentPage(newPage);
+      setSearchTerm(newSearch);
+      setDebouncedSearchTerm(newSearch);
+      setUrlParams({ page: newPage, search: newSearch });
+    }
+  }, [searchParams, urlParams]);
+
   useEffect(() => {
     fetchCustomers();
-  }, [currentPage, debouncedSearchTerm]);
+  }, [searchParams]); // URL parametreleri değiştiğinde fetch yap
 
   const fetchCustomers = async () => {
     try {
       setLoading(true);
+      
+      // URL'den güncel değerleri al
+      const urlPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
+      const urlSearch = searchParams.get('search') || "";
+      
       const params = new URLSearchParams({
-        page: currentPage.toString(),
+        page: urlPage.toString(),
         limit: itemsPerPage.toString()
       });
       
-      if (debouncedSearchTerm) {
-        params.append('search', debouncedSearchTerm);
+      if (urlSearch) {
+        params.append('search', urlSearch);
       }
       
       const response = await fetch(`/api/customers?${params}`);
@@ -103,10 +162,20 @@ export default function CustomersPage() {
   //   customer.yabanci_kimlik_no?.includes(searchTerm)
   // );
 
-  // Arama yapıldığında sayfa 1'e dön
+  // Arama değiştiğinde sayfa 1'e dön - sadece yeni arama yapıldığında
   useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearchTerm]);
+    // Eğer arama terimi değiştiyse ve bu URL'den gelmiyorsa sayfa 1'e dön
+    const urlSearch = searchParams.get('search') || "";
+    if (debouncedSearchTerm !== urlSearch && debouncedSearchTerm !== initialSearch) {
+      handlePageChange(1);
+    }
+  }, [debouncedSearchTerm, initialSearch, searchParams]);
+
+  // Pagination için özel handler
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    updateURL({ page });
+  };
 
   return (
     <ListPageTemplate
@@ -131,7 +200,7 @@ export default function CustomersPage() {
       showPagination={true}
       currentPage={currentPage}
       totalPages={totalPages}
-      onPageChange={setCurrentPage}
+      onPageChange={handlePageChange}
     >
       <div className="overflow-x-auto">
         <Table>
@@ -199,5 +268,13 @@ export default function CustomersPage() {
         </Table>
       </div>
     </ListPageTemplate>
+  );
+}
+
+export default function CustomersPage() {
+  return (
+    <Suspense fallback={<div>Yükleniyor...</div>}>
+      <CustomersPageContent />
+    </Suspense>
   );
 } 

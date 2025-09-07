@@ -66,6 +66,14 @@ export class CustomerRepository extends BaseRepository<ICustomerDoc> {
     return this.findOne({ eposta: email });
   }
 
+  // Ad soyad ile müşteri bul
+  async findByAdSoyad(ad: string, soyad: string): Promise<ICustomerDoc | null> {
+    return this.findOne({ 
+      ad: { $regex: new RegExp(`^${ad.trim()}$`, 'i') }, 
+      soyad: { $regex: new RegExp(`^${soyad.trim()}$`, 'i') } 
+    });
+  }
+
   // Telefon ile müşteri bul
   async findByPhone(phone: string): Promise<ICustomerDoc | null> {
     return this.findOne({ telefon_no: phone });
