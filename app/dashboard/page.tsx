@@ -29,7 +29,11 @@ import {
   Bell,
   User,
   FileText,
-  ClipboardList
+  ClipboardList,
+  ArrowUpRight,
+  ArrowDownRight,
+  Wallet,
+  CreditCard
 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -47,9 +51,11 @@ export default function Page() {
       recentlyAdded: 0
     },
     payments: {
-      totalRevenue: 0,
-      pendingPayments: 0,
-      paidAmount: 0
+      totalRevenue: 0,        // Toplam anlaşılan ücret
+      receivedAmount: 0,      // Alınan ödeme miktarı
+      expenseAmount: 0,       // Gider miktarı
+      netRevenue: 0,          // Net gelir (alınan - gider)
+      pendingPayments: 0      // Bekleyen ödemeler (toplam - alınan)
     }
   });
   const [recentActivities, setRecentActivities] = useState([]);
@@ -71,10 +77,19 @@ export default function Page() {
         fetch('/api/opportunities/recent').then(res => res.json())
       ]);
 
+      // Payment stats'ı yeni sisteme göre işle
+      const paymentData = paymentStats.data || {};
+      
       setStats({
         customers: customerStats.data || { total: 0, recentlyAdded: 0 },
         opportunities: opportunityStats.data || { total: 0, byStatus: {}, byType: {}, recentlyAdded: 0 },
-        payments: paymentStats.data || { totalRevenue: 0, pendingPayments: 0, paidAmount: 0 }
+        payments: {
+          totalRevenue: paymentData.totalRevenue || 0,
+          receivedAmount: paymentData.receivedAmount || 0,
+          expenseAmount: paymentData.expenseAmount || 0,
+          netRevenue: paymentData.netRevenue || 0,
+          pendingPayments: paymentData.pendingPayments || 0
+        }
       });
       setRecentActivities(activities.data || []);
     } catch (error) {
@@ -148,7 +163,7 @@ export default function Page() {
         </div>
 
         {/* İstatistik Kartları */}
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-8">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-5 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Toplam Müşteri</CardTitle>
@@ -196,15 +211,32 @@ export default function Page() {
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Bekleyen Ödemeler</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Net Gelir</CardTitle>
+              <Wallet className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className={`text-2xl font-bold ${stats.payments.netRevenue >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {loading ? '...' : formatCurrency(stats.payments.netRevenue)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Alınan: {formatCurrency(stats.payments.receivedAmount)} | Gider: {formatCurrency(stats.payments.expenseAmount)}
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Bekleyen Ödemeler</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600">
                 {loading ? '...' : formatCurrency(stats.payments.pendingPayments)}
               </div>
               <p className="text-xs text-muted-foreground">
-                Ödenen: {formatCurrency(stats.payments.paidAmount)}
+                <Link href="/bekleyen-odemeler" className="hover:underline text-blue-600">
+                  Toplam: {formatCurrency(stats.payments.totalRevenue)} →
+                </Link>
               </p>
             </CardContent>
           </Card>
@@ -263,7 +295,7 @@ export default function Page() {
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">Ödenen Tutar:</span>
                     <span className="text-lg font-bold text-green-600">
-                      {formatCurrency(stats.payments.paidAmount)}
+                      {formatCurrency(stats.payments.receivedAmount)}
                     </span>
                   </div>
                   <div className="pt-2 border-t">

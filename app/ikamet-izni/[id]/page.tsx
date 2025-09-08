@@ -11,6 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { IIkametIzniFirsati, FirsatDurumu, ParaBirimi } from '@/types/Opportunity';
 import { formatDate } from '@/lib/utils';
+import { getPaymentStatusLabel, getPaymentStatusVariant, getPaymentStatusDescription } from '@/lib/payment-utils';
+import { UcretDisplayCard } from '@/components/UcretDisplayCard';
 
 // Tarih değerini güvenli bir şekilde formatlayan yardımcı fonksiyon
 const formatDateForInput = (dateValue: unknown): string => {
@@ -37,8 +39,8 @@ export default function IkametIzniDetailPage() {
   const [editData, setEditData] = useState<{
     durum?: string;
     detaylar?: Record<string, unknown>;
-    ucretler?: Array<Record<string, unknown>>;
-    aciklamalar?: Array<Record<string, unknown>>;
+    ucretler?: any[];
+    aciklamalar?: any[];
   } | null>(null);
   const [uploadingPdfs, setUploadingPdfs] = useState(false);
   const [pdfFiles, setPdfFiles] = useState<File[]>([]);
@@ -468,7 +470,7 @@ export default function IkametIzniDetailPage() {
                         <span className="font-medium text-gray-600">Kayıt Numarası:</span>
                         {editMode ? (
                           <Input
-                            value={editData.detaylar?.kayit_numarasi || ''}
+                            value={editData.detaylar?.kayit_numarasi as string || ''}
                             onChange={(e) => setEditData({
                               ...editData,
                               detaylar: { ...editData.detaylar, kayit_numarasi: e.target.value }
@@ -486,7 +488,7 @@ export default function IkametIzniDetailPage() {
                         <span className="font-medium text-gray-600">Yapılan İşlem:</span>
                         {editMode ? (
                           <Input
-                            value={editData.detaylar?.yapilan_islem || ''}
+                            value={editData.detaylar?.yapilan_islem as string || ''}
                             onChange={(e) => setEditData({
                               ...editData,
                               detaylar: { ...editData.detaylar, yapilan_islem: e.target.value }
@@ -504,7 +506,7 @@ export default function IkametIzniDetailPage() {
                         <span className="font-medium text-gray-600">İkamet Türü:</span>
                         {editMode ? (
                           <Input
-                            value={editData.detaylar?.ikamet_turu || ''}
+                            value={editData.detaylar?.ikamet_turu as string || ''}
                             onChange={(e) => setEditData({
                               ...editData,
                               detaylar: { ...editData.detaylar, ikamet_turu: e.target.value }
@@ -585,7 +587,7 @@ export default function IkametIzniDetailPage() {
                     <span className="font-medium text-gray-600">İkamet İzni Notları:</span>
                     {editMode ? (
                       <Textarea
-                        value={editData.detaylar?.notlar || ''}
+                        value={editData.detaylar?.notlar as string || ''}
                         onChange={(e) => setEditData({
                           ...editData,
                           detaylar: { ...editData.detaylar, notlar: e.target.value }
@@ -725,8 +727,9 @@ export default function IkametIzniDetailPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {editData.ucretler?.map((ucret: any, index: number) => (
+                  {editMode ? (
+                    <div className="space-y-3">
+                      {editData.ucretler?.map((ucret: any, index: number) => (
                       <div key={index} className="p-3 bg-gray-50 rounded-lg">
                         {editMode ? (
                           <div className="space-y-3">
@@ -775,9 +778,9 @@ export default function IkametIzniDetailPage() {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="beklemede">Beklemede</SelectItem>
-                                <SelectItem value="odendi">Ödendi</SelectItem>
-                                <SelectItem value="iptal_edildi">İptal Edildi</SelectItem>
+                                <SelectItem value="toplam_ucret">Toplam Ücret</SelectItem>
+                                <SelectItem value="alinan_ucret">Alınan Ücret</SelectItem>
+                                <SelectItem value="gider">Gider</SelectItem>
                               </SelectContent>
                             </Select>
                             <Input
@@ -793,8 +796,8 @@ export default function IkametIzniDetailPage() {
                               <span className="font-medium text-lg">
                                 {formatCurrency(ucret.miktar)} {ucret.para_birimi}
                               </span>
-                              <Badge variant={ucret.odeme_durumu === 'odendi' ? 'default' : 'secondary'}>
-                                {ucret.odeme_durumu}
+                              <Badge variant={getPaymentStatusVariant(ucret.odeme_durumu)}>
+                                {getPaymentStatusLabel(ucret.odeme_durumu)}
                               </Badge>
                             </div>
                             {ucret.aciklama && (
@@ -807,9 +810,12 @@ export default function IkametIzniDetailPage() {
                             )}
                           </>
                         )}
-                      </div>
-                    ))}
-                  </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <UcretDisplayCard ucretler={editData.ucretler || []} />
+                  )}
                 </CardContent>
               </Card>
 

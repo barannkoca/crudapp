@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import ListPageTemplate from '@/components/ListPageTemplate';
 import { formatDate } from '@/lib/utils';
+import { getPaymentStatusLabel, getPaymentStatusVariant } from '@/lib/payment-utils';
 import { DollarSign, Search, Filter, Eye } from 'lucide-react';
 
 interface PendingPayment {
@@ -114,16 +115,23 @@ function BekleyenOdemelerPageContent() {
         params.set('status', searchParams.get('status')!);
       }
       
-      // Sadece bekleyen ödemeleri getir
-      params.set('payment_status', 'beklemede');
+      // Tüm kayıtları getir, filtrelemeyi frontend'de yapacağız
+      // params.set('payment_status', 'toplam_ucret');
       
       const response = await fetch(`/api/opportunities?${params.toString()}`);
       
       if (response.ok) {
         const data = await response.json();
-        setPendingPayments(data.data || []);
+        
+        // Sadece bekleyen ödemesi olan kayıtları filtrele
+        const filteredPayments = (data.data || []).filter((payment: PendingPayment) => {
+          const pendingAmount = getPendingAmount(payment.ucretler);
+          return pendingAmount > 0;
+        });
+        
+        setPendingPayments(filteredPayments);
         setTotalPages(data.pagination?.totalPages || 1);
-        setTotalCount(data.pagination?.total || 0);
+        setTotalCount(filteredPayments.length);
       } else {
         setError('Bekleyen ödemeler yüklenirken hata oluştu');
       }
@@ -172,9 +180,20 @@ function BekleyenOdemelerPageContent() {
   };
 
   const getPendingAmount = (ucretler: any[]) => {
-    return ucretler
-      .filter(u => u.odeme_durumu === 'beklemede')
+    // Toplam Ücret - Alınan Ücret - Gider = Bekleyen Ödeme
+    const toplamUcret = ucretler
+      .filter(u => u.odeme_durumu === 'toplam_ucret')
       .reduce((sum, u) => sum + (u.miktar || 0), 0);
+      
+    const alinanUcret = ucretler
+      .filter(u => u.odeme_durumu === 'alinan_ucret')
+      .reduce((sum, u) => sum + (u.miktar || 0), 0);
+      
+    const gider = ucretler
+      .filter(u => u.odeme_durumu === 'gider')
+      .reduce((sum, u) => sum + (u.miktar || 0), 0);
+    
+    return Math.max(0, toplamUcret - alinanUcret - gider);
   };
 
   // Pagination için özel handler
@@ -186,7 +205,7 @@ function BekleyenOdemelerPageContent() {
   return (
     <ListPageTemplate
       title="Bekleyen Ödemeler"
-      subtitle={`Toplam ${totalCount} bekleyen ödeme`}
+      subtitle={`Toplam ${totalCount} ödeme bekleyen iş`}
       totalCount={totalCount}
       searchTerm={searchTerm}
       onSearchChange={setSearchTerm}
@@ -302,9 +321,19 @@ function BekleyenOdemelerPageContent() {
                   </div>
                 </TableCell>
                 <TableCell className="w-32">
-                  <span className="text-lg font-bold text-orange-600">
-                    {formatCurrency(getPendingAmount(payment.ucretler))}
-                  </span>
+                  <div className="text-sm">
+                    <div className="text-lg font-bold text-orange-600">
+                      {formatCurrency(getPendingAmount(payment.ucretler))}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {(() => {
+                        const toplam = payment.ucretler.filter(u => u.odeme_durumu === 'toplam_ucret').reduce((sum, u) => sum + (u.miktar || 0), 0);
+                        const alinan = payment.ucretler.filter(u => u.odeme_durumu === 'alinan_ucret').reduce((sum, u) => sum + (u.miktar || 0), 0);
+                        const gider = payment.ucretler.filter(u => u.odeme_durumu === 'gider').reduce((sum, u) => sum + (u.miktar || 0), 0);
+                        return `${formatCurrency(toplam)} - ${formatCurrency(alinan)} - ${formatCurrency(gider)}`;
+                      })()}
+                    </div>
+                  </div>
                 </TableCell>
                 <TableCell className="w-32">
                   {payment.olusturma_tarihi ? formatDate(payment.olusturma_tarihi) : '-'}

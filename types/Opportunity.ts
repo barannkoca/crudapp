@@ -8,13 +8,15 @@ export enum ParaBirimi {
   GBP = 'GBP'
 }
 
-// Ücret entity'si
+// Ücret entity'si - Güncellenmiş yapı
 export interface IUcret {
-  miktar: number;
+  miktar: number; // Mevcut alan korundu
   para_birimi: ParaBirimi;
   aciklama?: string;
   odeme_tarihi?: Date;
-  odeme_durumu: 'beklemede' | 'odendi' | 'iptal_edildi';
+  
+  // Yeni ödeme durumu
+  odeme_durumu: 'toplam_ucret' | 'alinan_ucret' | 'gider';
 }
 
 // Açıklama entity'si

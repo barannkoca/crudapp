@@ -36,7 +36,7 @@ export const PricingStep: React.FC<PricingStepProps> = ({
       miktar: 0,
       para_birimi: ParaBirimiDto.TRY,
       aciklama: '',
-      odeme_durumu: 'beklemede'
+      odeme_durumu: 'toplam_ucret'
     };
     const newUcretler = [...ucretler, newUcret];
     setUcretler(newUcretler);
@@ -146,7 +146,7 @@ export const PricingStep: React.FC<PricingStepProps> = ({
 
                 {/* Ödeme Durumu */}
                 <div>
-                  <Label className="text-xs font-medium">Ödeme Durumu</Label>
+                  <Label className="text-xs font-medium">Ödeme Türü</Label>
                   <Select 
                     value={ucret.odeme_durumu} 
                     onValueChange={(value) => updateUcret(index, 'odeme_durumu', value)}
@@ -155,11 +155,16 @@ export const PricingStep: React.FC<PricingStepProps> = ({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="beklemede">Beklemede</SelectItem>
-                      <SelectItem value="odendi">Ödendi</SelectItem>
-                      <SelectItem value="iptal_edildi">İptal</SelectItem>
+                      <SelectItem value="toplam_ucret">Toplam Ücret</SelectItem>
+                      <SelectItem value="alinan_ucret">Alınan Ücret</SelectItem>
+                      <SelectItem value="gider">Gider</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {ucret.odeme_durumu === 'toplam_ucret' && 'Anlaşılan toplam ücret'}
+                    {ucret.odeme_durumu === 'alinan_ucret' && 'Ödenen miktar'}
+                    {ucret.odeme_durumu === 'gider' && 'Masraf/gider'}
+                  </p>
                 </div>
 
                 {/* Açıklama ve Sil */}

@@ -29,7 +29,7 @@ export interface UcretDto {
   para_birimi: ParaBirimiDto;
   aciklama?: string;
   odeme_tarihi?: Date;
-  odeme_durumu: 'beklemede' | 'odendi' | 'iptal_edildi';
+  odeme_durumu: 'toplam_ucret' | 'alinan_ucret' | 'gider';
 }
 
 export interface AciklamaDto {
@@ -124,7 +124,7 @@ export interface OpportunityFilterDto {
   sort_by?: 'olusturma_tarihi' | 'guncelleme_tarihi';
   sort_order?: 'asc' | 'desc';
   // Ödeme durumu filtresi
-  payment_status?: 'beklemede' | 'odendi' | 'iptal_edildi';
+  payment_status?: 'toplam_ucret' | 'alinan_ucret' | 'gider';
 }
 
 // Sıra numarası DTO'ları kaldırıldı - Tarih bazlı sıralama kullanılacak

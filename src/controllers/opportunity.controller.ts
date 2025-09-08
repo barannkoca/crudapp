@@ -32,7 +32,7 @@ export class OpportunityController extends BaseController {
         search: queryParams.search,
         sort_by: queryParams.sort_by as 'olusturma_tarihi' | 'guncelleme_tarihi',
         sort_order: queryParams.sort_order as 'asc' | 'desc',
-        payment_status: queryParams.payment_status as 'beklemede' | 'odendi' | 'iptal_edildi',
+        payment_status: queryParams.payment_status as 'toplam_ucret' | 'alinan_ucret' | 'gider',
         ...dateRange
       });
 

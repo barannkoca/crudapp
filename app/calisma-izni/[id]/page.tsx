@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ICalismaIzniFirsati, FirsatDurumu, ParaBirimi } from '@/types/Opportunity';
 import { formatDate } from '@/lib/utils';
+import { getPaymentStatusLabel, getPaymentStatusVariant, getPaymentStatusDescription } from '@/lib/payment-utils';
+import { UcretDisplayCard } from '@/components/UcretDisplayCard';
 
 export default function CalismaIzniDetailPage() {
   const params = useParams();
@@ -665,10 +667,10 @@ export default function CalismaIzniDetailPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {editData.ucretler?.map((ucret: any, index: number) => (
-                      <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                        {editMode ? (
+                  {editMode ? (
+                    <div className="space-y-3">
+                      {editData.ucretler?.map((ucret: any, index: number) => (
+                        <div key={index} className="p-3 bg-gray-50 rounded-lg">
                           <div className="space-y-3">
                             <div className="flex justify-between items-center">
                               <span className="font-medium text-sm">Ücret {index + 1}</span>
@@ -715,9 +717,9 @@ export default function CalismaIzniDetailPage() {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="beklemede">Beklemede</SelectItem>
-                                <SelectItem value="odendi">Ödendi</SelectItem>
-                                <SelectItem value="iptal_edildi">İptal Edildi</SelectItem>
+                                <SelectItem value="toplam_ucret">Toplam Ücret</SelectItem>
+                                <SelectItem value="alinan_ucret">Alınan Ücret</SelectItem>
+                                <SelectItem value="gider">Gider</SelectItem>
                               </SelectContent>
                             </Select>
                             <Input
@@ -729,33 +731,12 @@ export default function CalismaIzniDetailPage() {
                               placeholder="Ödeme Tarihi"
                             />
                           </div>
-                        ) : (
-                          <>
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="font-medium text-lg">
-                                {ucret.miktar ? new Intl.NumberFormat('tr-TR', {
-                                  style: 'currency',
-                                  currency: 'TRY',
-                                  minimumFractionDigits: 0
-                                }).format(ucret.miktar) : 'Belirtilmemiş'} {ucret.para_birimi}
-                              </span>
-                              <Badge variant={ucret.odeme_durumu === 'odendi' ? 'default' : 'secondary'}>
-                                {ucret.odeme_durumu}
-                              </Badge>
-                            </div>
-                            {ucret.aciklama && (
-                              <p className="text-sm text-muted-foreground">{ucret.aciklama}</p>
-                            )}
-                            {ucret.odeme_tarihi && (
-                              <p className="text-xs text-muted-foreground">
-                                Ödeme Tarihi: {formatDate(ucret.odeme_tarihi)}
-                              </p>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <UcretDisplayCard ucretler={editData.ucretler || []} />
+                  )}
                 </CardContent>
               </Card>
 

@@ -11,6 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { IDigerFirsati, FirsatDurumu, ParaBirimi } from '@/types/Opportunity';
 import { formatDate } from '@/lib/utils';
+import { getPaymentStatusLabel, getPaymentStatusVariant, getPaymentStatusDescription } from '@/lib/payment-utils';
+import { UcretDisplayCard } from '@/components/UcretDisplayCard';
 
 export default function DigerIslemlerDetailPage() {
   const params = useParams();
@@ -709,8 +711,9 @@ export default function DigerIslemlerDetailPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {editData.ucretler?.map((ucret: any, index: number) => (
+                  {editMode ? (
+                    <div className="space-y-3">
+                      {editData.ucretler?.map((ucret: any, index: number) => (
                       <div key={index} className="p-3 bg-gray-50 rounded-lg">
                         {editMode ? (
                           <div className="space-y-3">
@@ -759,9 +762,9 @@ export default function DigerIslemlerDetailPage() {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="beklemede">Beklemede</SelectItem>
-                                <SelectItem value="odendi">Ödendi</SelectItem>
-                                <SelectItem value="iptal_edildi">İptal Edildi</SelectItem>
+                                <SelectItem value="toplam_ucret">Toplam Ücret</SelectItem>
+                                <SelectItem value="alinan_ucret">Alınan Ücret</SelectItem>
+                                <SelectItem value="gider">Gider</SelectItem>
                               </SelectContent>
                             </Select>
                             <Input
@@ -779,8 +782,8 @@ export default function DigerIslemlerDetailPage() {
                               <span className="font-medium text-lg">
                                 {formatCurrency(ucret.miktar)} {ucret.para_birimi}
                               </span>
-                              <Badge variant={ucret.odeme_durumu === 'odendi' ? 'default' : 'secondary'}>
-                                {ucret.odeme_durumu}
+                              <Badge variant={getPaymentStatusVariant(ucret.odeme_durumu)}>
+                                {getPaymentStatusLabel(ucret.odeme_durumu)}
                               </Badge>
                             </div>
                             {ucret.aciklama && (
@@ -793,9 +796,12 @@ export default function DigerIslemlerDetailPage() {
                             )}
                           </>
                         )}
-                      </div>
-                    ))}
-                  </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <UcretDisplayCard ucretler={editData.ucretler || []} />
+                  )}
                 </CardContent>
               </Card>
 

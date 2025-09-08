@@ -186,13 +186,21 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
     return activities;
   }
 
-  // Ödeme durumu istatistikleri
+  // Ödeme durumu istatistikleri - Yeni sistem
   async getPaymentStats(): Promise<{
-    totalRevenue: number;
-    pendingPayments: number;
-    paidAmount: number;
-    cancelledAmount: number;
-    byType: { [key: string]: { total: number; paid: number; pending: number } };
+    totalRevenue: number; // Toplam anlaşılan ücret
+    receivedAmount: number; // Alınan ödeme miktarı
+    expenseAmount: number; // Gider miktarı
+    netRevenue: number; // Net gelir (alınan - gider)
+    pendingPayments: number; // Bekleyen ödemeler (toplam - alınan)
+    byType: { 
+      [key: string]: { 
+        total: number; // Toplam anlaşılan ücret
+        received: number; // Alınan ödeme
+        expense: number; // Gider
+        net: number; // Net (alınan - gider)
+      } 
+    };
   }> {
     const paymentStats = await this.aggregate([
       { $unwind: { path: '$ucretler', preserveNullAndEmptyArrays: false } },
@@ -210,10 +218,9 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
     ]);
 
     let totalRevenue = 0;
-    let pendingPayments = 0;
-    let paidAmount = 0;
-    let cancelledAmount = 0;
-    const byType: { [key: string]: { total: number; paid: number; pending: number } } = {};
+    let receivedAmount = 0;
+    let expenseAmount = 0;
+    const byType: { [key: string]: { total: number; received: number; expense: number; net: number } } = {};
 
     paymentStats.forEach((stat: any) => {
       const islemTuru = stat._id.islem_turu;
@@ -221,33 +228,42 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
       const amount = stat.totalAmount || 0;
 
       if (!byType[islemTuru]) {
-        byType[islemTuru] = { total: 0, paid: 0, pending: 0 };
+        byType[islemTuru] = { total: 0, received: 0, expense: 0, net: 0 };
       }
-
-      byType[islemTuru].total += amount;
 
       switch (odemeDurumu) {
-        case 'odendi':
-          paidAmount += amount;
-          byType[islemTuru].paid += amount;
+        case 'toplam_ucret':
+          totalRevenue += amount;
+          byType[islemTuru].total += amount;
           break;
-        case 'beklemede':
-          pendingPayments += amount;
-          byType[islemTuru].pending += amount;
+        case 'alinan_ucret':
+          receivedAmount += amount;
+          byType[islemTuru].received += amount;
           break;
-        case 'iptal_edildi':
-          cancelledAmount += amount;
+        case 'gider':
+          expenseAmount += amount;
+          byType[islemTuru].expense += amount;
           break;
       }
-
-      totalRevenue += amount;
     });
+
+    // Net gelir hesapla
+    const netRevenue = receivedAmount - expenseAmount;
+    
+    // İşlem türü bazında net hesapla
+    Object.keys(byType).forEach(islemTuru => {
+      byType[islemTuru].net = byType[islemTuru].received - byType[islemTuru].expense;
+    });
+
+    // Bekleyen ödemeler = Toplam ücret - Alınan ücret
+    const pendingPayments = Math.max(0, totalRevenue - receivedAmount);
 
     return {
       totalRevenue,
+      receivedAmount,
+      expenseAmount,
+      netRevenue,
       pendingPayments,
-      paidAmount,
-      cancelledAmount,
       byType
     };
   }

@@ -124,6 +124,13 @@ export const PARA_BIRIMLERI = {
   GBP: 'GBP'
 } as const;
 
+// Ödeme durumları - Yeni sistem
+export const ODEME_DURUMLARI = {
+  TOPLAM_UCRET: 'toplam_ucret', // Anlaşılan toplam ücret
+  ALINAN_UCRET: 'alinan_ucret', // Ödenen miktar  
+  GIDER: 'gider' // Masraflar
+} as const;
+
 // Cinsiyet seçenekleri
 export const CINSIYETLER = {
   ERKEK: 'Erkek',

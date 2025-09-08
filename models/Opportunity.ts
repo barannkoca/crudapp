@@ -12,8 +12,8 @@ const UcretSchema = new mongoose.Schema({
   odeme_tarihi: { type: Date },
   odeme_durumu: { 
     type: String, 
-    enum: ['beklemede', 'odendi', 'iptal_edildi'],
-    default: 'beklemede'
+    enum: ['toplam_ucret', 'alinan_ucret', 'gider'],
+    default: 'toplam_ucret'
   }
 }, { _id: false });
 
