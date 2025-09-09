@@ -206,7 +206,7 @@ export default function CustomerDetailPage() {
           <div className="flex gap-2">
             <Button 
               variant="outline" 
-              onClick={() => router.push('/customers')}
+              onClick={() => router.back()}
             >
               Geri Dön
             </Button>

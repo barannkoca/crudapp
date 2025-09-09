@@ -31,7 +31,10 @@ export const UcretDisplayCard: React.FC<UcretDisplayCardProps> = ({ ucretler }) 
   const toplamMiktar = toplamUcret.reduce((sum, u) => sum + (u.miktar || 0), 0);
   const alinanMiktar = alinanUcret.reduce((sum, u) => sum + (u.miktar || 0), 0);
   const giderMiktar = giderler.reduce((sum, u) => sum + (u.miktar || 0), 0);
-  const kalanMiktar = toplamMiktar - alinanMiktar - giderMiktar;
+  
+  // Yeni hesaplama sistemi
+  const netGelir = alinanMiktar - giderMiktar; // Net Gelir = Alınan Ücret - Gider
+  const beklenenOdeme = toplamMiktar - alinanMiktar; // Beklenen Ödeme = Toplam Ücret - Alınan Ücret
 
   if (!ucretler || ucretler.length === 0) {
     return (
@@ -53,25 +56,7 @@ export const UcretDisplayCard: React.FC<UcretDisplayCardProps> = ({ ucretler }) 
         </div>
       )}
 
-      {/* Giderler */}
-      {giderMiktar > 0 && (
-        <div>
-          <div className="text-xs text-red-600 mb-1">Giderler</div>
-          {giderler.map((gider, index) => (
-            <div key={index} className="text-red-700 ml-2">
-              <span className="font-medium">
-                -{formatCurrency(gider.miktar, gider.para_birimi)}
-              </span>
-              {gider.aciklama && <span className="ml-2">{gider.aciklama}</span>}
-              {gider.odeme_tarihi && (
-                <span className="ml-2 text-xs text-red-500">
-                  {formatDate(gider.odeme_tarihi)}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+
 
       {/* Ödenenler */}
       {alinanMiktar > 0 && (
@@ -80,7 +65,7 @@ export const UcretDisplayCard: React.FC<UcretDisplayCardProps> = ({ ucretler }) 
           {alinanUcret.map((odeme, index) => (
             <div key={index} className="text-green-700 ml-2">
               <span className="font-medium">
-                -{formatCurrency(odeme.miktar, odeme.para_birimi)}
+                {formatCurrency(odeme.miktar, odeme.para_birimi)}
               </span>
               {odeme.aciklama && <span className="ml-2">{odeme.aciklama}</span>}
               {odeme.odeme_tarihi && (
@@ -93,11 +78,40 @@ export const UcretDisplayCard: React.FC<UcretDisplayCardProps> = ({ ucretler }) 
         </div>
       )}
 
-      {/* Alacak Tutar */}
-      {kalanMiktar > 0 && (
+      {/* Giderler */}
+      {giderMiktar > 0 && (
+        <div>
+          <div className="text-xs text-red-600 mb-1">Giderler</div>
+          {giderler.map((gider, index) => (
+            <div key={index} className="text-red-700 ml-2">
+              <span className="font-medium">
+                {formatCurrency(gider.miktar, gider.para_birimi)}
+              </span>
+              {gider.aciklama && <span className="ml-2">{gider.aciklama}</span>}
+              {gider.odeme_tarihi && (
+                <span className="ml-2 text-xs text-red-500">
+                  {formatDate(gider.odeme_tarihi)}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Net Gelir */}
+      {(alinanMiktar > 0 || giderMiktar > 0) && (
+        <div className="pt-2 border-t border-gray-200">
+          <div className={`font-bold ${netGelir >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+            Net Gelir: {formatCurrency(netGelir)}
+          </div>
+        </div>
+      )}
+
+      {/* Beklenen Ödeme */}
+      {beklenenOdeme > 0 && (
         <div className="pt-2 border-t border-gray-200">
           <div className="text-orange-700 font-bold">
-            Alacak Tutar: {formatCurrency(kalanMiktar)}
+            Beklenen Ödeme: {formatCurrency(beklenenOdeme)}
           </div>
         </div>
       )}

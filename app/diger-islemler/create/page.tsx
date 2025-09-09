@@ -88,7 +88,7 @@ export default function DigerIslemlerCreatePage() {
   };
 
   const handleCancel = () => {
-    router.push('/diger-islemler');
+    router.back();
   };
 
   return (

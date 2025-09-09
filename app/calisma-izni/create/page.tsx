@@ -106,7 +106,7 @@ export default function CalismaIzniCreatePage() {
   };
 
   const handleCancel = () => {
-    router.push('/calisma-izni');
+    router.back();
   };
 
   return (

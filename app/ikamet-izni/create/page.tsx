@@ -80,7 +80,7 @@ export default function IkametIzniCreatePage() {
     }
   };
 
-  const handleCancel = () => router.push('/ikamet-izni');
+  const handleCancel = () => router.back();
 
   return (
     <OpportunityFormWrapper

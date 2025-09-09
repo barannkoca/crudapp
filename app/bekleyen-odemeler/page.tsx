@@ -180,7 +180,7 @@ function BekleyenOdemelerPageContent() {
   };
 
   const getPendingAmount = (ucretler: any[]) => {
-    // Toplam Ücret - Alınan Ücret - Gider = Bekleyen Ödeme
+    // Yeni sistem: Beklenen Ödeme = Toplam Ücret - Alınan Ücret
     const toplamUcret = ucretler
       .filter(u => u.odeme_durumu === 'toplam_ucret')
       .reduce((sum, u) => sum + (u.miktar || 0), 0);
@@ -188,12 +188,8 @@ function BekleyenOdemelerPageContent() {
     const alinanUcret = ucretler
       .filter(u => u.odeme_durumu === 'alinan_ucret')
       .reduce((sum, u) => sum + (u.miktar || 0), 0);
-      
-    const gider = ucretler
-      .filter(u => u.odeme_durumu === 'gider')
-      .reduce((sum, u) => sum + (u.miktar || 0), 0);
     
-    return Math.max(0, toplamUcret - alinanUcret - gider);
+    return Math.max(0, toplamUcret - alinanUcret);
   };
 
   // Pagination için özel handler
@@ -329,8 +325,7 @@ function BekleyenOdemelerPageContent() {
                       {(() => {
                         const toplam = payment.ucretler.filter(u => u.odeme_durumu === 'toplam_ucret').reduce((sum, u) => sum + (u.miktar || 0), 0);
                         const alinan = payment.ucretler.filter(u => u.odeme_durumu === 'alinan_ucret').reduce((sum, u) => sum + (u.miktar || 0), 0);
-                        const gider = payment.ucretler.filter(u => u.odeme_durumu === 'gider').reduce((sum, u) => sum + (u.miktar || 0), 0);
-                        return `${formatCurrency(toplam)} - ${formatCurrency(alinan)} - ${formatCurrency(gider)}`;
+                        return `${formatCurrency(toplam)} - ${formatCurrency(alinan)}`;
                       })()}
                     </div>
                   </div>

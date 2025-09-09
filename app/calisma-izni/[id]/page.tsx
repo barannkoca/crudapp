@@ -273,15 +273,15 @@ export default function CalismaIzniDetailPage() {
       {/* Header */}
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-6 w-full">
         <div className="flex items-center gap-2">
-          <Link 
-            href="/calisma-izni"
+          <button 
+            onClick={() => router.back()}
             className="inline-flex items-center px-3 py-2 text-sm font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors duration-200"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
             </svg>
             Çalışma İzni Listesi
-          </Link>
+          </button>
           <div className="ml-4">
             <h1 className="text-xl font-semibold text-blue-700">
               Çalışma İzni Detayları
