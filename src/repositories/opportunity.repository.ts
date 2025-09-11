@@ -202,8 +202,11 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
       } 
     };
   }> {
+    // Daha performanslı aggregation - sadece ücret bilgisi olan kayıtları işle
     const paymentStats = await this.aggregate([
-      { $unwind: { path: '$ucretler', preserveNullAndEmptyArrays: false } },
+      // Sadece ücret bilgisi olan kayıtları filtrele
+      { $match: { 'ucretler': { $exists: true, $ne: [], $not: { $size: 0 } } } },
+      { $unwind: { path: '$ucretler' } },
       { $match: { 'ucretler.miktar': { $exists: true, $ne: null, $gt: 0 } } },
       {
         $group: {
