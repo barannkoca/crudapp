@@ -65,16 +65,15 @@ export default function Page() {
     fetchDashboardStats();
   }, []);
 
-
   const fetchDashboardStats = async () => {
     try {
       setLoading(true);
       
-      // Paralel olarak tüm istatistikleri çek (düzeltilmiş payment-stats API'sini kullan)
+      // Paralel olarak tüm istatistikleri çek
       const [customerStats, opportunityStats, paymentStats, activities] = await Promise.all([
         fetch('/api/customers/stats').then(res => res.json()),
         fetch('/api/opportunities/stats').then(res => res.json()),
-        fetch('/api/opportunities/payment-stats').then(res => res.json()), // Düzeltilmiş API
+        fetch('/api/opportunities/payment-stats').then(res => res.json()),
         fetch('/api/opportunities/recent').then(res => res.json())
       ]);
 
