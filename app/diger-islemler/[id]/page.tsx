@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { IDigerFirsati, FirsatDurumu, ParaBirimi } from '@/types/Opportunity';
 import { formatDate } from '@/lib/utils';
 import { getPaymentStatusLabel, getPaymentStatusVariant, getPaymentStatusDescription } from '@/lib/payment-utils';
@@ -25,6 +26,8 @@ export default function DigerIslemlerDetailPage() {
   const [editData, setEditData] = useState<any>(null);
   const [uploadingPdfs, setUploadingPdfs] = useState(false);
   const [pdfFiles, setPdfFiles] = useState<File[]>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -256,6 +259,28 @@ export default function DigerIslemlerDetailPage() {
     }
   };
 
+  const deleteOpportunity = async () => {
+    if (!opportunity) return;
+    
+    try {
+      setDeleting(true);
+      const response = await fetch(`/api/opportunities/${opportunity._id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        router.push('/diger-islemler');
+      } else {
+        setError('İşlem silinirken hata oluştu');
+      }
+    } catch (error) {
+      setError('İşlem silinirken hata oluştu');
+    } finally {
+      setDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col w-full">
@@ -370,16 +395,62 @@ export default function DigerIslemlerDetailPage() {
                 </Button>
               </>
             ) : (
-              <Button 
-                size="sm" 
-                onClick={() => setEditMode(true)}
-                className="bg-purple-600 hover:bg-purple-700"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Düzenle
-              </Button>
+              <>
+                <Button 
+                  size="sm" 
+                  onClick={() => setEditMode(true)}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Düzenle
+                </Button>
+                <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      size="sm"
+                      variant="destructive"
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Sil
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>İşlemi Sil</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Bu işlemi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+                      </p>
+                      <p className="text-sm font-medium">
+                        Müşteri: {opportunity.musteri?.ad} {opportunity.musteri?.soyad}
+                      </p>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setShowDeleteDialog(false)}
+                        disabled={deleting}
+                      >
+                        İptal
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        onClick={deleteOpportunity}
+                        disabled={deleting}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        {deleting ? 'Siliniyor...' : 'Sil'}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </>
             )}
           </div>
         </div>
