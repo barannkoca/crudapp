@@ -53,13 +53,6 @@ export default function CalismaIzniCreatePage() {
         return;
       }
 
-      if (!formData.detaylar?.isveren || !formData.detaylar?.pozisyon || 
-          !formData.detaylar?.kayit_tarihi || !formData.detaylar?.calisma_izni_bitis_tarihi) {
-        console.log('❌ Validation failed: Missing work permit details');
-        toast.error('Lütfen tüm çalışma izni detaylarını doldurun');
-        return;
-      }
-
       console.log('✅ Validation passed, sending to API');
       
       const payload = {
