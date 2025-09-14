@@ -42,34 +42,35 @@ function DigerIslemlerPageContent() {
 
   // URL'i güncelle
   const updateURL = useCallback((params: { page?: number; search?: string; status?: string }) => {
-    const url = new URL(window.location.href);
+    const newParams = new URLSearchParams(searchParams);
     
     if (params.page !== undefined) {
       if (params.page === 1) {
-        url.searchParams.delete('page');
+        newParams.delete('page');
       } else {
-        url.searchParams.set('page', params.page.toString());
+        newParams.set('page', params.page.toString());
       }
     }
     
     if (params.search !== undefined) {
       if (params.search === '') {
-        url.searchParams.delete('search');
+        newParams.delete('search');
       } else {
-        url.searchParams.set('search', params.search);
+        newParams.set('search', params.search);
       }
     }
     
     if (params.status !== undefined) {
       if (params.status === 'all') {
-        url.searchParams.delete('status');
+        newParams.delete('status');
       } else {
-        url.searchParams.set('status', params.status);
+        newParams.set('status', params.status);
       }
     }
     
-    router.replace(url.pathname + url.search, { scroll: false });
-  }, [router]);
+    const newURL = newParams.toString() ? `?${newParams.toString()}` : '';
+    router.replace(`/diger-islemler${newURL}`, { scroll: false });
+  }, [router, searchParams]);
 
   // Debounce search term
   useEffect(() => {
@@ -89,15 +90,19 @@ function DigerIslemlerPageContent() {
     }
   }, [searchTerm, debouncedSearchTerm]);
 
-  // URL'i güncelle - arama değişiklikleri
+  // Arama değiştiğinde sayfa 1'e dön ve URL'i güncelle
   useEffect(() => {
-    updateURL({ search: debouncedSearchTerm });
-  }, [debouncedSearchTerm, updateURL]);
+    if (debouncedSearchTerm !== initialSearch) {
+      updateURL({ search: debouncedSearchTerm, page: 1 });
+    }
+  }, [debouncedSearchTerm, updateURL, initialSearch]);
 
-  // URL'i güncelle - filtre değişiklikleri
+  // Filtre değiştiğinde sayfa 1'e dön ve URL'i güncelle
   useEffect(() => {
-    updateURL({ status: statusFilter });
-  }, [statusFilter, updateURL]);
+    if (statusFilter !== initialStatus) {
+      updateURL({ status: statusFilter, page: 1 });
+    }
+  }, [statusFilter, updateURL, initialStatus]);
 
   // URL parametreleri değiştiğinde state'i güncelle
   useEffect(() => {
