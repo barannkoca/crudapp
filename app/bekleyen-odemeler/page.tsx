@@ -141,7 +141,24 @@ function BekleyenOdemelerPageContent() {
   }, [fetchPendingPayments]);
 
   const handleRowClick = (payment: PendingPayment) => {
-    router.push(`/${payment.islem_turu}/${payment._id}`);
+    // İşlem türü isimlerini URL formatına çevir
+    const urlMapping: { [key: string]: string } = {
+      'calisma_izni': 'calisma-izni',
+      'ikamet_izni': 'ikamet-izni', 
+      'diger': 'diger-islemler'
+    };
+    
+    const urlPath = urlMapping[payment.islem_turu] || payment.islem_turu;
+    const fullUrl = `/${urlPath}/${payment._id}`;
+    
+    console.log('🔗 Row click:', {
+      islem_turu: payment.islem_turu,
+      urlPath: urlPath,
+      fullUrl: fullUrl,
+      id: payment._id
+    });
+    
+    router.push(fullUrl);
   };
 
   const getStatusColor = (status: string) => {
