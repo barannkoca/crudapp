@@ -79,6 +79,81 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
     );
   }
 
+  // Bekleyen ödemeleri getir
+  async findPendingPayments(
+    filters: OpportunityFilterDto, 
+    pagination?: { page: number; limit: number }
+  ): Promise<{ data: IOpportunityDoc[], total: number }> {
+    const filter: FilterQuery<IOpportunityDoc> = {};
+
+    if (filters.islem_turu) filter.islem_turu = filters.islem_turu;
+    if (filters.durum) filter.durum = filters.durum;
+    if (filters.musteri_id) filter.musteri = filters.musteri_id;
+    
+    // Detaylar içinde arama (isveren, kayit_numarasi, islem_adi vb.)
+    if (filters.search) {
+      filter.$or = [
+        { 'detaylar.isveren': { $regex: filters.search, $options: 'i' } },
+        { 'detaylar.kayit_numarasi': { $regex: filters.search, $options: 'i' } },
+        { 'detaylar.islem_adi': { $regex: filters.search, $options: 'i' } },
+        { 'detaylar.pozisyon': { $regex: filters.search, $options: 'i' } }
+      ];
+    }
+
+    // Tarih aralığı filtresi
+    if (filters.date_from || filters.date_to) {
+      filter.olusturma_tarihi = {};
+      if (filters.date_from) filter.olusturma_tarihi.$gte = filters.date_from;
+      if (filters.date_to) filter.olusturma_tarihi.$lte = filters.date_to;
+    }
+
+    // Bekleyen ödeme filtresi: Toplam ücret > Alınan ücret olan kayıtlar
+    filter.$expr = {
+      $gt: [
+        {
+          $sum: {
+            $map: {
+              input: {
+                $filter: {
+                  input: '$ucretler',
+                  cond: { $eq: ['$$this.odeme_durumu', 'toplam_ucret'] }
+                }
+              },
+              as: 'ucret',
+              in: '$$ucret.miktar'
+            }
+          }
+        },
+        {
+          $sum: {
+            $map: {
+              input: {
+                $filter: {
+                  input: '$ucretler',
+                  cond: { $eq: ['$$this.odeme_durumu', 'alinan_ucret'] }
+                }
+              },
+              as: 'ucret',
+              in: '$$ucret.miktar'
+            }
+          }
+        }
+      ]
+    };
+
+    // Dinamik sıralama - varsayılan olarak oluşturma tarihine göre azalan
+    const sortField = filters.sort_by || 'olusturma_tarihi';
+    const sortOrder = filters.sort_order === 'asc' ? 1 : -1;
+    const sortObject = { [sortField]: sortOrder };
+
+    return this.findAll(
+      filter, 
+      pagination, 
+      'musteri', 
+      sortObject
+    );
+  }
+
   // findBySiraNo metodu kaldırıldı - Tarih bazlı sıralama kullanılacak
 
   // Sıra numarası metodları kaldırıldı - Tarih bazlı sıralama kullanılacak

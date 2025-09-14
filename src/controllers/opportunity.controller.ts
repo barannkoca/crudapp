@@ -426,5 +426,45 @@ export class OpportunityController extends BaseController {
     }, 'PDF dosyası silinemedi');
   }
 
+  // GET /api/opportunities/pending-payments - Bekleyen ödemeler
+  async getPendingPayments(request: NextRequest): Promise<NextResponse> {
+    return this.handleRequest(async () => {
+      const authResult = await this.checkAuth(request);
+      if (!authResult.isAuthenticated) {
+        return authResult.response!;
+      }
+
+      const pagination = this.parsePaginationParams(request);
+      const queryParams = this.parseQueryParams(request);
+      const dateRange = this.parseDateRange(queryParams);
+      
+      // Filtreleme parametrelerini hazırla
+      const filters: OpportunityFilterDto = this.cleanFilterParams({
+        islem_turu: queryParams.islem_turu as IslemTuruDto,
+        durum: queryParams.durum,
+        musteri_id: queryParams.musteri_id,
+        search: queryParams.search,
+        sort_by: queryParams.sort_by as 'olusturma_tarihi' | 'guncelleme_tarihi',
+        sort_order: queryParams.sort_order as 'asc' | 'desc',
+        ...dateRange
+      });
+
+      const result = await this.opportunityService.getPendingPayments(filters, pagination);
+      
+      if (!result.success) {
+        return this.createErrorResponse(result.error!);
+      }
+      
+      // Pagination bilgilerini response'a ekle
+      return NextResponse.json({
+        success: true,
+        data: result.data || [],
+        total: result.pagination?.total || (result.data?.length || 0),
+        totalPages: result.pagination?.totalPages || Math.ceil((result.pagination?.total || (result.data?.length || 0)) / pagination.limit),
+        message: result.message
+      });
+    }, 'Bekleyen ödemeler getirilemedi');
+  }
+
   // Artık tarih bazlı sıralama ve genel arama (search) kullanılıyor
 }

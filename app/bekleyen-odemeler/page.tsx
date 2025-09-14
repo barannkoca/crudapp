@@ -115,23 +115,15 @@ function BekleyenOdemelerPageContent() {
         params.set('status', searchParams.get('status')!);
       }
       
-      // Tüm kayıtları getir, filtrelemeyi frontend'de yapacağız
-      // params.set('payment_status', 'toplam_ucret');
-      
-      const response = await fetch(`/api/opportunities?${params.toString()}`);
+      // Yeni bekleyen ödemeler endpoint'ini kullan
+      const response = await fetch(`/api/opportunities/pending-payments?${params.toString()}`);
       
       if (response.ok) {
         const data = await response.json();
         
-        // Sadece bekleyen ödemesi olan kayıtları filtrele
-        const filteredPayments = (data.data || []).filter((payment: PendingPayment) => {
-          const pendingAmount = getPendingAmount(payment.ucretler);
-          return pendingAmount > 0;
-        });
-        
-        setPendingPayments(filteredPayments);
-        setTotalPages(data.pagination?.totalPages || 1);
-        setTotalCount(filteredPayments.length);
+        setPendingPayments(data.data || []);
+        setTotalPages(data.totalPages || 1);
+        setTotalCount(data.total || 0);
       } else {
         setError('Bekleyen ödemeler yüklenirken hata oluştu');
       }
@@ -180,14 +172,18 @@ function BekleyenOdemelerPageContent() {
   };
 
   const getPendingAmount = (ucretler: any[]) => {
-    // Yeni sistem: Beklenen Ödeme = Toplam Ücret - Alınan Ücret
+    // Güvenli hesaplama: Beklenen Ödeme = Toplam Ücret - Alınan Ücret
+    if (!ucretler || !Array.isArray(ucretler)) {
+      return 0;
+    }
+    
     const toplamUcret = ucretler
-      .filter(u => u.odeme_durumu === 'toplam_ucret')
-      .reduce((sum, u) => sum + (u.miktar || 0), 0);
+      .filter(u => u && u.odeme_durumu === 'toplam_ucret' && typeof u.miktar === 'number')
+      .reduce((sum, u) => sum + u.miktar, 0);
       
     const alinanUcret = ucretler
-      .filter(u => u.odeme_durumu === 'alinan_ucret')
-      .reduce((sum, u) => sum + (u.miktar || 0), 0);
+      .filter(u => u && u.odeme_durumu === 'alinan_ucret' && typeof u.miktar === 'number')
+      .reduce((sum, u) => sum + u.miktar, 0);
     
     return Math.max(0, toplamUcret - alinanUcret);
   };
@@ -229,7 +225,13 @@ function BekleyenOdemelerPageContent() {
     >
       {/* Durum Filtresi */}
       <div className="mb-6">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select 
+          value={statusFilter} 
+          onValueChange={(value) => {
+            setStatusFilter(value);
+            updateURL({ status: value, page: 1 });
+          }}
+        >
           <SelectTrigger className="w-full md:w-64 border-orange-200 focus:border-orange-500 focus:ring-orange-500">
             <SelectValue placeholder="Durum filtresi" />
           </SelectTrigger>
@@ -323,8 +325,15 @@ function BekleyenOdemelerPageContent() {
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
                       {(() => {
-                        const toplam = payment.ucretler.filter(u => u.odeme_durumu === 'toplam_ucret').reduce((sum, u) => sum + (u.miktar || 0), 0);
-                        const alinan = payment.ucretler.filter(u => u.odeme_durumu === 'alinan_ucret').reduce((sum, u) => sum + (u.miktar || 0), 0);
+                        if (!payment.ucretler || !Array.isArray(payment.ucretler)) {
+                          return 'Ücret bilgisi yok';
+                        }
+                        const toplam = payment.ucretler
+                          .filter(u => u && u.odeme_durumu === 'toplam_ucret' && typeof u.miktar === 'number')
+                          .reduce((sum, u) => sum + u.miktar, 0);
+                        const alinan = payment.ucretler
+                          .filter(u => u && u.odeme_durumu === 'alinan_ucret' && typeof u.miktar === 'number')
+                          .reduce((sum, u) => sum + u.miktar, 0);
                         return `${formatCurrency(toplam)} - ${formatCurrency(alinan)}`;
                       })()}
                     </div>

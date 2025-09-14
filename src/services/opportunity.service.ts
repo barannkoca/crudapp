@@ -125,6 +125,22 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
     }
   }
 
+  // Bekleyen ödemeleri getir
+  async getPendingPayments(
+    filters: OpportunityFilterDto, 
+    pagination: PaginationParams
+  ): Promise<OpportunitiesResponse> {
+    try {
+      const { data, total } = await this.opportunityRepository.findPendingPayments(filters, pagination);
+      const opportunities = data.map(this.mapToDto.bind(this));
+      
+      return this.createPaginatedResponse(opportunities, { ...pagination, total }) as OpportunitiesResponse;
+    } catch (error) {
+      console.error('Pending payments error:', error);
+      return this.createErrorResponse('Bekleyen ödemeler getirilemedi') as OpportunitiesResponse;
+    }
+  }
+
   // Sıra numarası istatistik metodları kaldırıldı - Tarih bazlı sıralama kullanılacak
 
   // Fırsat oluştur (özelleştirilmiş)
