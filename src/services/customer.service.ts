@@ -108,6 +108,30 @@ export class CustomerService extends BaseService<ICustomerDoc, CustomerDto, Crea
     }
   }
 
+  // Müşteri ile ilgili işlemleri kontrol et
+  async checkCustomerHasOpportunities(customerId: string): Promise<BaseResponse<{ hasOpportunities: boolean; count: number; opportunities: any[] }>> {
+    try {
+      const { OpportunityRepository } = await import('../repositories/opportunity.repository');
+      const opportunityRepository = new OpportunityRepository();
+      
+      const opportunities = await opportunityRepository.findByCustomer(customerId, { page: 1, limit: 1000 });
+      
+      return this.createSuccessResponse({
+        hasOpportunities: opportunities.data.length > 0,
+        count: opportunities.data.length,
+        opportunities: opportunities.data.map(opp => ({
+          _id: opp._id,
+          islem_turu: opp.islem_turu,
+          durum: opp.durum,
+          olusturma_tarihi: opp.olusturma_tarihi
+        }))
+      });
+    } catch (error) {
+      console.error('Customer opportunities check error:', error);
+      return this.createErrorResponse('Müşteri işlemleri kontrol edilemedi');
+    }
+  }
+
   // Validation metodları
   protected async validateCreate(createDto: CreateCustomerDto): Promise<{ isValid: boolean; errors: any[] }> {
     const errors: any[] = [];

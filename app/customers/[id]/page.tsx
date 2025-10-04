@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { CustomerPhotoUpload } from "@/components/CustomerPhotoUpload";
 
 export default function CustomerDetailPage() {
   const params = useParams();
@@ -25,6 +26,11 @@ export default function CustomerDetailPage() {
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editData, setEditData] = useState<any>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [hasOpportunities, setHasOpportunities] = useState(false);
+  const [opportunitiesCount, setOpportunitiesCount] = useState(0);
 
   useEffect(() => {
     if (params.id) {
@@ -67,7 +73,10 @@ export default function CustomerDetailPage() {
       const result = await response.json();
       
       if (response.ok) {
-        setOpportunities(result.data || []);
+        const opportunities = result.data || [];
+        setOpportunities(opportunities);
+        setHasOpportunities(opportunities.length > 0);
+        setOpportunitiesCount(opportunities.length);
       } else {
         console.error('Fırsatlar yüklenemedi');
       }
@@ -138,27 +147,99 @@ export default function CustomerDetailPage() {
     
     try {
       setSaving(true);
-      const response = await fetch(`/api/customers/${customer._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(editData)
-      });
+      
+      // Eğer fotoğraf seçildiyse FormData kullan
+      if (selectedPhoto) {
+        const formData = new FormData();
+        formData.append('photo', selectedPhoto);
+        formData.append('ad', editData.ad);
+        formData.append('soyad', editData.soyad);
+        formData.append('telefon_no', editData.telefon_no || '');
+        formData.append('eposta', editData.eposta || '');
+        formData.append('dogum_tarihi', editData.dogum_tarihi || '');
+        formData.append('adres', editData.adres || '');
 
-      if (response.ok) {
-        // Sadece customer state'ini güncelle, editData'yı değil
-        const updatedCustomer = { ...customer, ...editData };
-        setCustomer(updatedCustomer);
-        setEditMode(false);
-        toast.success("Müşteri bilgileri başarıyla güncellendi");
+        const response = await fetch(`/api/customers/${customer._id}`, {
+          method: 'PUT',
+          body: formData
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          setCustomer(result.data);
+          setEditMode(false);
+          setSelectedPhoto(null);
+          toast.success("Müşteri bilgileri ve fotoğraf başarıyla güncellendi");
+        } else {
+          const error = await response.json();
+          toast.error(error.message || "Değişiklikler kaydedilirken hata oluştu");
+        }
       } else {
-        toast.error("Değişiklikler kaydedilirken hata oluştu");
+        // Fotoğraf yoksa normal JSON gönder
+        const response = await fetch(`/api/customers/${customer._id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(editData)
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          setCustomer(result.data);
+          setEditMode(false);
+          toast.success("Müşteri bilgileri başarıyla güncellendi");
+        } else {
+          const error = await response.json();
+          toast.error(error.message || "Değişiklikler kaydedilirken hata oluştu");
+        }
       }
     } catch (error) {
       toast.error("Değişiklikler kaydedilirken hata oluştu");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteCustomer = async () => {
+    if (!customer) return;
+    
+    try {
+      setDeleting(true);
+      const response = await fetch(`/api/customers/${customer._id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        toast.success("Müşteri başarıyla silindi");
+        router.push('/customers');
+      } else {
+        const errorData = await response.json();
+        console.error('Silme hatası:', errorData);
+        
+        // Hata mesajını daha detaylı göster
+        let errorMessage = "Müşteri silinemedi";
+        
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        } else if (response.status === 400) {
+          errorMessage = "Bu müşteri ile ilgili işlemler bulunmaktadır. Önce işlemleri tamamlayın veya silin.";
+        } else if (response.status === 404) {
+          errorMessage = "Müşteri bulunamadı";
+        } else if (response.status === 500) {
+          errorMessage = "Sunucu hatası oluştu";
+        }
+        
+        toast.error(errorMessage);
+      }
+    } catch (error) {
+      console.error('Silme işlemi hatası:', error);
+      toast.error("Müşteri silinirken bir hata oluştu. Lütfen tekrar deneyin.");
+    } finally {
+      setDeleting(false);
+      setIsDeleteDialogOpen(false);
     }
   };
 
@@ -225,6 +306,7 @@ export default function CustomerDetailPage() {
                       dogum_tarihi: customer.dogum_tarihi,
                       adres: customer.adres
                     });
+                    setSelectedPhoto(null);
                   }}
                 >
                   İptal
@@ -238,16 +320,117 @@ export default function CustomerDetailPage() {
                 </Button>
               </>
             ) : (
-              <Button 
-                size="sm" 
-                onClick={() => setEditMode(true)}
-                className="bg-cyan-600 hover:bg-cyan-700"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Düzenle
-              </Button>
+              <>
+                <Button 
+                  size="sm" 
+                  onClick={() => setEditMode(true)}
+                  className="bg-cyan-600 hover:bg-cyan-700"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Düzenle
+                </Button>
+                <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      size="sm" 
+                      variant="destructive"
+                      disabled={hasOpportunities}
+                      className={hasOpportunities ? "opacity-50 cursor-not-allowed" : ""}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      {hasOpportunities ? `Sil (${opportunitiesCount} işlem var)` : 'Sil'}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        {hasOpportunities ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                          </svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                          </svg>
+                        )}
+                        {hasOpportunities ? 'Müşteri Silinemez' : 'Müşteriyi Sil'}
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      {hasOpportunities ? (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                          <div className="flex items-start gap-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div>
+                              <h4 className="text-sm font-medium text-yellow-800">Silme İşlemi Engellendi</h4>
+                              <p className="text-sm text-yellow-700 mt-1">
+                                Bu müşteri ile ilgili <strong>{opportunitiesCount} adet işlem</strong> bulunmaktadır. 
+                                Müşteriyi silmek için önce tüm işlemleri tamamlamanız veya silmeniz gerekmektedir.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <div className="flex items-start gap-3">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                              </svg>
+                              <div>
+                                <h4 className="text-sm font-medium text-red-800">Dikkat!</h4>
+                                <p className="text-sm text-red-700 mt-1">
+                                  Bu müşteriyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                      
+                      <div className="flex justify-end gap-2">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setIsDeleteDialogOpen(false)}
+                          disabled={deleting}
+                        >
+                          İptal
+                        </Button>
+                        {!hasOpportunities && (
+                          <Button 
+                            variant="destructive" 
+                            onClick={handleDeleteCustomer}
+                            disabled={deleting}
+                          >
+                            {deleting ? (
+                              <>
+                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Siliniyor...
+                              </>
+                            ) : (
+                              <>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Sil
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </>
             )}
           </div>
         </div>
@@ -275,6 +458,15 @@ export default function CustomerDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {editMode && (
+              <div className="mb-6">
+                <CustomerPhotoUpload
+                  onFileSelect={setSelectedPhoto}
+                  acceptedFileTypes={['image/*']}
+                  maxFileSize={5 * 1024 * 1024}
+                />
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div>

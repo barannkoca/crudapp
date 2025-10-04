@@ -263,6 +263,15 @@ export class CustomerController extends BaseController {
         return authResult.response!;
       }
 
+      // Önce müşteri ile ilgili işlemleri kontrol et
+      const opportunitiesCheck = await this.customerService.checkCustomerHasOpportunities(params.id);
+      if (opportunitiesCheck.success && opportunitiesCheck.data.hasOpportunities) {
+        return this.createErrorResponse(
+          `Bu müşteri ile ilgili ${opportunitiesCheck.data.count} adet işlem bulunmaktadır. Müşteriyi silmek için önce tüm işlemleri tamamlamanız veya silmeniz gerekmektedir.`,
+          400
+        );
+      }
+
       // Önce silinecek veriyi al (audit için)
       const existingCustomer = await this.customerService.getById(params.id);
       const startTime = Date.now();
