@@ -125,6 +125,17 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
     }
   }
 
+  // Aylık gelir istatistikleri
+  async getMonthlyRevenueStats(months: number = 12): Promise<BaseResponse<any>> {
+    try {
+      const stats = await this.opportunityRepository.getMonthlyRevenueStats(months);
+      return this.createSuccessResponse(stats);
+    } catch (error) {
+      console.error('Monthly revenue stats error:', error);
+      return this.createErrorResponse('Aylık gelir istatistikleri alınamadı');
+    }
+  }
+
   // Bekleyen ödemeleri getir
   async getPendingPayments(
     filters: OpportunityFilterDto, 

@@ -95,23 +95,10 @@ const navigationData = {
       ],
     },
     {
-      title: "Raporlar",
-      url: "/reports",
+      title: "Analitik",
+      url: "/analytics",
       icon: BarChart3,
-      items: [
-        {
-          title: "Genel Rapor",
-          url: "/reports/general",
-        },
-        {
-          title: "Müşteri Raporu",
-          url: "/reports/customers",
-        },
-        {
-          title: "Fırsat Raporu",
-          url: "/reports/opportunities",
-        },
-      ],
+      items: [],
     },
   ],
 }

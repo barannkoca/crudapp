@@ -307,6 +307,27 @@ export class OpportunityController extends BaseController {
     }, 'Ödeme istatistikleri alınamadı');
   }
 
+  // GET /api/opportunities/monthly-revenue - Aylık gelir istatistikleri
+  async getMonthlyRevenueStats(request: NextRequest): Promise<NextResponse> {
+    return this.handleRequest(async () => {
+      const authResult = await this.checkAuth(request);
+      if (!authResult.isAuthenticated) {
+        return authResult.response!;
+      }
+
+      const url = new URL(request.url);
+      const months = parseInt(url.searchParams.get('months') || '12');
+
+      const result = await this.opportunityService.getMonthlyRevenueStats(months);
+      
+      if (!result.success) {
+        return this.createErrorResponse(result.error!);
+      }
+      
+      return this.createSuccessResponse(result.data, result.message);
+    }, 'Aylık gelir istatistikleri alınamadı');
+  }
+
   // GET /api/opportunities/recent - Son aktiviteler
   async getRecentActivities(request: NextRequest): Promise<NextResponse> {
     return this.handleRequest(async () => {

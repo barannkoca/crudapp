@@ -342,4 +342,138 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
       byType
     };
   }
+
+  // Aylık gelir analizi - Sadece olusturma_tarihi bazlı
+  async getMonthlyRevenueStats(months: number = 12): Promise<{
+    monthlyData: Array<{
+      year: number;
+      month: number;
+      monthName: string;
+      totalRevenue: number;
+      receivedAmount: number;
+      expenseAmount: number;
+      netRevenue: number;
+      pendingPayments: number;
+      byType: { [key: string]: { total: number; received: number; expense: number; net: number } };
+    }>;
+    summary: {
+      totalRevenue: number;
+      totalReceived: number;
+      totalExpense: number;
+      totalNet: number;
+      totalPending: number;
+    };
+  }> {
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - months);
+    startDate.setDate(1);
+    startDate.setHours(0, 0, 0, 0);
+
+    // Sadece olusturma_tarihi bazlı analiz
+    const monthlyStats = await this.aggregate([
+      {
+        $match: {
+          olusturma_tarihi: { $gte: startDate },
+          'ucretler.miktar': { $exists: true, $ne: null, $gt: 0 }
+        }
+      },
+      { $unwind: { path: '$ucretler', preserveNullAndEmptyArrays: false } },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$olusturma_tarihi' },
+            month: { $month: '$olusturma_tarihi' },
+            islem_turu: '$islem_turu',
+            odeme_durumu: '$ucretler.odeme_durumu'
+          },
+          totalAmount: { $sum: '$ucretler.miktar' },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { '_id.year': 1, '_id.month': 1 }
+      }
+    ]);
+
+    // Aylık verileri organize et
+    const monthlyDataMap: { [key: string]: any } = {};
+    const monthNames = [
+      'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+      'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+    ];
+
+    monthlyStats.forEach((stat: any) => {
+      const key = `${stat._id.year}-${stat._id.month}`;
+      if (!monthlyDataMap[key]) {
+        monthlyDataMap[key] = {
+          year: stat._id.year,
+          month: stat._id.month,
+          monthName: monthNames[stat._id.month - 1],
+          totalRevenue: 0,
+          receivedAmount: 0,
+          expenseAmount: 0,
+          netRevenue: 0,
+          pendingPayments: 0,
+          byType: {}
+        };
+      }
+
+      const islemTuru = stat._id.islem_turu;
+      const odemeDurumu = stat._id.odeme_durumu;
+      const amount = stat.totalAmount || 0;
+
+      if (!monthlyDataMap[key].byType[islemTuru]) {
+        monthlyDataMap[key].byType[islemTuru] = { total: 0, received: 0, expense: 0, net: 0 };
+      }
+
+      switch (odemeDurumu) {
+        case 'toplam_ucret':
+          monthlyDataMap[key].totalRevenue += amount;
+          monthlyDataMap[key].byType[islemTuru].total += amount;
+          break;
+        case 'alinan_ucret':
+          monthlyDataMap[key].receivedAmount += amount;
+          monthlyDataMap[key].byType[islemTuru].received += amount;
+          break;
+        case 'gider':
+          monthlyDataMap[key].expenseAmount += amount;
+          monthlyDataMap[key].byType[islemTuru].expense += amount;
+          break;
+      }
+    });
+
+    // Net gelir ve bekleyen ödemeleri hesapla
+    const monthlyData = Object.values(monthlyDataMap).map((month: any) => {
+      month.netRevenue = month.receivedAmount - month.expenseAmount;
+      month.pendingPayments = month.totalRevenue - month.receivedAmount;
+      
+      // Her işlem türü için net gelir hesapla
+      Object.keys(month.byType).forEach(type => {
+        month.byType[type].net = month.byType[type].received - month.byType[type].expense;
+      });
+
+      return month;
+    });
+
+    // Özet istatistikler
+    const summary = monthlyData.reduce((acc: any, month: any) => {
+      acc.totalRevenue += month.totalRevenue;
+      acc.totalReceived += month.receivedAmount;
+      acc.totalExpense += month.expenseAmount;
+      acc.totalNet += month.netRevenue;
+      acc.totalPending += month.pendingPayments;
+      return acc;
+    }, {
+      totalRevenue: 0,
+      totalReceived: 0,
+      totalExpense: 0,
+      totalNet: 0,
+      totalPending: 0
+    });
+
+    return {
+      monthlyData,
+      summary
+    };
+  }
 }
