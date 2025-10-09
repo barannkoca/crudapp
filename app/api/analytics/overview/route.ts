@@ -56,13 +56,39 @@ export async function GET(request: NextRequest) {
         { $addFields: {
             eventDate: {
               $ifNull: [
+                // 1) olusturma_tarihi: date | string | object{$date}
                 {
-                  $cond: {
-                    if: { $eq: [{ $type: '$olusturma_tarihi' }, 'string'] },
-                    then: { $toDate: '$olusturma_tarihi' },
-                    else: '$olusturma_tarihi'
+                  $let: {
+                    vars: { t: { $type: '$olusturma_tarihi' } },
+                    in: {
+                      $switch: {
+                        branches: [
+                          { case: { $eq: ['$$t', 'date'] }, then: '$olusturma_tarihi' },
+                          { case: { $eq: ['$$t', 'string'] }, then: { $toDate: '$olusturma_tarihi' } },
+                          { case: { $eq: ['$$t', 'object'] }, then: { $toDate: '$olusturma_tarihi.$date' } },
+                        ],
+                        default: null
+                      }
+                    }
                   }
                 },
+                // 2) createdAt: date | string | object{$date}
+                {
+                  $let: {
+                    vars: { t: { $type: '$createdAt' } },
+                    in: {
+                      $switch: {
+                        branches: [
+                          { case: { $eq: ['$$t', 'date'] }, then: '$createdAt' },
+                          { case: { $eq: ['$$t', 'string'] }, then: { $toDate: '$createdAt' } },
+                          { case: { $eq: ['$$t', 'object'] }, then: { $toDate: '$createdAt.$date' } },
+                        ],
+                        default: null
+                      }
+                    }
+                  }
+                },
+                // 3) fallback: _id zamanı
                 { $toDate: '$_id' }
               ]
             }
@@ -87,6 +113,23 @@ export async function GET(request: NextRequest) {
         { $sort: { '_id.year': 1, '_id.month': 1 } }
       ]).exec()
     ]);
+
+    // Aylık istatistiklerde eksik ayları 0 ile doldur (her zaman son 6 ay)
+    const now = new Date();
+    const monthsToShow = 6;
+    const monthlyMap = new Map<string, number>();
+    (monthlyStats as Array<{ _id: { year: number; month: number }, count: number }>).forEach(item => {
+      const key = `${item._id.year}-${String(item._id.month).padStart(2, '0')}`;
+      monthlyMap.set(key, item.count);
+    });
+    const filledMonthlyStats: Array<{ _id: { year: number; month: number }, count: number }> = [];
+    for (let i = monthsToShow - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      const key = `${y}-${String(m).padStart(2, '0')}`;
+      filledMonthlyStats.push({ _id: { year: y, month: m }, count: monthlyMap.get(key) ?? 0 });
+    }
 
     // Müşteri cinsiyet dağılımı
     const genderDistribution = await CustomerModel.aggregate([
@@ -167,7 +210,7 @@ export async function GET(request: NextRequest) {
         genderDistribution,
         countryDistribution,
         recentOpportunities,
-        monthlyStats
+        monthlyStats: filledMonthlyStats
       }
     });
 

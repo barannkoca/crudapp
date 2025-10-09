@@ -9,16 +9,24 @@ export async function GET(request: NextRequest) {
 
     // Müşteri kayıt trendi (son 12 ay)
     const customerRegistrationTrend = await Customer.aggregate([
-      // createdAt normalizasyonu: string ise toDate, yoksa aynen kullan; yoksa _id tarihi
+      // createdAt normalizasyonu: date | string | object{$date}; yoksa _id tarihi
       {
         $addFields: {
           createdAtNorm: {
             $ifNull: [
               {
-                $cond: {
-                  if: { $eq: [{ $type: '$createdAt' }, 'string'] },
-                  then: { $toDate: '$createdAt' },
-                  else: '$createdAt'
+                $let: {
+                  vars: { t: { $type: '$createdAt' } },
+                  in: {
+                    $switch: {
+                      branches: [
+                        { case: { $eq: ['$$t', 'date'] }, then: '$createdAt' },
+                        { case: { $eq: ['$$t', 'string'] }, then: { $toDate: '$createdAt' } },
+                        { case: { $eq: ['$$t', 'object'] }, then: { $toDate: '$createdAt.$date' } },
+                      ],
+                      default: null
+                    }
+                  }
                 }
               },
               { $toDate: '$_id' }
