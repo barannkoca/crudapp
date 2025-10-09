@@ -22,7 +22,21 @@ export async function GET(request: NextRequest) {
                       branches: [
                         { case: { $eq: ['$$t', 'date'] }, then: '$createdAt' },
                         { case: { $eq: ['$$t', 'string'] }, then: { $toDate: '$createdAt' } },
-                        { case: { $eq: ['$$t', 'object'] }, then: { $convert: { input: { $getField: { field: '$date', input: '$createdAt' } }, to: 'date', onError: null, onNull: null } } },
+                        { case: { $eq: ['$$t', 'object'] }, then: {
+                          $let: {
+                            vars: { d: { $getField: { field: '$date', input: '$createdAt' } } },
+                            in: {
+                              $switch: {
+                                branches: [
+                                  { case: { $eq: [{ $type: '$$d' }, 'date'] }, then: '$$d' },
+                                  { case: { $eq: [{ $type: '$$d' }, 'string'] }, then: { $convert: { input: '$$d', to: 'date', onError: null, onNull: null } } },
+                                  { case: { $eq: [{ $type: '$$d' }, 'object'] }, then: { $convert: { input: { $getField: { field: '$numberLong', input: '$$d' } }, to: 'long', onError: null, onNull: null } } },
+                                ],
+                                default: null
+                              }
+                            }
+                          }
+                        } },
                       ],
                       default: null
                     }

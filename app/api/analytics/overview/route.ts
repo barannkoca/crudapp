@@ -42,21 +42,11 @@ export async function GET(request: NextRequest) {
         }
       ]).exec(),
       
-      // Son 5 fırsat
-      (OpportunityModel as any).find({})
-        .populate('musteri', 'ad soyad')
-        .sort({ olusturma_tarihi: -1 })
-        .limit(5)
-        .select('islem_turu durum olusturma_tarihi musteri')
-        .lean()
-        .exec(),
-      
-      // Son 6 ayın istatistikleri (tarih normalize: string/date yoksa _id)
+      // Son 5 fırsat — tarih normalize edilerek sıralama
       OpportunityModel.aggregate([
         { $addFields: {
             eventDate: {
               $ifNull: [
-                // 1) olusturma_tarihi: date | string | object{$date}
                 {
                   $let: {
                     vars: { t: { $type: '$olusturma_tarihi' } },
@@ -65,7 +55,70 @@ export async function GET(request: NextRequest) {
                         branches: [
                           { case: { $eq: ['$$t', 'date'] }, then: '$olusturma_tarihi' },
                           { case: { $eq: ['$$t', 'string'] }, then: { $convert: { input: '$olusturma_tarihi', to: 'date', onError: null, onNull: null } } },
-                          { case: { $eq: ['$$t', 'object'] }, then: { $convert: { input: { $getField: { field: '$date', input: '$olusturma_tarihi' } }, to: 'date', onError: null, onNull: null } } },
+                          { case: { $eq: ['$$t', 'object'] }, then: {
+                              $let: {
+                                vars: { d: { $getField: { field: '$date', input: '$olusturma_tarihi' } } },
+                                in: {
+                                  $switch: {
+                                    branches: [
+                                      { case: { $eq: [{ $type: '$$d' }, 'date'] }, then: '$$d' },
+                                      { case: { $eq: [{ $type: '$$d' }, 'string'] }, then: { $convert: { input: '$$d', to: 'date', onError: null, onNull: null } } },
+                                      { case: { $eq: [{ $type: '$$d' }, 'object'] }, then: { $convert: { input: { $getField: { field: '$numberLong', input: '$$d' } }, to: 'long', onError: null, onNull: null } } },
+                                    ],
+                                    default: null
+                                  }
+                                }
+                              }
+                            }
+                          },
+                        ],
+                        default: null
+                      }
+                    }
+                  }
+                },
+                { $toDate: '$_id' }
+              ]
+            }
+          }
+        },
+        { $sort: { eventDate: -1 } },
+        { $limit: 5 },
+        { $lookup: { from: 'customers', localField: 'musteri', foreignField: '_id', as: 'musteriDoc' } },
+        { $unwind: { path: '$musteriDoc', preserveNullAndEmptyArrays: true } },
+        { $project: { islem_turu: 1, durum: 1, olusturma_tarihi: 1, musteri: { _id: '$musteriDoc._id', ad: '$musteriDoc.ad', soyad: '$musteriDoc.soyad' } } }
+      ]).exec(),
+      
+      // Son 6 ayın istatistikleri (tarih normalize: string/date yoksa _id)
+      OpportunityModel.aggregate([
+        { $addFields: {
+            eventDate: {
+              $ifNull: [
+                // 1) olusturma_tarihi: date | string | object{$date} | object{$date:{ $numberLong }}
+                {
+                  $let: {
+                    vars: { t: { $type: '$olusturma_tarihi' } },
+                    in: {
+                      $switch: {
+                        branches: [
+                          { case: { $eq: ['$$t', 'date'] }, then: '$olusturma_tarihi' },
+                          { case: { $eq: ['$$t', 'string'] }, then: { $convert: { input: '$olusturma_tarihi', to: 'date', onError: null, onNull: null } } },
+                          { case: { $eq: ['$$t', 'object'] }, then: {
+                              $let: {
+                                vars: { d: { $getField: { field: '$date', input: '$olusturma_tarihi' } } },
+                                in: {
+                                  $switch: {
+                                    branches: [
+                                      { case: { $eq: [{ $type: '$$d' }, 'date'] }, then: '$$d' },
+                                      { case: { $eq: [{ $type: '$$d' }, 'string'] }, then: { $convert: { input: '$$d', to: 'date', onError: null, onNull: null } } },
+                                      { case: { $eq: [{ $type: '$$d' }, 'object'] }, then: { $convert: { input: { $getField: { field: '$numberLong', input: '$$d' } }, to: 'long', onError: null, onNull: null } } },
+                                    ],
+                                    default: null
+                                  }
+                                }
+                              }
+                            }
+                          },
                         ],
                         default: null
                       }
