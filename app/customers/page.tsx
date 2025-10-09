@@ -34,26 +34,27 @@ function CustomersPageContent() {
 
   // URL'i güncelle
   const updateURL = useCallback((params: { page?: number; search?: string }) => {
-    const url = new URL(window.location.href);
+    const newParams = new URLSearchParams(searchParams);
     
     if (params.page !== undefined) {
       if (params.page === 1) {
-        url.searchParams.delete('page');
+        newParams.delete('page');
       } else {
-        url.searchParams.set('page', params.page.toString());
+        newParams.set('page', params.page.toString());
       }
     }
     
     if (params.search !== undefined) {
       if (params.search === '') {
-        url.searchParams.delete('search');
+        newParams.delete('search');
       } else {
-        url.searchParams.set('search', params.search);
+        newParams.set('search', params.search);
       }
     }
     
-    router.replace(url.pathname + url.search, { scroll: false });
-  }, [router]);
+    const newURL = newParams.toString() ? `?${newParams.toString()}` : '';
+    router.replace(`/customers${newURL}`, { scroll: false });
+  }, [router, searchParams]);
 
   // Debounce search term
   useEffect(() => {
@@ -73,10 +74,12 @@ function CustomersPageContent() {
     }
   }, [searchTerm, debouncedSearchTerm]);
 
-  // URL'i güncelle - arama değişiklikleri
+  // Arama değiştiğinde sayfa 1'e dön ve URL'i güncelle
   useEffect(() => {
-    updateURL({ search: debouncedSearchTerm });
-  }, [debouncedSearchTerm, updateURL]);
+    if (debouncedSearchTerm !== initialSearch) {
+      updateURL({ search: debouncedSearchTerm, page: 1 });
+    }
+  }, [debouncedSearchTerm, updateURL, initialSearch]);
 
   // URL parametreleri değiştiğinde state'i güncelle
   useEffect(() => {
@@ -162,14 +165,12 @@ function CustomersPageContent() {
   //   customer.yabanci_kimlik_no?.includes(searchTerm)
   // );
 
-  // Arama değiştiğinde sayfa 1'e dön - sadece yeni arama yapıldığında
+  // Arama değiştiğinde sayfa 1'e dön ve URL'i güncelle
   useEffect(() => {
-    // Eğer arama terimi değiştiyse ve bu URL'den gelmiyorsa sayfa 1'e dön
-    const urlSearch = searchParams.get('search') || "";
-    if (debouncedSearchTerm !== urlSearch && debouncedSearchTerm !== initialSearch) {
-      handlePageChange(1);
+    if (debouncedSearchTerm !== initialSearch) {
+      updateURL({ search: debouncedSearchTerm, page: 1 });
     }
-  }, [debouncedSearchTerm, initialSearch, searchParams]);
+  }, [debouncedSearchTerm, updateURL, initialSearch]);
 
   // Pagination için özel handler
   const handlePageChange = (page: number) => {

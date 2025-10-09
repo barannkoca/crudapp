@@ -10,7 +10,9 @@
     "migrate:cloud": "node scripts/migrate-to-cloud.js",
     "migrate:validate": "node scripts/migrate-to-cloud.js validate",
     "migrate:local": "node scripts/migrate-database.js",
-    "migrate:calisma-izni": "node scripts/migrate-calisma-izni-fields.js"
+    "migrate:calisma-izni": "node scripts/migrate-calisma-izni-fields.js",
+    "migrate:normalize-dates:dry": "node scripts/normalize-dates.js --dry-run",
+    "migrate:normalize-dates": "node scripts/normalize-dates.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",

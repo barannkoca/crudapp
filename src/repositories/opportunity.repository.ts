@@ -30,16 +30,6 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
     if (filters.islem_turu) filter.islem_turu = filters.islem_turu;
     if (filters.durum) filter.durum = filters.durum;
     if (filters.musteri_id) filter.musteri = filters.musteri_id;
-    
-    // Detaylar içinde arama (isveren, kayit_numarasi, islem_adi vb.)
-    if (filters.search) {
-      filter.$or = [
-        { 'detaylar.isveren': { $regex: filters.search, $options: 'i' } },
-        { 'detaylar.kayit_numarasi': { $regex: filters.search, $options: 'i' } },
-        { 'detaylar.islem_adi': { $regex: filters.search, $options: 'i' } },
-        { 'detaylar.pozisyon': { $regex: filters.search, $options: 'i' } }
-      ];
-    }
 
     // Tarih aralığı filtresi
     if (filters.date_from || filters.date_to) {
@@ -51,6 +41,64 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
     // Ödeme durumu filtresi
     if (filters.payment_status) {
       filter['ucretler.odeme_durumu'] = filters.payment_status;
+    }
+
+    // Arama terimi varsa, hem detaylarda hem de müşteri adında ara
+    if (filters.search) {
+      const searchRegex = { $regex: filters.search, $options: 'i' };
+      
+      // Müşteri ad ve soyadına göre arama yapmak için aggregation kullan
+      const aggregation = [
+        {
+          $lookup: {
+            from: 'customers',
+            localField: 'musteri',
+            foreignField: '_id',
+            as: 'customerInfo'
+          }
+        },
+        {
+          $unwind: {
+            path: '$customerInfo',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $match: {
+            ...filter, // Diğer filtreleri uygula
+            $or: [
+              { 'detaylar.isveren': searchRegex },
+              { 'detaylar.kayit_numarasi': searchRegex },
+              { 'detaylar.islem_adi': searchRegex },
+              { 'detaylar.pozisyon': searchRegex },
+              { 'customerInfo.ad': searchRegex },
+              { 'customerInfo.soyad': searchRegex }
+            ]
+          }
+        }
+      ];
+
+      const total = await this.model.aggregate([...aggregation, { $count: 'total' }]).exec();
+      
+      const sortField = filters.sort_by || 'olusturma_tarihi';
+      const sortOrder = filters.sort_order === 'asc' ? 1 : -1;
+      const sortObject = { [sortField]: sortOrder };
+
+      let dataQuery = this.model.aggregate(aggregation).sort(sortObject);
+
+      if (pagination) {
+        dataQuery = dataQuery.skip((pagination.page - 1) * pagination.limit).limit(pagination.limit);
+      }
+
+      const data = await dataQuery.exec();
+
+      // Populate müşteri bilgisi (aggregation sonrası)
+      const populatedData = await this.model.populate(data, { path: 'musteri' });
+
+      return {
+        data: populatedData,
+        total: total.length > 0 ? total[0].total : 0
+      };
     }
 
     // Dinamik sıralama - varsayılan olarak oluşturma tarihine göre azalan

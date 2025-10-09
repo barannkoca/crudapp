@@ -168,14 +168,12 @@ function DigerIslemlerPageContent() {
 
   // Server-side filtering yapıldığı için client-side filtering kaldırıldı
 
-  // Arama değiştiğinde sayfa 1'e dön - sadece yeni arama yapıldığında
+  // Arama değiştiğinde sayfa 1'e dön ve URL'i güncelle
   useEffect(() => {
-    // Eğer arama terimi değiştiyse ve bu URL'den gelmiyorsa sayfa 1'e dön
-    const urlSearch = searchParams.get('search') || "";
-    if (debouncedSearchTerm !== urlSearch && debouncedSearchTerm !== initialSearch) {
-      handlePageChange(1);
+    if (debouncedSearchTerm !== initialSearch) {
+      updateURL({ search: debouncedSearchTerm, page: 1 });
     }
-  }, [debouncedSearchTerm, initialSearch, searchParams]);
+  }, [debouncedSearchTerm, updateURL, initialSearch]);
 
   const getStatusColor = (status: FirsatDurumu) => {
     switch (status) {
