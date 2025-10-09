@@ -162,6 +162,15 @@ export default function AnalyticsPage() {
     return months[month - 1];
   };
 
+  // Aylık veri için tüm işlem türlerini birleştir (eksik aylarda 0 doldurmak için)
+  const allMonthlyTypes = monthlyRevenueData
+    ? Array.from(
+        new Set(
+          monthlyRevenueData.monthlyData.flatMap((m) => Object.keys(m.byType || {}))
+        )
+      )
+    : [];
+
   if (loading) {
     return (
       <div className="container mx-auto p-6">
@@ -571,7 +580,7 @@ export default function AnalyticsPage() {
                     labels: monthlyRevenueData.monthlyData.map(month => 
                       `${month.monthName} ${month.year}`
                     ),
-                    datasets: Object.keys(monthlyRevenueData.monthlyData[0]?.byType || {}).map((type, index) => ({
+                    datasets: allMonthlyTypes.map((type, index) => ({
                       label: type === 'calisma_izni' ? 'Çalışma İzni' :
                              type === 'ikamet_izni' ? 'İkamet İzni' : 'Diğer İşlemler',
                       data: monthlyRevenueData.monthlyData.map(month => 

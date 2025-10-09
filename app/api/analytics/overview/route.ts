@@ -64,8 +64,8 @@ export async function GET(request: NextRequest) {
                       $switch: {
                         branches: [
                           { case: { $eq: ['$$t', 'date'] }, then: '$olusturma_tarihi' },
-                          { case: { $eq: ['$$t', 'string'] }, then: { $toDate: '$olusturma_tarihi' } },
-                          { case: { $eq: ['$$t', 'object'] }, then: { $toDate: '$olusturma_tarihi.$date' } },
+                          { case: { $eq: ['$$t', 'string'] }, then: { $convert: { input: '$olusturma_tarihi', to: 'date', onError: null, onNull: null } } },
+                          { case: { $eq: ['$$t', 'object'] }, then: { $convert: { input: { $getField: { field: '$date', input: '$olusturma_tarihi' } }, to: 'date', onError: null, onNull: null } } },
                         ],
                         default: null
                       }
@@ -80,8 +80,8 @@ export async function GET(request: NextRequest) {
                       $switch: {
                         branches: [
                           { case: { $eq: ['$$t', 'date'] }, then: '$createdAt' },
-                          { case: { $eq: ['$$t', 'string'] }, then: { $toDate: '$createdAt' } },
-                          { case: { $eq: ['$$t', 'object'] }, then: { $toDate: '$createdAt.$date' } },
+                          { case: { $eq: ['$$t', 'string'] }, then: { $convert: { input: '$createdAt', to: 'date', onError: null, onNull: null } } },
+                          { case: { $eq: ['$$t', 'object'] }, then: { $convert: { input: { $getField: { field: '$date', input: '$createdAt' } }, to: 'date', onError: null, onNull: null } } },
                         ],
                         default: null
                       }

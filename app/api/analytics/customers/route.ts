@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
                       branches: [
                         { case: { $eq: ['$$t', 'date'] }, then: '$createdAt' },
                         { case: { $eq: ['$$t', 'string'] }, then: { $toDate: '$createdAt' } },
-                        { case: { $eq: ['$$t', 'object'] }, then: { $toDate: '$createdAt.$date' } },
+                        { case: { $eq: ['$$t', 'object'] }, then: { $convert: { input: { $getField: { field: '$date', input: '$createdAt' } }, to: 'date', onError: null, onNull: null } } },
                       ],
                       default: null
                     }
