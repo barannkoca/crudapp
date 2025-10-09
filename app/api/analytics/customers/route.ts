@@ -9,9 +9,26 @@ export async function GET(request: NextRequest) {
 
     // Müşteri kayıt trendi (son 12 ay)
     const customerRegistrationTrend = await Customer.aggregate([
+      // createdAt normalizasyonu: string ise toDate, yoksa aynen kullan; yoksa _id tarihi
+      {
+        $addFields: {
+          createdAtNorm: {
+            $ifNull: [
+              {
+                $cond: {
+                  if: { $eq: [{ $type: '$createdAt' }, 'string'] },
+                  then: { $toDate: '$createdAt' },
+                  else: '$createdAt'
+                }
+              },
+              { $toDate: '$_id' }
+            ]
+          }
+        }
+      },
       {
         $match: {
-          createdAt: {
+          createdAtNorm: {
             $gte: new Date(new Date().setFullYear(new Date().getFullYear() - 1))
           }
         }
@@ -19,15 +36,13 @@ export async function GET(request: NextRequest) {
       {
         $group: {
           _id: {
-            year: { $year: '$createdAt' },
-            month: { $month: '$createdAt' }
+            year: { $year: '$createdAtNorm' },
+            month: { $month: '$createdAtNorm' }
           },
           count: { $sum: 1 }
         }
       },
-      {
-        $sort: { '_id.year': 1, '_id.month': 1 }
-      }
+      { $sort: { '_id.year': 1, '_id.month': 1 } }
     ]).exec();
 
     // Müşteri cinsiyet dağılımı

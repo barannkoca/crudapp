@@ -51,11 +51,26 @@ export async function GET(request: NextRequest) {
         .lean()
         .exec(),
       
-      // Son 6 ayın istatistikleri
+      // Son 6 ayın istatistikleri (tarih normalize: string/date yoksa _id)
       OpportunityModel.aggregate([
+        { $addFields: {
+            eventDate: {
+              $ifNull: [
+                {
+                  $cond: {
+                    if: { $eq: [{ $type: '$olusturma_tarihi' }, 'string'] },
+                    then: { $toDate: '$olusturma_tarihi' },
+                    else: '$olusturma_tarihi'
+                  }
+                },
+                { $toDate: '$_id' }
+              ]
+            }
+          }
+        },
         {
           $match: {
-            olusturma_tarihi: {
+            eventDate: {
               $gte: new Date(new Date().setMonth(new Date().getMonth() - 6))
             }
           }
@@ -63,15 +78,13 @@ export async function GET(request: NextRequest) {
         {
           $group: {
             _id: {
-              year: { $year: '$olusturma_tarihi' },
-              month: { $month: '$olusturma_tarihi' }
+              year: { $year: '$eventDate' },
+              month: { $month: '$eventDate' }
             },
             count: { $sum: 1 }
           }
         },
-        {
-          $sort: { '_id.year': 1, '_id.month': 1 }
-        }
+        { $sort: { '_id.year': 1, '_id.month': 1 } }
       ]).exec()
     ]);
 
