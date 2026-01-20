@@ -10,20 +10,20 @@ const ALLOWED_EMAILS = [
 export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
-    
+
     // Token yoksa erişim reddedilir
     if (!token) {
       return NextResponse.redirect(new URL('/auth/signin', req.url));
     }
-    
+
     // Email kontrolü
     const userEmail = token.email as string;
-    
+
     if (!ALLOWED_EMAILS.includes(userEmail)) {
       console.log(`🚫 Erişim reddedildi: ${userEmail}`);
       return NextResponse.redirect(new URL('/auth/access-denied', req.url));
     }
-    
+
     console.log(`✅ Erişim izni verildi: ${userEmail}`);
     return NextResponse.next();
   },
@@ -31,14 +31,14 @@ export default withAuth(
     callbacks: {
       authorized: ({ token }) => {
         if (!token) return false;
-        
+
         const userEmail = token.email as string;
         const isAllowed = ALLOWED_EMAILS.includes(userEmail);
-        
+
         if (!isAllowed) {
           console.log(`🚫 Middleware: Erişim reddedildi - ${userEmail}`);
         }
-        
+
         return isAllowed;
       },
     },
