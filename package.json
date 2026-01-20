@@ -38,7 +38,7 @@
     "lucide-react": "^0.483.0",
     "mongodb": "^6.18.0",
     "mongoose": "^8.13.1",
-    "next": "15.2.2",
+    "next": "15.2.8",
     "next-auth": "^4.24.11",
     "pdf-ts": "^0.0.2",
     "pdfjs-dist": "^3.11.174",
