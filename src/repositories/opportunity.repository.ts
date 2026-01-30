@@ -128,6 +128,7 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
   }
 
   // Bitiş tarihi yaklaşan fırsatları getir
+  // Bitiş tarihi yaklaşan fırsatları getir
   async findExpiring(days: number): Promise<IOpportunityDoc[]> {
     const now = new Date();
     const futureDate = new Date();
@@ -135,19 +136,33 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
 
     const dateRangeQuery = { $gte: now, $lte: futureDate };
 
+    // EJSON formatı için string karşılaştırması
+    const nowIso = now.toISOString();
+    const futureIso = futureDate.toISOString();
+    const dateRangeQueryString = { $gte: nowIso, $lte: futureIso };
+
     return this.model.find({
       $or: [
         {
           islem_turu: IslemTuruDto.CALISMA_IZNI,
-          'detaylar.calisma_izni_bitis_tarihi': dateRangeQuery
+          $or: [
+            { 'detaylar.calisma_izni_bitis_tarihi': dateRangeQuery },
+            { 'detaylar.calisma_izni_bitis_tarihi.$date': dateRangeQueryString }
+          ]
         },
         {
           islem_turu: IslemTuruDto.IKAMET_IZNI,
-          'detaylar.gecerlilik_tarihi': dateRangeQuery
+          $or: [
+            { 'detaylar.gecerlilik_tarihi': dateRangeQuery },
+            { 'detaylar.gecerlilik_tarihi.$date': dateRangeQueryString }
+          ]
         },
         {
           islem_turu: IslemTuruDto.DIGER,
-          'detaylar.bitis_tarihi': dateRangeQuery
+          $or: [
+            { 'detaylar.bitis_tarihi': dateRangeQuery },
+            { 'detaylar.bitis_tarihi.$date': dateRangeQueryString }
+          ]
         }
       ]
     })

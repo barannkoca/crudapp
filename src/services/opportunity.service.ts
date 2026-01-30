@@ -93,28 +93,50 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
   // getNextSiraNo metodu kaldırıldı
 
   // Bitiş tarihi yaklaşan fırsatları getir
+  // Bitiş tarihi yaklaşan fırsatları getir
   async getExpiringOpportunities(days: number = 60): Promise<BaseResponse<any[]>> {
     try {
       const opportunities = await this.opportunityRepository.findExpiring(days);
       const now = new Date();
 
+      // Tarih değerini güvenli bir şekilde çıkaran yardımcı fonksiyon
+      const extractDate = (val: any): Date | undefined => {
+        if (!val) return undefined;
+        if (val instanceof Date) return val;
+        if (typeof val === 'string') return new Date(val);
+        // MongoDB EJSON formatı { $date: "..." }
+        if (typeof val === 'object' && val.$date) return new Date(val.$date);
+        return undefined;
+      };
+
       const processedOpportunities = opportunities.map((opp: any) => {
-        let expirationDate: Date | undefined;
+        let rawDate: any;
 
         if (opp.islem_turu === IslemTuruDto.CALISMA_IZNI) {
-          expirationDate = opp.detaylar?.calisma_izni_bitis_tarihi;
+          rawDate = opp.detaylar?.calisma_izni_bitis_tarihi;
         } else if (opp.islem_turu === IslemTuruDto.IKAMET_IZNI) {
-          expirationDate = opp.detaylar?.gecerlilik_tarihi;
+          rawDate = opp.detaylar?.gecerlilik_tarihi;
         } else if (opp.islem_turu === IslemTuruDto.DIGER) {
-          expirationDate = opp.detaylar?.bitis_tarihi;
+          rawDate = opp.detaylar?.bitis_tarihi;
         }
 
+        const expirationDate = extractDate(rawDate);
+
         const daysLeft = expirationDate
-          ? Math.ceil((new Date(expirationDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+          ? Math.ceil((expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
           : 0;
 
         // DTO mapping
         const dto = this.mapToDto(opp as IOpportunityDoc);
+
+        // Map edilen DTO'da da tarihi düzelt (display için)
+        if (dto.islem_turu === IslemTuruDto.CALISMA_IZNI && dto.detaylar) {
+          dto.detaylar.calisma_izni_bitis_tarihi = extractDate(dto.detaylar.calisma_izni_bitis_tarihi);
+        } else if (dto.islem_turu === IslemTuruDto.IKAMET_IZNI && dto.detaylar) {
+          dto.detaylar.gecerlilik_tarihi = extractDate(dto.detaylar.gecerlilik_tarihi);
+        } else if (dto.islem_turu === IslemTuruDto.DIGER && dto.detaylar) {
+          dto.detaylar.bitis_tarihi = extractDate(dto.detaylar.bitis_tarihi);
+        }
 
         return {
           ...dto,

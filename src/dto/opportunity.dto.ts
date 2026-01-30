@@ -80,6 +80,8 @@ export interface CreateCalismaIzniDto extends Omit<CreateOpportunityDto, 'islem_
     sozlesme_turu: string;
     maas: number;
     calisma_saati: number;
+    kayit_tarihi?: string | Date; // Migration script'ten gelen alan
+    calisma_izni_bitis_tarihi?: string | Date; // Migration script'ten gelen alan
   };
 }
 
@@ -130,5 +132,5 @@ export interface OpportunityFilterDto {
 // Sıra numarası DTO'ları kaldırıldı - Tarih bazlı sıralama kullanılacak
 
 // Response DTO'ları
-export interface OpportunityResponse extends BaseResponse<OpportunityDto> {}
-export interface OpportunitiesResponse extends PaginatedResponse<OpportunityDto> {}
+export interface OpportunityResponse extends BaseResponse<OpportunityDto> { }
+export interface OpportunitiesResponse extends PaginatedResponse<OpportunityDto> { }
