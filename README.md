@@ -1,75 +1,67 @@
-# 🚀 CRUD App - Migration Sistemi
+# 🚀 CRUD App - CRM Sistemi
 
-Bu proje, test veritabanındaki fotoğraf ve PDF verilerini yeni sisteme migrate etmek için geliştirilmiş bir otomasyon sistemidir.
+Müşteri ilişkileri, fırsat takibi ve finansal süreçleri yönetmek için geliştirilmiş kapsamlı bir CRM uygulamasıdır. Next.js ve MongoDB altyapısı üzerine inşa edilmiştir.
 
-## 🎯 Özellikler
+## 🌟 Özellikler
 
-- ✅ **Otomatik Migration**: Makefile ile tek komutla tüm işlemler
-- ✅ **Fotoğraf Migrasyonu**: Müşteri fotoğraflarını otomatik aktarım
-- ✅ **PDF Migrasyonu**: İkamet izni PDF'lerini otomatik aktarım
-- ✅ **Detaylı Raporlama**: Migration sonuçlarını detaylı kontrol
-- ✅ **Yedekleme Sistemi**: Veritabanı yedekleme ve geri yükleme
-- ✅ **Hata Yönetimi**: Kapsamlı hata yakalama ve loglama
+- **📊 Dashboard**: Genel durum özeti, grafikler ve istatistikler.
+- **👥 Müşteri Yönetimi**: Müşteri ekleme, düzenleme ve detaylı profil görüntüleme.
+- **📁 İşlemler & Fırsatlar**:
+    - **İkamet İzni**: İkamet izni süreçlerinin takibi.
+    - **Çalışma İzni**: Çalışma izni başvurularının yönetimi.
+    - **Diğer İşlemler**: Çeşitli hizmet süreçlerinin takibi.
+- **💰 Finansal Takip**: Bekleyen ödemeler ve tahsilat takibi.
+- **📈 Analitik**: Satış ve müşteri verilerinin analizi.
+- **🛡️ Audit Log**: Yapılan işlemlerin kayıt altına alınması.
 
-## 🚀 Hızlı Başlangıç
+## 🛠️ Teknolojiler
 
-### Tek Komutla Tüm Migration
-```bash
-make all
-```
+- **Frontend & Framework**: [Next.js 15](https://nextjs.org/), React 19
+- **Dil**: TypeScript
+- **Veritabanı**: MongoDB, Mongoose
+- **Genel Stil & UI**: [Tailwind CSS v4](https://tailwindcss.com/), [Shadcn UI](https://ui.shadcn.com/)
+- **İkonlar**: Lucide React, React Icons
+- **Grafikler**: Chart.js, React Chartjs 2
 
-### Adım Adım Migration
-```bash
-make setup    # Test verilerini import et
-make migrate  # Fotoğraf ve PDF'leri migrate et
-make check    # Sonuçları kontrol et
-```
+## 🚀 Kurulum
 
-## 📊 Son Migration Sonuçları
+Projeyi yerel ortamınızda çalıştırmak için aşağıdaki adımları izleyin:
 
-- **94 müşteri** başarıyla oluşturuldu
-- **94 ikamet izni fırsatı** başarıyla oluşturuldu
-- **94 müşteri fotoğrafı** başarıyla eklendi (%100 başarı)
-- **94 PDF** başarıyla ikamet iznine eklendi (%100 başarı)
+1. **Bağımlılıkları Yükleyin**
+   ```bash
+   npm install
+   ```
 
-## 🛠️ Kullanılabilir Komutlar
+2. **Çevresel Değişkenleri Ayarlayın**
+   `.env` dosyasını oluşturun ve gerekli veritabanı bağlantı bilgilerini ekleyin (`MONGODB_URI` vb.).
 
-```bash
-make help         # Tüm komutları göster
-make all          # Tüm migration işlemlerini çalıştır
-make setup        # Test verilerini import et
-make migrate      # Fotoğraf ve PDF'leri migrate et
-make check        # Sonuçları kontrol et
-make status       # Mevcut durumu göster
-make report       # Detaylı rapor oluştur
-make backup       # Veritabanı yedeği al
-make clean        # Log dosyalarını temizle
-```
+3. **Geliştirme Sunucusunu Başlatın**
+   ```bash
+   npm run dev
+   ```
+   Uygulama [http://localhost:3000](http://localhost:3000) adresinde çalışacaktır.
 
-## 📁 Proje Yapısı
+## 📦 Migration & Scriptler
+
+Proje, verileri yönetmek ve test verisi oluşturmak için çeşitli yardımcı araçlar içerir.
+
+### Hızlı Komutlar (Makefile)
+
+- `make setup`: Test verilerini import eder.
+- `make migrate`: Fotoğraf ve PDF migrasyonlarını çalıştırır.
+- `make check`: Migrasyon sonuçlarını kontrol eder.
+- `make all`: Tüm süreci sırasıyla çalıştırır.
+
+Detaylı script dokümantasyonu için [scripts/README.md](scripts/README.md) dosyasını inceleyebilirsiniz.
+
+## 📂 Proje Yapısı
 
 ```
 crudapp/
-├── Makefile                    # Otomatik migration komutları
-├── scripts/                    # Migration scriptleri
-│   ├── import-test-data.js     # Test verilerini import eder
-│   ├── migrate-photos-and-pdfs.js  # Fotoğraf ve PDF'leri migrate eder
-│   ├── check-migration-results.js  # Sonuçları kontrol eder
-│   └── README.md              # Detaylı dokümantasyon
-├── .env                        # Veritabanı bağlantı bilgileri
-└── README.md                   # Bu dosya
+├── app/                  # Next.js App Router sayfaları
+├── components/           # UI bileşenleri
+├── models/               # Mongoose veritabanı şemaları
+├── lib/                  # Yardımcı fonksiyonlar ve servisler
+├── scripts/              # Migration ve veri scriptleri
+└── public/               # Statik dosyalar
 ```
-
-## 🔧 Gereksinimler
-
-- Node.js (v14+)
-- MongoDB
-- Make (Unix/Linux/macOS)
-
-## 📝 Detaylı Dokümantasyon
-
-Daha detaylı bilgi için [scripts/README.md](scripts/README.md) dosyasını inceleyin.
-
-## 🎉 Başarı!
-
-Migration sistemi başarıyla kuruldu ve çalışıyor! Artık tek komutla tüm migration işlemlerini otomatik olarak gerçekleştirebilirsiniz.
