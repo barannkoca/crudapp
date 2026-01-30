@@ -22,7 +22,7 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
 
   // Filtreleme ile fırsatları getir
   async findByFilters(
-    filters: OpportunityFilterDto, 
+    filters: OpportunityFilterDto,
     pagination?: { page: number; limit: number }
   ): Promise<{ data: IOpportunityDoc[], total: number }> {
     const filter: FilterQuery<IOpportunityDoc> = {};
@@ -46,7 +46,7 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
     // Arama terimi varsa, hem detaylarda hem de müşteri adında ara
     if (filters.search) {
       const searchRegex = { $regex: filters.search, $options: 'i' };
-      
+
       // Müşteri ad ve soyadına göre arama yapmak için aggregation kullan
       const aggregation = [
         {
@@ -79,10 +79,10 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
       ];
 
       const total = await this.model.aggregate([...aggregation, { $count: 'total' }]).exec();
-      
+
       const sortField = filters.sort_by || 'olusturma_tarihi';
       const sortOrder = filters.sort_order === 'asc' ? 1 : -1;
-      const sortObject = { [sortField]: sortOrder };
+      const sortObject: any = { [sortField]: sortOrder };
 
       let dataQuery = this.model.aggregate(aggregation).sort(sortObject);
 
@@ -107,29 +107,57 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
     const sortObject = { [sortField]: sortOrder };
 
     return this.findAll(
-      filter, 
-      pagination, 
-      'musteri', 
+      filter,
+      pagination,
+      'musteri',
       sortObject
     );
   }
 
   // Müşteriye ait fırsatları getir
   async findByCustomer(
-    customerId: string, 
+    customerId: string,
     pagination?: { page: number; limit: number }
   ): Promise<{ data: IOpportunityDoc[], total: number }> {
     return this.findAll(
-      { musteri: customerId }, 
-      pagination, 
-      'musteri', 
+      { musteri: customerId },
+      pagination,
+      'musteri',
       { olusturma_tarihi: -1 }
     );
   }
 
+  // Bitiş tarihi yaklaşan fırsatları getir
+  async findExpiring(days: number): Promise<IOpportunityDoc[]> {
+    const now = new Date();
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + days);
+
+    const dateRangeQuery = { $gte: now, $lte: futureDate };
+
+    return this.model.find({
+      $or: [
+        {
+          islem_turu: IslemTuruDto.CALISMA_IZNI,
+          'detaylar.calisma_izni_bitis_tarihi': dateRangeQuery
+        },
+        {
+          islem_turu: IslemTuruDto.IKAMET_IZNI,
+          'detaylar.gecerlilik_tarihi': dateRangeQuery
+        },
+        {
+          islem_turu: IslemTuruDto.DIGER,
+          'detaylar.bitis_tarihi': dateRangeQuery
+        }
+      ]
+    })
+      .populate('musteri', 'ad soyad telefon photo')
+      .lean();
+  }
+
   // Bekleyen ödemeleri getir
   async findPendingPayments(
-    filters: OpportunityFilterDto, 
+    filters: OpportunityFilterDto,
     pagination?: { page: number; limit: number }
   ): Promise<{ data: IOpportunityDoc[], total: number }> {
     const filter: FilterQuery<IOpportunityDoc> = {};
@@ -137,7 +165,7 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
     if (filters.islem_turu) filter.islem_turu = filters.islem_turu;
     if (filters.durum) filter.durum = filters.durum;
     if (filters.musteri_id) filter.musteri = filters.musteri_id;
-    
+
     // Detaylar içinde arama (isveren, kayit_numarasi, islem_adi vb.)
     if (filters.search) {
       filter.$or = [
@@ -195,9 +223,9 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
     const sortObject = { [sortField]: sortOrder };
 
     return this.findAll(
-      filter, 
-      pagination, 
-      'musteri', 
+      filter,
+      pagination,
+      'musteri',
       sortObject
     );
   }
@@ -316,13 +344,13 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
     expenseAmount: number; // Gider miktarı
     netRevenue: number; // Net gelir (alınan - gider)
     pendingPayments: number; // Bekleyen ödemeler (toplam - alınan)
-    byType: { 
-      [key: string]: { 
+    byType: {
+      [key: string]: {
         total: number; // Toplam anlaşılan ücret
         received: number; // Alınan ödeme
         expense: number; // Gider
         net: number; // Net (alınan - gider)
-      } 
+      }
     };
   }> {
     const paymentStats = await this.aggregate([
@@ -372,7 +400,7 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
 
     // Net gelir hesapla
     const netRevenue = receivedAmount - expenseAmount;
-    
+
     // İşlem türü bazında net hesapla
     Object.keys(byType).forEach(islemTuru => {
       byType[islemTuru].net = byType[islemTuru].received - byType[islemTuru].expense;
@@ -494,7 +522,7 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
     const monthlyData = Object.values(monthlyDataMap).map((month: any) => {
       month.netRevenue = month.receivedAmount - month.expenseAmount;
       month.pendingPayments = month.totalRevenue - month.receivedAmount;
-      
+
       // Her işlem türü için net gelir hesapla
       Object.keys(month.byType).forEach(type => {
         month.byType[type].net = month.byType[type].received - month.byType[type].expense;

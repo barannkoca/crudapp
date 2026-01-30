@@ -1,18 +1,18 @@
 import { BaseService } from './base.service';
 import { OpportunityRepository } from '../repositories/opportunity.repository';
 import { CustomerRepository } from '../repositories/customer.repository';
-import { 
-  OpportunityDto, 
-  CreateOpportunityDto, 
-  UpdateOpportunityDto, 
+import {
+  OpportunityDto,
+  CreateOpportunityDto,
+  UpdateOpportunityDto,
   OpportunityFilterDto,
   OpportunitiesResponse,
   IslemTuruDto
 } from '../dto/opportunity.dto';
 import { BaseResponse, PaginationParams } from '../dto/base.dto';
-import { 
-  DataSanitizer, 
-  SchemaValidator, 
+import {
+  DataSanitizer,
+  SchemaValidator,
   DataIntegrityChecker,
   RateLimiter
 } from '../utils/data-integrity.utils';
@@ -57,13 +57,13 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
 
   // Filtreleme ile fırsat listesi
   async getOpportunitiesByFilters(
-    filters: OpportunityFilterDto, 
+    filters: OpportunityFilterDto,
     pagination: PaginationParams
   ): Promise<OpportunitiesResponse> {
     try {
       const { data, total } = await this.opportunityRepository.findByFilters(filters, pagination);
       const opportunities = data.map(this.mapToDto.bind(this));
-      
+
       return this.createPaginatedResponse(opportunities, { ...pagination, total }) as OpportunitiesResponse;
     } catch (error) {
       console.error('Opportunity filter error:', error);
@@ -73,13 +73,13 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
 
   // Müşteriye ait fırsatlar
   async getOpportunitiesByCustomer(
-    customerId: string, 
+    customerId: string,
     pagination: PaginationParams
   ): Promise<OpportunitiesResponse> {
     try {
       const { data, total } = await this.opportunityRepository.findByCustomer(customerId, pagination);
       const opportunities = data.map(this.mapToDto.bind(this));
-      
+
       return this.createPaginatedResponse(opportunities, { ...pagination, total }) as OpportunitiesResponse;
     } catch (error) {
       console.error('Customer opportunities error:', error);
@@ -91,6 +91,47 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
   // getOpportunityBySiraNo metodu kaldırıldı - Tarih bazlı sıralama kullanılacak
 
   // getNextSiraNo metodu kaldırıldı
+
+  // Bitiş tarihi yaklaşan fırsatları getir
+  async getExpiringOpportunities(days: number = 60): Promise<BaseResponse<any[]>> {
+    try {
+      const opportunities = await this.opportunityRepository.findExpiring(days);
+      const now = new Date();
+
+      const processedOpportunities = opportunities.map((opp: any) => {
+        let expirationDate: Date | undefined;
+
+        if (opp.islem_turu === IslemTuruDto.CALISMA_IZNI) {
+          expirationDate = opp.detaylar?.calisma_izni_bitis_tarihi;
+        } else if (opp.islem_turu === IslemTuruDto.IKAMET_IZNI) {
+          expirationDate = opp.detaylar?.gecerlilik_tarihi;
+        } else if (opp.islem_turu === IslemTuruDto.DIGER) {
+          expirationDate = opp.detaylar?.bitis_tarihi;
+        }
+
+        const daysLeft = expirationDate
+          ? Math.ceil((new Date(expirationDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+          : 0;
+
+        // DTO mapping
+        const dto = this.mapToDto(opp as IOpportunityDoc);
+
+        return {
+          ...dto,
+          expirationDate,
+          daysLeft
+        };
+      });
+
+      // Sort by days left (ascending)
+      processedOpportunities.sort((a, b) => a.daysLeft - b.daysLeft);
+
+      return this.createSuccessResponse(processedOpportunities);
+    } catch (error) {
+      console.error('Expiring opportunities error:', error);
+      return this.createErrorResponse('Yaklaşan fırsatlar alınamadı');
+    }
+  }
 
   // Fırsat istatistikleri
   async getOpportunityStats(): Promise<BaseResponse<any>> {
@@ -138,13 +179,13 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
 
   // Bekleyen ödemeleri getir
   async getPendingPayments(
-    filters: OpportunityFilterDto, 
+    filters: OpportunityFilterDto,
     pagination: PaginationParams
   ): Promise<OpportunitiesResponse> {
     try {
       const { data, total } = await this.opportunityRepository.findPendingPayments(filters, pagination);
       const opportunities = data.map(this.mapToDto.bind(this));
-      
+
       return this.createPaginatedResponse(opportunities, { ...pagination, total }) as OpportunitiesResponse;
     } catch (error) {
       console.error('Pending payments error:', error);
@@ -166,10 +207,10 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
 
       const data = await this.mapCreateDtoToEntity(createDto);
       const result = await this.opportunityRepository.create(data);
-      
+
       // Müşteri bilgilerini populate et
       const populatedResult = await this.opportunityRepository.findById(result._id as string, 'musteri');
-      
+
       return this.createSuccessResponse(this.mapToDto(populatedResult!), 'Fırsat başarıyla oluşturuldu');
     } catch (error) {
       console.error('Create opportunity error:', error);

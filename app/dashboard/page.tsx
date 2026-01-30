@@ -15,11 +15,11 @@ import {
 } from "@/components/ui/sidebar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { 
-  Users, 
-  Briefcase, 
-  FileCheck, 
-  Building2, 
+import {
+  Users,
+  Briefcase,
+  FileCheck,
+  Building2,
   TrendingUp,
   Calendar,
   DollarSign,
@@ -37,6 +37,16 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
+import dynamic from "next/dynamic"
+import { LoadingSkeleton } from "@/components/dashboard/LoadingSkeleton"
+
+const ExpiringOpportunities = dynamic(
+  () => import("@/components/dashboard/ExpiringOpportunities").then((mod) => mod.ExpiringOpportunities),
+  {
+    loading: () => <LoadingSkeleton />,
+    ssr: false,
+  }
+)
 
 export default function Page() {
   const [stats, setStats] = useState({
@@ -68,7 +78,7 @@ export default function Page() {
   const fetchDashboardStats = async () => {
     try {
       setLoading(true);
-      
+
       // Paralel olarak tüm istatistikleri çek
       const [customerStats, opportunityStats, paymentStats, activities] = await Promise.all([
         fetch('/api/customers/stats').then(res => res.json()),
@@ -79,7 +89,7 @@ export default function Page() {
 
       // Payment stats'ı yeni sisteme göre işle
       const paymentData = paymentStats.data || {};
-      
+
       setStats({
         customers: customerStats.data || { total: 0, recentlyAdded: 0 },
         opportunities: opportunityStats.data || { total: 0, byStatus: {}, byType: {}, recentlyAdded: 0 },
@@ -130,7 +140,7 @@ export default function Page() {
             </BreadcrumbList>
           </Breadcrumb>
         </div>
-        
+
         <div className="ml-auto flex items-center gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -151,7 +161,7 @@ export default function Page() {
           </Button>
         </div>
       </header>
-      
+
       {/* Main Content */}
       <div className="flex-1 overflow-auto p-6 w-full">
         {/* Hoş Geldin Mesajı */}
@@ -178,7 +188,7 @@ export default function Page() {
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Toplam Fırsat</CardTitle>
@@ -193,7 +203,7 @@ export default function Page() {
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Tamamlanan İşlemler</CardTitle>
@@ -208,7 +218,7 @@ export default function Page() {
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Net Gelir</CardTitle>
@@ -223,7 +233,7 @@ export default function Page() {
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Bekleyen Ödemeler</CardTitle>
@@ -240,6 +250,11 @@ export default function Page() {
               </p>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Yaklaşan Bitiş Tarihleri - Yeni Bölüm */}
+        <div className="mb-8">
+          <ExpiringOpportunities />
         </div>
 
         {/* Hızlı Erişim */}

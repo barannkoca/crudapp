@@ -23,7 +23,7 @@ export class OpportunityController extends BaseController {
       const pagination = this.parsePaginationParams(request);
       const queryParams = this.parseQueryParams(request);
       const dateRange = this.parseDateRange(queryParams);
-      
+
       // Filtreleme parametrelerini hazırla
       const filters: OpportunityFilterDto = this.cleanFilterParams({
         islem_turu: queryParams.islem_turu as IslemTuruDto,
@@ -37,11 +37,11 @@ export class OpportunityController extends BaseController {
       });
 
       const result = await this.opportunityService.getOpportunitiesByFilters(filters, pagination);
-      
+
       if (!result.success) {
         return this.createErrorResponse(result.error!);
       }
-      
+
       // Pagination bilgilerini response'a ekle
       return NextResponse.json({
         success: true,
@@ -62,11 +62,11 @@ export class OpportunityController extends BaseController {
       }
 
       const result = await this.opportunityService.getById(params.id);
-      
+
       if (!result.success) {
         return this.createErrorResponse(result.error!, 404);
       }
-      
+
       return this.createSuccessResponse(result.data, result.message);
     }, 'Fırsat getirilemedi');
   }
@@ -81,11 +81,11 @@ export class OpportunityController extends BaseController {
 
       const pagination = this.parsePaginationParams(request);
       const result = await this.opportunityService.getOpportunitiesByCustomer(params.customerId, pagination);
-      
+
       if (!result.success) {
         return this.createErrorResponse(result.error!);
       }
-      
+
       // Pagination bilgilerini response'a ekle
       return NextResponse.json({
         success: true,
@@ -103,7 +103,7 @@ export class OpportunityController extends BaseController {
   async createOpportunity(request: NextRequest): Promise<NextResponse> {
     return this.handleRequest(async () => {
       console.log('🎯 OpportunityController.createOpportunity called');
-      
+
       const authResult = await this.checkAuth(request);
       if (!authResult.isAuthenticated) {
         console.log('❌ Authentication failed');
@@ -113,7 +113,7 @@ export class OpportunityController extends BaseController {
       const { body, formData, contentType } = await this.parseRequestBody(request);
       console.log('📝 Request Content-Type:', contentType);
       console.log('📋 Request Body:', body);
-      
+
       let createDto: CreateOpportunityDto;
 
       if (contentType.includes('multipart/form-data') && formData) {
@@ -155,12 +155,12 @@ export class OpportunityController extends BaseController {
       }
 
       console.log('💾 Final CreateDTO:', createDto);
-      
+
       const startTime = Date.now();
       const result = await this.opportunityService.createOpportunity(createDto);
-      
+
       console.log('🔄 Service Result:', result);
-      
+
       if (!result.success) {
         // Başarısız fırsat oluşturma audit log
         await AuditService.logFailure(
@@ -174,7 +174,7 @@ export class OpportunityController extends BaseController {
         );
         return this.createErrorResponse(result.error!, 400);
       }
-      
+
       // Başarılı fırsat oluşturma audit log
       await AuditService.logSuccess(
         authResult.session.user.id,
@@ -189,7 +189,7 @@ export class OpportunityController extends BaseController {
         },
         Date.now() - startTime
       );
-      
+
       return this.createSuccessResponse(result.data, result.message, 201);
     }, 'Fırsat oluşturulamadı');
   }
@@ -203,13 +203,13 @@ export class OpportunityController extends BaseController {
       }
 
       const { body, formData, contentType } = await this.parseRequestBody(request);
-      
+
       let updateDto: UpdateOpportunityDto;
 
       if (contentType.includes('multipart/form-data') && formData) {
         // FormData'dan fırsat bilgilerini al
         updateDto = {};
-        
+
         if (formData.get('durum')) updateDto.durum = formData.get('durum') as any;
         if (formData.get('detaylar')) updateDto.detaylar = JSON.parse(formData.get('detaylar') as string);
         if (formData.get('aciklamalar')) updateDto.aciklamalar = JSON.parse(formData.get('aciklamalar') as string);
@@ -244,11 +244,11 @@ export class OpportunityController extends BaseController {
       }
 
       const result = await this.opportunityService.update(params.id, updateDto);
-      
+
       if (!result.success) {
         return this.createErrorResponse(result.error!, 400);
       }
-      
+
       return this.createSuccessResponse(result.data, result.message);
     }, 'Fırsat güncellenemedi');
   }
@@ -262,11 +262,11 @@ export class OpportunityController extends BaseController {
       }
 
       const result = await this.opportunityService.delete(params.id);
-      
+
       if (!result.success) {
         return this.createErrorResponse(result.error!, 404);
       }
-      
+
       return this.createSuccessResponse(result.data, result.message);
     }, 'Fırsat silinemedi');
   }
@@ -280,11 +280,11 @@ export class OpportunityController extends BaseController {
       }
 
       const result = await this.opportunityService.getOpportunityStats();
-      
+
       if (!result.success) {
         return this.createErrorResponse(result.error!);
       }
-      
+
       return this.createSuccessResponse(result.data, result.message);
     }, 'İstatistikler alınamadı');
   }
@@ -298,11 +298,11 @@ export class OpportunityController extends BaseController {
       }
 
       const result = await this.opportunityService.getPaymentStats();
-      
+
       if (!result.success) {
         return this.createErrorResponse(result.error!);
       }
-      
+
       return this.createSuccessResponse(result.data, result.message);
     }, 'Ödeme istatistikleri alınamadı');
   }
@@ -319,11 +319,11 @@ export class OpportunityController extends BaseController {
       const months = parseInt(url.searchParams.get('months') || '12');
 
       const result = await this.opportunityService.getMonthlyRevenueStats(months);
-      
+
       if (!result.success) {
         return this.createErrorResponse(result.error!);
       }
-      
+
       return this.createSuccessResponse(result.data, result.message);
     }, 'Aylık gelir istatistikleri alınamadı');
   }
@@ -337,13 +337,32 @@ export class OpportunityController extends BaseController {
       }
 
       const result = await this.opportunityService.getRecentActivities();
-      
+
       if (!result.success) {
         return this.createErrorResponse(result.error!);
       }
-      
+
       return this.createSuccessResponse(result.data, result.message);
     }, 'Son aktiviteler alınamadı');
+  }
+
+  // GET /api/opportunities/expiring - Yaklaşan fırsatlar
+  async getExpiringOpportunities(request: NextRequest): Promise<NextResponse> {
+    return this.handleRequest(async () => {
+      // Auth check opsiyonel olabilir veya sadece view izni
+      const authResult = await this.checkAuth(request);
+      if (!authResult.isAuthenticated) {
+        return authResult.response!;
+      }
+
+      const result = await this.opportunityService.getExpiringOpportunities(60); // 60 gün
+
+      if (!result.success) {
+        return this.createErrorResponse(result.error!);
+      }
+
+      return this.createSuccessResponse(result.data, result.message);
+    }, 'Yaklaşan fırsatlar alınamadı');
   }
 
   // POST /api/opportunities/[id]/upload-pdfs - PDF yükle
@@ -373,7 +392,7 @@ export class OpportunityController extends BaseController {
       for (const file of files) {
         const buffer = await file.arrayBuffer();
         const base64 = Buffer.from(buffer).toString('base64');
-        
+
         pdfDosyalari.push({
           data: base64,
           contentType: file.type,
@@ -426,7 +445,7 @@ export class OpportunityController extends BaseController {
       }
 
       const mevcutPdfler = opportunity.data.pdf_dosyalari || [];
-      
+
       if (pdfIndex >= mevcutPdfler.length) {
         return this.createErrorResponse('PDF bulunamadı', 404);
       }
@@ -458,7 +477,7 @@ export class OpportunityController extends BaseController {
       const pagination = this.parsePaginationParams(request);
       const queryParams = this.parseQueryParams(request);
       const dateRange = this.parseDateRange(queryParams);
-      
+
       // Filtreleme parametrelerini hazırla
       const filters: OpportunityFilterDto = this.cleanFilterParams({
         islem_turu: queryParams.islem_turu as IslemTuruDto,
@@ -471,11 +490,11 @@ export class OpportunityController extends BaseController {
       });
 
       const result = await this.opportunityService.getPendingPayments(filters, pagination);
-      
+
       if (!result.success) {
         return this.createErrorResponse(result.error!);
       }
-      
+
       // Pagination bilgilerini response'a ekle
       return NextResponse.json({
         success: true,
