@@ -4,11 +4,11 @@ import { ICustomer } from '@/types/Customer';
 import { CustomerFilterDto } from '../dto/customer.dto';
 import { FilterQuery, Document } from 'mongoose';
 
-interface ICustomerDoc extends Omit<ICustomer, '_id'>, Document {}
+interface ICustomerDoc extends Omit<ICustomer, '_id'>, Document { }
 
 export class CustomerRepository extends BaseRepository<ICustomerDoc> {
   constructor() {
-    super(Customer);
+    super(Customer as any);
   }
 
   // Müşteri arama (ad, soyad, email, telefon)
@@ -68,9 +68,9 @@ export class CustomerRepository extends BaseRepository<ICustomerDoc> {
 
   // Ad soyad ile müşteri bul
   async findByAdSoyad(ad: string, soyad: string): Promise<ICustomerDoc | null> {
-    return this.findOne({ 
-      ad: { $regex: new RegExp(`^${ad.trim()}$`, 'i') }, 
-      soyad: { $regex: new RegExp(`^${soyad.trim()}$`, 'i') } 
+    return this.findOne({
+      ad: { $regex: new RegExp(`^${ad.trim()}$`, 'i') },
+      soyad: { $regex: new RegExp(`^${soyad.trim()}$`, 'i') }
     });
   }
 
@@ -80,7 +80,7 @@ export class CustomerRepository extends BaseRepository<ICustomerDoc> {
   }
 
   // Select için müşteri listesi (sadece id, ad, soyad)
-  async findForSelect(): Promise<Array<{_id: string, ad: string, soyad: string}>> {
+  async findForSelect(): Promise<Array<{ _id: string, ad: string, soyad: string }>> {
     return this.model.find({}, { ad: 1, soyad: 1 })
       .sort({ ad: 1, soyad: 1 })
       .lean()

@@ -75,7 +75,7 @@ function CalismaIzniPageContent() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-    }, 500); // 500ms gecikme
+    }, 1000); // 1000ms gecikme
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
