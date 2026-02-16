@@ -15,7 +15,7 @@ import { formatDate } from '@/lib/utils';
 function DigerIslemlerPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // URL'den başlangıç değerlerini al
   const initialPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
   const initialSearch = searchParams.get('search') || "";
@@ -43,7 +43,7 @@ function DigerIslemlerPageContent() {
   // URL'i güncelle
   const updateURL = useCallback((params: { page?: number; search?: string; status?: string }) => {
     const newParams = new URLSearchParams(searchParams);
-    
+
     if (params.page !== undefined) {
       if (params.page === 1) {
         newParams.delete('page');
@@ -51,7 +51,7 @@ function DigerIslemlerPageContent() {
         newParams.set('page', params.page.toString());
       }
     }
-    
+
     if (params.search !== undefined) {
       if (params.search === '') {
         newParams.delete('search');
@@ -59,7 +59,7 @@ function DigerIslemlerPageContent() {
         newParams.set('search', params.search);
       }
     }
-    
+
     if (params.status !== undefined) {
       if (params.status === 'all') {
         newParams.delete('status');
@@ -67,7 +67,7 @@ function DigerIslemlerPageContent() {
         newParams.set('status', params.status);
       }
     }
-    
+
     const newURL = newParams.toString() ? `?${newParams.toString()}` : '';
     router.replace(`/diger-islemler${newURL}`, { scroll: false });
   }, [router, searchParams]);
@@ -127,12 +127,12 @@ function DigerIslemlerPageContent() {
   const fetchOpportunities = async () => {
     try {
       setLoading(true);
-      
+
       // URL'den güncel değerleri al
       const urlPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
       const urlSearch = searchParams.get('search') || "";
       const urlStatus = searchParams.get('status') || "all";
-      
+
       const params = new URLSearchParams({
         islem_turu: IslemTuru.DIGER,
         sort_by: 'olusturma_tarihi',
@@ -140,17 +140,17 @@ function DigerIslemlerPageContent() {
         page: urlPage.toString(),
         limit: itemsPerPage.toString()
       });
-      
+
       if (urlSearch) {
         params.append('search', urlSearch);
       }
-      
+
       if (urlStatus !== 'all') {
         params.append('durum', urlStatus);
       }
-      
+
       const response = await fetch(`/api/opportunities?${params}`);
-      
+
       if (response.ok) {
         const data = await response.json();
         setOpportunities(data.data || []);
@@ -240,8 +240,8 @@ function DigerIslemlerPageContent() {
       searchResultsCount={debouncedSearchTerm ? opportunities.length : totalCount}
       emptyStateTitle="İşlem Bulunamadı"
       emptyStateDescription={
-        debouncedSearchTerm 
-          ? "Arama kriterlerinize uygun işlem bulunamadı." 
+        debouncedSearchTerm
+          ? "Arama kriterlerinize uygun işlem bulunamadı."
           : "Henüz diğer işlem oluşturulmamış."
       }
       emptyStateIcon={
@@ -300,7 +300,7 @@ function DigerIslemlerPageContent() {
               >
                 <TableCell>
                   {opportunity.musteri?.photo && opportunity.musteri.photo.data ? (
-                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-purple-200">
+                    <div className="w-15 h-15 rounded-full overflow-hidden border-2 border-purple-200">
                       <img
                         src={`data:${opportunity.musteri.photo.contentType};base64,${opportunity.musteri.photo.data}`}
                         alt={`${opportunity.musteri.ad} ${opportunity.musteri.soyad}`}
@@ -318,7 +318,7 @@ function DigerIslemlerPageContent() {
                       </div>
                     </div>
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center border-2 border-purple-200">
+                    <div className="w-15 h-15 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center border-2 border-purple-200">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
@@ -328,10 +328,11 @@ function DigerIslemlerPageContent() {
                 <TableCell className="font-medium">
                   {opportunity.musteri?.ad} {opportunity.musteri?.soyad}
                 </TableCell>
-                <TableCell className="font-medium text-purple-700">
-                  <Link 
+                <TableCell className="font-medium text-purple-700 max-w-[200px]">
+                  <Link
                     href={`/diger-islemler/${opportunity._id}`}
-                    className="hover:underline cursor-pointer"
+                    className="hover:underline cursor-pointer block truncate"
+                    title={opportunity.detaylar?.islem_adi || ''}
                   >
                     {opportunity.detaylar?.islem_adi || '-'}
                   </Link>
@@ -346,8 +347,8 @@ function DigerIslemlerPageContent() {
                   {opportunity.detaylar?.bitis_tarihi ? formatDate(opportunity.detaylar.bitis_tarihi) : '-'}
                 </TableCell>
                 <TableCell>
-                  <Badge 
-                    variant="outline" 
+                  <Badge
+                    variant="outline"
                     className={`text-xs ${getIslemDurumColor(opportunity.detaylar?.islem_durumu)}`}
                   >
                     {opportunity.detaylar?.islem_durumu || 'Belirsiz'}

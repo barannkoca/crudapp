@@ -41,7 +41,7 @@ function IkametIzniPageContent() {
   // URL'i güncelle
   const updateURL = useCallback((params: { page?: number; search?: string; status?: string }) => {
     const newParams = new URLSearchParams(searchParams);
-    
+
     if (params.page !== undefined) {
       if (params.page === 1) {
         newParams.delete('page');
@@ -49,7 +49,7 @@ function IkametIzniPageContent() {
         newParams.set('page', params.page.toString());
       }
     }
-    
+
     if (params.search !== undefined) {
       if (params.search === '') {
         newParams.delete('search');
@@ -57,7 +57,7 @@ function IkametIzniPageContent() {
         newParams.set('search', params.search);
       }
     }
-    
+
     if (params.status !== undefined) {
       if (params.status === 'all') {
         newParams.delete('status');
@@ -65,7 +65,7 @@ function IkametIzniPageContent() {
         newParams.set('status', params.status);
       }
     }
-    
+
     const newURL = newParams.toString() ? `?${newParams.toString()}` : '';
     router.replace(`/ikamet-izni${newURL}`, { scroll: false });
   }, [router, searchParams]);
@@ -127,12 +127,12 @@ function IkametIzniPageContent() {
   const fetchOpportunities = async () => {
     try {
       setLoading(true);
-      
+
       // URL'den güncel değerleri al
       const urlPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
       const urlSearch = searchParams.get('search') || "";
       const urlStatus = searchParams.get('status') || "all";
-      
+
       const params = new URLSearchParams({
         islem_turu: IslemTuru.IKAMET_IZNI,
         sort_by: 'olusturma_tarihi',
@@ -140,17 +140,17 @@ function IkametIzniPageContent() {
         page: urlPage.toString(),
         limit: itemsPerPage.toString()
       });
-      
+
       if (urlSearch) {
         params.append('search', urlSearch);
       }
-      
+
       if (urlStatus !== 'all') {
         params.append('durum', urlStatus);
       }
-      
+
       const response = await fetch(`/api/opportunities?${params}`);
-      
+
       if (response.ok) {
         const result = await response.json();
         setOpportunities(result.data || []);
@@ -225,8 +225,8 @@ function IkametIzniPageContent() {
       searchResultsCount={debouncedSearchTerm ? opportunities.length : totalCount}
       emptyStateTitle="Fırsat Bulunamadı"
       emptyStateDescription={
-        debouncedSearchTerm 
-          ? "Arama kriterlerinize uygun ikamet izni fırsatı bulunamadı." 
+        debouncedSearchTerm
+          ? "Arama kriterlerinize uygun ikamet izni fırsatı bulunamadı."
           : "Henüz ikamet izni fırsatı oluşturulmamış."
       }
       emptyStateIcon={
@@ -284,7 +284,7 @@ function IkametIzniPageContent() {
               >
                 <TableCell>
                   {opportunity.musteri?.photo && opportunity.musteri.photo.data ? (
-                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-cyan-200">
+                    <div className="w-15 h-15 rounded-full overflow-hidden border-2 border-cyan-200">
                       <img
                         src={`data:${opportunity.musteri.photo.contentType};base64,${opportunity.musteri.photo.data}`}
                         alt={`${opportunity.musteri.ad} ${opportunity.musteri.soyad}`}
@@ -302,7 +302,7 @@ function IkametIzniPageContent() {
                       </div>
                     </div>
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-100 to-cyan-200 flex items-center justify-center border-2 border-cyan-200">
+                    <div className="w-15 h-15 rounded-full bg-gradient-to-br from-cyan-100 to-cyan-200 flex items-center justify-center border-2 border-cyan-200">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>

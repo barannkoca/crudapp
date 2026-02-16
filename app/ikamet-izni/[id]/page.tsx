@@ -18,7 +18,7 @@ import { UcretDisplayCard } from '@/components/UcretDisplayCard';
 // Tarih değerini güvenli bir şekilde formatlayan yardımcı fonksiyon
 const formatDateForInput = (dateValue: unknown): string => {
   if (!dateValue) return '';
-  
+
   try {
     const date = new Date(dateValue as string | number | Date);
     if (isNaN(date.getTime())) return '';
@@ -58,7 +58,7 @@ export default function IkametIzniDetailPage() {
     try {
       setLoading(true);
       const response = await fetch(`/api/opportunities/${id}`);
-      
+
       if (response.ok) {
         const data = await response.json();
         setOpportunity(data.data);
@@ -80,7 +80,7 @@ export default function IkametIzniDetailPage() {
 
   const saveChanges = async () => {
     if (!opportunity || !editData) return;
-    
+
     try {
       setSaving(true);
       const response = await fetch(`/api/opportunities/${opportunity._id}`, {
@@ -220,11 +220,11 @@ export default function IkametIzniDetailPage() {
 
   const uploadPdfs = async () => {
     if (!opportunity || pdfFiles.length === 0) return;
-    
+
     try {
       setUploadingPdfs(true);
       const formData = new FormData();
-      
+
       pdfFiles.forEach((file, index) => {
         formData.append(`pdf_${index}`, file);
       });
@@ -249,7 +249,7 @@ export default function IkametIzniDetailPage() {
 
   const deletePdf = async (pdfIndex: number) => {
     if (!opportunity) return;
-    
+
     try {
       const response = await fetch(`/api/opportunities/${opportunity._id}/delete-pdf/${pdfIndex}`, {
         method: 'DELETE'
@@ -267,7 +267,7 @@ export default function IkametIzniDetailPage() {
 
   const deleteOpportunity = async () => {
     if (!opportunity) return;
-    
+
     try {
       setDeleting(true);
       const response = await fetch(`/api/opportunities/${opportunity._id}`, {
@@ -326,7 +326,7 @@ export default function IkametIzniDetailPage() {
       {/* Header */}
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-6 w-full">
         <div className="flex items-center gap-2">
-          <button 
+          <button
             onClick={() => router.back()}
             className="inline-flex items-center px-3 py-2 text-sm font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors duration-200"
           >
@@ -344,14 +344,14 @@ export default function IkametIzniDetailPage() {
             </p>
           </div>
         </div>
-        
+
         <div className="ml-auto flex items-center gap-2">
           {editMode && (
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Durum:</span>
-              <Select 
-                value={editData.durum} 
-                onValueChange={(value) => setEditData({...editData, durum: value})}
+              <Select
+                value={editData.durum}
+                onValueChange={(value) => setEditData({ ...editData, durum: value })}
               >
                 <SelectTrigger className="w-40">
                   <SelectValue />
@@ -367,18 +367,18 @@ export default function IkametIzniDetailPage() {
               </Select>
             </div>
           )}
-          
+
           {!editMode && (
             <Badge className={`${getStatusColor(opportunity.durum)}`}>
               {opportunity.durum}
             </Badge>
           )}
-          
+
           <div className="flex gap-2">
             {editMode ? (
               <>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => {
                     setEditMode(false);
@@ -392,9 +392,9 @@ export default function IkametIzniDetailPage() {
                 >
                   İptal
                 </Button>
-                <Button 
-                  size="sm" 
-                  onClick={saveChanges} 
+                <Button
+                  size="sm"
+                  onClick={saveChanges}
                   disabled={saving}
                 >
                   {saving ? 'Kaydediliyor...' : 'Kaydet'}
@@ -402,8 +402,8 @@ export default function IkametIzniDetailPage() {
               </>
             ) : (
               <>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   onClick={() => setEditMode(true)}
                   className="bg-cyan-600 hover:bg-cyan-700"
                 >
@@ -414,7 +414,7 @@ export default function IkametIzniDetailPage() {
                 </Button>
                 <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                   <DialogTrigger asChild>
-                    <Button 
+                    <Button
                       size="sm"
                       variant="destructive"
                       className="bg-red-600 hover:bg-red-700"
@@ -438,15 +438,15 @@ export default function IkametIzniDetailPage() {
                       </p>
                     </div>
                     <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         onClick={() => setShowDeleteDialog(false)}
                         disabled={deleting}
                       >
                         İptal
                       </Button>
-                      <Button 
-                        variant="destructive" 
+                      <Button
+                        variant="destructive"
                         onClick={deleteOpportunity}
                         disabled={deleting}
                         className="bg-red-600 hover:bg-red-700"
@@ -466,16 +466,16 @@ export default function IkametIzniDetailPage() {
       <div className="flex-1 overflow-auto p-6 w-full">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
+
             {/* Sol Kolon - Ana Bilgiler */}
             <div className="lg:col-span-2 space-y-6">
-              
+
               {/* Müşteri Bilgileri */}
               <Card className="border-cyan-200 bg-cyan-50 border-2">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-3 text-cyan-700">
                     {opportunity.musteri?.photo && opportunity.musteri.photo.data ? (
-                      <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-cyan-500">
+                      <div className="w-40 h-40 rounded-full overflow-hidden border-2 border-cyan-500">
                         <img
                           src={`data:${opportunity.musteri.photo.contentType};base64,${opportunity.musteri.photo.data}`}
                           alt={`${opportunity.musteri.ad} ${opportunity.musteri.soyad}`}
@@ -483,7 +483,7 @@ export default function IkametIzniDetailPage() {
                         />
                       </div>
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-200 to-cyan-300 flex items-center justify-center">
+                      <div className="w-40 h-40 rounded-full bg-gradient-to-br from-cyan-200 to-cyan-300 flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-cyan-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
@@ -653,7 +653,7 @@ export default function IkametIzniDetailPage() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div>
                     <span className="font-medium text-gray-600">İkamet İzni Notları:</span>
                     {editMode ? (
@@ -707,8 +707,8 @@ export default function IkametIzniDetailPage() {
                           <div className="space-y-3">
                             <div className="flex justify-between items-center">
                               <div className="flex items-center gap-2">
-                                <Select 
-                                  value={aciklama.onem_derecesi} 
+                                <Select
+                                  value={aciklama.onem_derecesi}
                                   onValueChange={(value) => updateAciklama(index, 'onem_derecesi', value)}
                                 >
                                   <SelectTrigger className="w-32">
@@ -745,8 +745,8 @@ export default function IkametIzniDetailPage() {
                           <>
                             <div className="flex justify-between items-start mb-2">
                               <div className="flex items-center gap-2">
-                                <Badge variant={aciklama.onem_derecesi === 'yuksek' ? 'destructive' : 
-                                              aciklama.onem_derecesi === 'orta' ? 'default' : 'secondary'}>
+                                <Badge variant={aciklama.onem_derecesi === 'yuksek' ? 'destructive' :
+                                  aciklama.onem_derecesi === 'orta' ? 'default' : 'secondary'}>
                                   {aciklama.onem_derecesi} önem
                                 </Badge>
                                 {aciklama.yazan_kullanici && (
@@ -801,86 +801,86 @@ export default function IkametIzniDetailPage() {
                   {editMode ? (
                     <div className="space-y-3">
                       {editData.ucretler?.map((ucret: any, index: number) => (
-                      <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                        {editMode ? (
-                          <div className="space-y-3">
-                            <div className="flex justify-between items-center">
-                              <span className="font-medium text-sm">Ücret {index + 1}</span>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => removeUcret(index)}
-                              >
-                                Sil
-                              </Button>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
+                        <div key={index} className="p-3 bg-gray-50 rounded-lg">
+                          {editMode ? (
+                            <div className="space-y-3">
+                              <div className="flex justify-between items-center">
+                                <span className="font-medium text-sm">Ücret {index + 1}</span>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => removeUcret(index)}
+                                >
+                                  Sil
+                                </Button>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <Input
+                                  type="number"
+                                  value={ucret.miktar || ''}
+                                  onChange={(e) => updateUcret(index, 'miktar', parseFloat(e.target.value) || 0)}
+                                  placeholder="Miktar"
+                                />
+                                <Select
+                                  value={ucret.para_birimi || ParaBirimi.TRY}
+                                  onValueChange={(value) => updateUcret(index, 'para_birimi', value)}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value={ParaBirimi.TRY}>TRY</SelectItem>
+                                    <SelectItem value={ParaBirimi.USD}>USD</SelectItem>
+                                    <SelectItem value={ParaBirimi.EUR}>EUR</SelectItem>
+                                    <SelectItem value={ParaBirimi.GBP}>GBP</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                               <Input
-                                type="number"
-                                value={ucret.miktar || ''}
-                                onChange={(e) => updateUcret(index, 'miktar', parseFloat(e.target.value) || 0)}
-                                placeholder="Miktar"
+                                value={ucret.aciklama || ''}
+                                onChange={(e) => updateUcret(index, 'aciklama', e.target.value)}
+                                placeholder="Açıklama"
                               />
-                              <Select 
-                                value={ucret.para_birimi || ParaBirimi.TRY} 
-                                onValueChange={(value) => updateUcret(index, 'para_birimi', value)}
+                              <Select
+                                value={ucret.odeme_durumu || 'beklemede'}
+                                onValueChange={(value) => updateUcret(index, 'odeme_durumu', value)}
                               >
                                 <SelectTrigger>
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value={ParaBirimi.TRY}>TRY</SelectItem>
-                                  <SelectItem value={ParaBirimi.USD}>USD</SelectItem>
-                                  <SelectItem value={ParaBirimi.EUR}>EUR</SelectItem>
-                                  <SelectItem value={ParaBirimi.GBP}>GBP</SelectItem>
+                                  <SelectItem value="toplam_ucret">Toplam Ücret</SelectItem>
+                                  <SelectItem value="alinan_ucret">Alınan Ücret</SelectItem>
+                                  <SelectItem value="gider">Gider</SelectItem>
                                 </SelectContent>
                               </Select>
+                              <Input
+                                type="date"
+                                value={formatDateForInput(ucret.odeme_tarihi)}
+                                onChange={(e) => updateUcret(index, 'odeme_tarihi', e.target.value)}
+                                placeholder="Ödeme Tarihi"
+                              />
                             </div>
-                            <Input
-                              value={ucret.aciklama || ''}
-                              onChange={(e) => updateUcret(index, 'aciklama', e.target.value)}
-                              placeholder="Açıklama"
-                            />
-                            <Select 
-                              value={ucret.odeme_durumu || 'beklemede'} 
-                              onValueChange={(value) => updateUcret(index, 'odeme_durumu', value)}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="toplam_ucret">Toplam Ücret</SelectItem>
-                                <SelectItem value="alinan_ucret">Alınan Ücret</SelectItem>
-                                <SelectItem value="gider">Gider</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <Input
-                              type="date"
-                              value={formatDateForInput(ucret.odeme_tarihi)}
-                              onChange={(e) => updateUcret(index, 'odeme_tarihi', e.target.value)}
-                              placeholder="Ödeme Tarihi"
-                            />
-                          </div>
-                        ) : (
-                          <>
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="font-medium text-lg">
-                                {formatCurrency(ucret.miktar)} {ucret.para_birimi}
-                              </span>
-                              <Badge variant={getPaymentStatusVariant(ucret.odeme_durumu)}>
-                                {getPaymentStatusLabel(ucret.odeme_durumu)}
-                              </Badge>
-                            </div>
-                            {ucret.aciklama && (
-                              <p className="text-sm text-muted-foreground">{ucret.aciklama}</p>
-                            )}
-                            {ucret.odeme_tarihi && (
-                              <p className="text-xs text-muted-foreground">
-                                Ödeme Tarihi: {formatDate(ucret.odeme_tarihi)}
-                              </p>
-                            )}
-                          </>
-                        )}
+                          ) : (
+                            <>
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="font-medium text-lg">
+                                  {formatCurrency(ucret.miktar)} {ucret.para_birimi}
+                                </span>
+                                <Badge variant={getPaymentStatusVariant(ucret.odeme_durumu)}>
+                                  {getPaymentStatusLabel(ucret.odeme_durumu)}
+                                </Badge>
+                              </div>
+                              {ucret.aciklama && (
+                                <p className="text-sm text-muted-foreground">{ucret.aciklama}</p>
+                              )}
+                              {ucret.odeme_tarihi && (
+                                <p className="text-xs text-muted-foreground">
+                                  Ödeme Tarihi: {formatDate(ucret.odeme_tarihi)}
+                                </p>
+                              )}
+                            </>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -937,127 +937,127 @@ export default function IkametIzniDetailPage() {
                     )}
                   </CardTitle>
                 </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {/* Yüklenmeyi bekleyen PDF'ler */}
-                      {pdfFiles.length > 0 && (
-                        <div className="border-2 border-dashed border-cyan-300 rounded-lg p-4 bg-cyan-50">
-                          <h4 className="font-semibold text-cyan-700 mb-3">Yüklenmeyi Bekleyen Dosyalar</h4>
-                          <div className="space-y-2">
-                            {pdfFiles.map((file, index) => (
-                              <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
-                                <div className="flex items-center gap-2">
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                  </svg>
-                                  <span className="text-sm font-medium">{file.name}</span>
-                                  <span className="text-xs text-gray-500">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
-                                </div>
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => removePdfFile(index)}
-                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
-                                </Button>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Yüklenmeyi bekleyen PDF'ler */}
+                    {pdfFiles.length > 0 && (
+                      <div className="border-2 border-dashed border-cyan-300 rounded-lg p-4 bg-cyan-50">
+                        <h4 className="font-semibold text-cyan-700 mb-3">Yüklenmeyi Bekleyen Dosyalar</h4>
+                        <div className="space-y-2">
+                          {pdfFiles.map((file, index) => (
+                            <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
+                              <div className="flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <span className="text-sm font-medium">{file.name}</span>
+                                <span className="text-xs text-gray-500">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
                               </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Mevcut PDF'ler */}
-                      {opportunity.pdf_dosyalari && opportunity.pdf_dosyalari.map((pdf, index) => (
-                        <div key={index} className="border rounded-lg p-4 bg-white shadow-sm">
-                          <div className="flex items-start gap-4">
-                            <div className="w-16 h-20 bg-red-50 border-2 border-red-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => removePdfFile(index)}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </Button>
                             </div>
-                            
-                            <div className="flex-1">
-                              <div className="flex justify-between items-start mb-2">
-                                <h4 className="font-semibold text-lg">
-                                  {pdf.dosya_adi || `PDF Belgesi ${index + 1}`}
-                                </h4>
-                                <div className="flex gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => downloadPdf(pdf, index)}
-                                    className="text-cyan-600 border-cyan-600 hover:bg-cyan-50"
-                                  >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    İndir
-                                  </Button>
-                                  {editMode && (
-                                    <Button
-                                      variant="destructive"
-                                      size="sm"
-                                      onClick={() => deletePdf(index)}
-                                    >
-                                      Sil
-                                    </Button>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                                <div>
-                                  <span className="font-medium">Boyut:</span>
-                                  <p>{pdf.dosya_boyutu ? 
-                                    (pdf.dosya_boyutu / 1024 / 1024).toFixed(2) + ' MB' : 
-                                    (pdf.data.length * 3/4 / 1024 / 1024).toFixed(2) + ' MB'
-                                  }</p>
-                                </div>
-                                <div>
-                                  <span className="font-medium">Format:</span>
-                                  <p>{pdf.contentType}</p>
-                                </div>
-                                {pdf.yuklenme_tarihi && (
-                                  <div className="col-span-2">
-                                    <span className="font-medium">Yüklenme:</span>
-                                    <p>{formatDate(pdf.yuklenme_tarihi)}</p>
-                                  </div>
-                                )}
-                              </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                              <div className="mt-4">
+                    {/* Mevcut PDF'ler */}
+                    {opportunity.pdf_dosyalari && opportunity.pdf_dosyalari.map((pdf, index) => (
+                      <div key={index} className="border rounded-lg p-4 bg-white shadow-sm">
+                        <div className="flex items-start gap-4">
+                          <div className="w-16 h-20 bg-red-50 border-2 border-red-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </div>
+
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-semibold text-lg">
+                                {pdf.dosya_adi || `PDF Belgesi ${index + 1}`}
+                              </h4>
+                              <div className="flex gap-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => viewPdf(pdf)}
-                                  className="w-full text-green-600 border-green-600 hover:bg-green-50"
+                                  onClick={() => downloadPdf(pdf, index)}
+                                  className="text-cyan-600 border-cyan-600 hover:bg-cyan-50"
                                 >
                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                   </svg>
-                                  Önizleme
+                                  İndir
                                 </Button>
+                                {editMode && (
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => deletePdf(index)}
+                                  >
+                                    Sil
+                                  </Button>
+                                )}
                               </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                              <div>
+                                <span className="font-medium">Boyut:</span>
+                                <p>{pdf.dosya_boyutu ?
+                                  (pdf.dosya_boyutu / 1024 / 1024).toFixed(2) + ' MB' :
+                                  (pdf.data.length * 3 / 4 / 1024 / 1024).toFixed(2) + ' MB'
+                                }</p>
+                              </div>
+                              <div>
+                                <span className="font-medium">Format:</span>
+                                <p>{pdf.contentType}</p>
+                              </div>
+                              {pdf.yuklenme_tarihi && (
+                                <div className="col-span-2">
+                                  <span className="font-medium">Yüklenme:</span>
+                                  <p>{formatDate(pdf.yuklenme_tarihi)}</p>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="mt-4">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => viewPdf(pdf)}
+                                className="w-full text-green-600 border-green-600 hover:bg-green-50"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                Önizleme
+                              </Button>
                             </div>
                           </div>
                         </div>
-                      ))}
-                      
-                      {!opportunity.pdf_dosyalari?.length && pdfFiles.length === 0 && (
-                        <div className="text-center py-8 text-gray-500">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          <p>Henüz PDF belgesi yüklenmemiş</p>
-                          <p className="text-sm">Yukarıdaki "PDF Seç" butonunu kullanarak belge ekleyebilirsiniz</p>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                      </div>
+                    ))}
+
+                    {!opportunity.pdf_dosyalari?.length && pdfFiles.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p>Henüz PDF belgesi yüklenmemiş</p>
+                        <p className="text-sm">Yukarıdaki "PDF Seç" butonunu kullanarak belge ekleyebilirsiniz</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
             </div>
           </div>

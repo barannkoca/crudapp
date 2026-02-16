@@ -14,7 +14,7 @@ import { formatDate } from '@/lib/utils';
 function CalismaIzniPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // URL'den başlangıç değerlerini al
   const initialPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
   const initialSearch = searchParams.get('search') || "";
@@ -42,7 +42,7 @@ function CalismaIzniPageContent() {
   // URL'i güncelle
   const updateURL = useCallback((params: { page?: number; search?: string; status?: string }) => {
     const newParams = new URLSearchParams(searchParams);
-    
+
     if (params.page !== undefined) {
       if (params.page === 1) {
         newParams.delete('page');
@@ -50,7 +50,7 @@ function CalismaIzniPageContent() {
         newParams.set('page', params.page.toString());
       }
     }
-    
+
     if (params.search !== undefined) {
       if (params.search === '') {
         newParams.delete('search');
@@ -58,7 +58,7 @@ function CalismaIzniPageContent() {
         newParams.set('search', params.search);
       }
     }
-    
+
     if (params.status !== undefined) {
       if (params.status === 'all') {
         newParams.delete('status');
@@ -66,7 +66,7 @@ function CalismaIzniPageContent() {
         newParams.set('status', params.status);
       }
     }
-    
+
     const newURL = newParams.toString() ? `?${newParams.toString()}` : '';
     router.replace(`/calisma-izni${newURL}`, { scroll: false });
   }, [router, searchParams]);
@@ -126,12 +126,12 @@ function CalismaIzniPageContent() {
   const fetchOpportunities = async () => {
     try {
       setLoading(true);
-      
+
       // URL'den güncel değerleri al
       const urlPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
       const urlSearch = searchParams.get('search') || "";
       const urlStatus = searchParams.get('status') || "all";
-      
+
       const params = new URLSearchParams({
         islem_turu: IslemTuru.CALISMA_IZNI,
         sort_by: 'olusturma_tarihi',
@@ -139,17 +139,17 @@ function CalismaIzniPageContent() {
         page: urlPage.toString(),
         limit: itemsPerPage.toString()
       });
-      
+
       if (urlSearch) {
         params.append('search', urlSearch);
       }
-      
+
       if (urlStatus !== 'all') {
         params.append('durum', urlStatus);
       }
-      
+
       const response = await fetch(`/api/opportunities?${params}`);
-      
+
       if (response.ok) {
         const data = await response.json();
         setOpportunities(data.data || []);
@@ -219,8 +219,8 @@ function CalismaIzniPageContent() {
       searchResultsCount={debouncedSearchTerm ? opportunities.length : totalCount}
       emptyStateTitle="Çalışma İzni Fırsatı Bulunamadı"
       emptyStateDescription={
-        debouncedSearchTerm 
-          ? "Arama kriterlerinize uygun çalışma izni fırsatı bulunamadı." 
+        debouncedSearchTerm
+          ? "Arama kriterlerinize uygun çalışma izni fırsatı bulunamadı."
           : "Henüz çalışma izni fırsatı oluşturulmamış."
       }
       emptyStateIcon={
@@ -276,7 +276,7 @@ function CalismaIzniPageContent() {
               >
                 <TableCell className="w-20">
                   {opportunity.musteri?.photo && opportunity.musteri.photo.data ? (
-                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-green-200">
+                    <div className="w-15 h-15 rounded-full overflow-hidden border-2 border-green-200">
                       <img
                         src={`data:${opportunity.musteri.photo.contentType};base64,${opportunity.musteri.photo.data}`}
                         alt={`${opportunity.musteri.ad} ${opportunity.musteri.soyad}`}
@@ -294,7 +294,7 @@ function CalismaIzniPageContent() {
                       </div>
                     </div>
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center border-2 border-green-200">
+                    <div className="w-15 h-15 rounded-full bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center border-2 border-green-200">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>

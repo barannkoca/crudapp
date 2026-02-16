@@ -43,7 +43,7 @@ export default function CustomerDetailPage() {
     try {
       const response = await fetch(`/api/customers/${params.id}`);
       const result = await response.json();
-      
+
       if (response.ok) {
         setCustomer(result.data);
         // Sadece edit mode kapalıysa editData'yı güncelle
@@ -71,7 +71,7 @@ export default function CustomerDetailPage() {
     try {
       const response = await fetch(`/api/customers/${params.id}/opportunities`);
       const result = await response.json();
-      
+
       if (response.ok) {
         const opportunities = result.data || [];
         setOpportunities(opportunities);
@@ -144,10 +144,10 @@ export default function CustomerDetailPage() {
 
   const saveCustomerChanges = async () => {
     if (!customer || !editData) return;
-    
+
     try {
       setSaving(true);
-      
+
       // Eğer fotoğraf seçildiyse FormData kullan
       if (selectedPhoto) {
         const formData = new FormData();
@@ -203,7 +203,7 @@ export default function CustomerDetailPage() {
 
   const handleDeleteCustomer = async () => {
     if (!customer) return;
-    
+
     try {
       setDeleting(true);
       const response = await fetch(`/api/customers/${customer._id}`, {
@@ -216,10 +216,10 @@ export default function CustomerDetailPage() {
       } else {
         const errorData = await response.json();
         console.error('Silme hatası:', errorData);
-        
+
         // Hata mesajını daha detaylı göster
         let errorMessage = "Müşteri silinemedi";
-        
+
         if (errorData.message) {
           errorMessage = errorData.message;
         } else if (errorData.error) {
@@ -231,7 +231,7 @@ export default function CustomerDetailPage() {
         } else if (response.status === 500) {
           errorMessage = "Sunucu hatası oluştu";
         }
-        
+
         toast.error(errorMessage);
       }
     } catch (error) {
@@ -285,16 +285,16 @@ export default function CustomerDetailPage() {
             <p className="text-gray-600">Müşteri Detayları</p>
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => router.back()}
             >
               Geri Dön
             </Button>
             {editMode ? (
               <>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => {
                     setEditMode(false);
@@ -311,9 +311,9 @@ export default function CustomerDetailPage() {
                 >
                   İptal
                 </Button>
-                <Button 
-                  size="sm" 
-                  onClick={saveCustomerChanges} 
+                <Button
+                  size="sm"
+                  onClick={saveCustomerChanges}
                   disabled={saving}
                 >
                   {saving ? 'Kaydediliyor...' : 'Kaydet'}
@@ -321,8 +321,8 @@ export default function CustomerDetailPage() {
               </>
             ) : (
               <>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   onClick={() => setEditMode(true)}
                   className="bg-cyan-600 hover:bg-cyan-700"
                 >
@@ -333,8 +333,8 @@ export default function CustomerDetailPage() {
                 </Button>
                 <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="destructive"
                       disabled={hasOpportunities}
                       className={hasOpportunities ? "opacity-50 cursor-not-allowed" : ""}
@@ -370,7 +370,7 @@ export default function CustomerDetailPage() {
                             <div>
                               <h4 className="text-sm font-medium text-yellow-800">Silme İşlemi Engellendi</h4>
                               <p className="text-sm text-yellow-700 mt-1">
-                                Bu müşteri ile ilgili <strong>{opportunitiesCount} adet işlem</strong> bulunmaktadır. 
+                                Bu müşteri ile ilgili <strong>{opportunitiesCount} adet işlem</strong> bulunmaktadır.
                                 Müşteriyi silmek için önce tüm işlemleri tamamlamanız veya silmeniz gerekmektedir.
                               </p>
                             </div>
@@ -393,18 +393,18 @@ export default function CustomerDetailPage() {
                           </div>
                         </>
                       )}
-                      
+
                       <div className="flex justify-end gap-2">
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           onClick={() => setIsDeleteDialogOpen(false)}
                           disabled={deleting}
                         >
                           İptal
                         </Button>
                         {!hasOpportunities && (
-                          <Button 
-                            variant="destructive" 
+                          <Button
+                            variant="destructive"
                             onClick={handleDeleteCustomer}
                             disabled={deleting}
                           >
@@ -439,7 +439,7 @@ export default function CustomerDetailPage() {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-cyan-200">
+              <div className="w-40 h-40 rounded-full overflow-hidden border-2 border-cyan-200">
                 {customer.photo?.data ? (
                   <img
                     src={`data:${customer.photo.contentType};base64,${customer.photo.data}`}
@@ -474,7 +474,7 @@ export default function CustomerDetailPage() {
                   {editMode ? (
                     <Input
                       value={editData?.ad || ''}
-                      onChange={(e) => setEditData({...editData, ad: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, ad: e.target.value })}
                       className="mt-1"
                     />
                   ) : (
@@ -488,7 +488,7 @@ export default function CustomerDetailPage() {
                   {editMode ? (
                     <Input
                       value={editData?.soyad || ''}
-                      onChange={(e) => setEditData({...editData, soyad: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, soyad: e.target.value })}
                       className="mt-1"
                     />
                   ) : (
@@ -516,7 +516,7 @@ export default function CustomerDetailPage() {
                   {editMode ? (
                     <Input
                       value={editData?.telefon_no || ''}
-                      onChange={(e) => setEditData({...editData, telefon_no: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, telefon_no: e.target.value })}
                       className="mt-1"
                     />
                   ) : (
@@ -529,7 +529,7 @@ export default function CustomerDetailPage() {
                     <Input
                       type="email"
                       value={editData?.eposta || ''}
-                      onChange={(e) => setEditData({...editData, eposta: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, eposta: e.target.value })}
                       className="mt-1"
                     />
                   ) : (
@@ -542,7 +542,7 @@ export default function CustomerDetailPage() {
                     <Input
                       type="date"
                       value={editData?.dogum_tarihi ? new Date(editData.dogum_tarihi).toISOString().split('T')[0] : ''}
-                      onChange={(e) => setEditData({...editData, dogum_tarihi: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, dogum_tarihi: e.target.value })}
                       className="mt-1"
                     />
                   ) : (
@@ -556,7 +556,7 @@ export default function CustomerDetailPage() {
                   {editMode ? (
                     <Textarea
                       value={editData?.adres || ''}
-                      onChange={(e) => setEditData({...editData, adres: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, adres: e.target.value })}
                       className="mt-1"
                       rows={3}
                     />
@@ -695,41 +695,41 @@ export default function CustomerDetailPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm">
-                          {opportunity.islem_turu === IslemTuru.IKAMET_IZNI && opportunity.detaylar?.kayit_tarihi 
+                          {opportunity.islem_turu === IslemTuru.IKAMET_IZNI && opportunity.detaylar?.kayit_tarihi
                             ? (() => {
-                                try {
-                                  const dateData = opportunity.detaylar.kayit_tarihi;
-                                  const date = dateData && typeof dateData === 'object' && (dateData as any).$date 
-                                    ? new Date((dateData as any).$date) 
-                                    : new Date(dateData);
-                                  return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('tr-TR');
-                                } catch {
-                                  return '-';
-                                }
-                              })()
+                              try {
+                                const dateData = opportunity.detaylar.kayit_tarihi;
+                                const date = dateData && typeof dateData === 'object' && (dateData as any).$date
+                                  ? new Date((dateData as any).$date)
+                                  : new Date(dateData);
+                                return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('tr-TR');
+                              } catch {
+                                return '-';
+                              }
+                            })()
                             : '-'
                           }
                         </TableCell>
                         <TableCell className="text-sm">
-                          {opportunity.olusturma_tarihi 
+                          {opportunity.olusturma_tarihi
                             ? (() => {
-                                try {
-                                  const dateData = opportunity.olusturma_tarihi;
-                                  const date = dateData && typeof dateData === 'object' && (dateData as any).$date 
-                                    ? new Date((dateData as any).$date) 
-                                    : new Date(dateData);
-                                  return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('tr-TR');
-                                } catch {
-                                  return '-';
-                                }
-                              })()
+                              try {
+                                const dateData = opportunity.olusturma_tarihi;
+                                const date = dateData && typeof dateData === 'object' && (dateData as any).$date
+                                  ? new Date((dateData as any).$date)
+                                  : new Date(dateData);
+                                return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('tr-TR');
+                              } catch {
+                                return '-';
+                              }
+                            })()
                             : '-'
                           }
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant="outline"
                               onClick={(e) => {
                                 e.stopPropagation();

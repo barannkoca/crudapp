@@ -11,7 +11,7 @@ import ListPageTemplate from "@/components/ListPageTemplate";
 function CustomersPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // URL'den başlangıç değerlerini al
   const initialPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
   const initialSearch = searchParams.get('search') || "";
@@ -35,7 +35,7 @@ function CustomersPageContent() {
   // URL'i güncelle
   const updateURL = useCallback((params: { page?: number; search?: string }) => {
     const newParams = new URLSearchParams(searchParams);
-    
+
     if (params.page !== undefined) {
       if (params.page === 1) {
         newParams.delete('page');
@@ -43,7 +43,7 @@ function CustomersPageContent() {
         newParams.set('page', params.page.toString());
       }
     }
-    
+
     if (params.search !== undefined) {
       if (params.search === '') {
         newParams.delete('search');
@@ -51,7 +51,7 @@ function CustomersPageContent() {
         newParams.set('search', params.search);
       }
     }
-    
+
     const newURL = newParams.toString() ? `?${newParams.toString()}` : '';
     router.replace(`/customers${newURL}`, { scroll: false });
   }, [router, searchParams]);
@@ -102,23 +102,23 @@ function CustomersPageContent() {
   const fetchCustomers = async () => {
     try {
       setLoading(true);
-      
+
       // URL'den güncel değerleri al
       const urlPage = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1;
       const urlSearch = searchParams.get('search') || "";
-      
+
       const params = new URLSearchParams({
         page: urlPage.toString(),
         limit: itemsPerPage.toString()
       });
-      
+
       if (urlSearch) {
         params.append('search', urlSearch);
       }
-      
+
       const response = await fetch(`/api/customers?${params}`);
       const result = await response.json();
-      
+
       if (response.ok) {
         setCustomers(result.data);
         setTotalCount(result.total || result.data.length);
@@ -194,8 +194,8 @@ function CustomersPageContent() {
       searchResultsCount={debouncedSearchTerm ? customers.length : totalCount}
       emptyStateTitle="Müşteri Bulunamadı"
       emptyStateDescription={
-        debouncedSearchTerm 
-          ? "Arama kriterlerinize uygun müşteri bulunamadı." 
+        debouncedSearchTerm
+          ? "Arama kriterlerinize uygun müşteri bulunamadı."
           : "Henüz müşteri kaydı oluşturulmamış."
       }
       showPagination={true}
@@ -228,7 +228,7 @@ function CustomersPageContent() {
               >
                 <TableCell>
                   {customer.photo?.data ? (
-                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-cyan-200">
+                    <div className="w-15 h-15 rounded-full overflow-hidden border-2 border-cyan-200">
                       <img
                         src={`data:${customer.photo.contentType};base64,${customer.photo.data}`}
                         alt={`${customer.ad} ${customer.soyad}`}
@@ -236,8 +236,8 @@ function CustomersPageContent() {
                       />
                     </div>
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-100 to-cyan-200 flex items-center justify-center border-2 border-cyan-200">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="w-15 h-15 rounded-full bg-gradient-to-br from-cyan-100 to-cyan-200 flex items-center justify-center border-2 border-cyan-200">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                     </div>
