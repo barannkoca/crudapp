@@ -395,10 +395,10 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
 
     if (createDto.islem_turu === IslemTuruDto.DIGER && createDto.detaylar) {
       entity.islem_adi = createDto.detaylar.islem_adi;
-      entity.diger_baslama_tarihi = createDto.detaylar.diger_baslama_tarihi;
-      entity.diger_bitis_tarihi = createDto.detaylar.diger_bitis_tarihi;
-      entity.diger_aciklama = createDto.detaylar.diger_aciklama;
-      entity.ek_bilgiler = createDto.detaylar.ek_bilgiler;
+      entity.baslama_tarihi = createDto.detaylar.baslama_tarihi;
+      entity.bitis_tarihi = createDto.detaylar.bitis_tarihi;
+      entity.aciklama = createDto.detaylar.aciklama;
+      entity.notlar = createDto.detaylar.notlar;
       entity.sira_no = createDto.detaylar.sira_no;
     }
 

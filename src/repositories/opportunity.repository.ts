@@ -140,6 +140,11 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
     const nowIso = now.toISOString();
     const futureIso = futureDate.toISOString();
     const dateRangeQueryString = { $gte: nowIso, $lte: futureIso };
+    
+    // YYYY-MM-DD formatında string karşılaştırması için
+    const nowYMD = nowIso.split('T')[0];
+    const futureYMD = futureIso.split('T')[0];
+    const dateRangeQueryYMD = { $gte: nowYMD, $lte: futureYMD };
 
     return this.model.find({
       $or: [
@@ -147,6 +152,8 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
           islem_turu: IslemTuruDto.CALISMA_IZNI,
           $or: [
             { 'detaylar.calisma_izni_bitis_tarihi': dateRangeQuery },
+            { 'detaylar.calisma_izni_bitis_tarihi': dateRangeQueryString },
+            { 'detaylar.calisma_izni_bitis_tarihi': dateRangeQueryYMD },
             { 'detaylar.calisma_izni_bitis_tarihi.$date': dateRangeQueryString }
           ]
         },
@@ -154,6 +161,8 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
           islem_turu: IslemTuruDto.IKAMET_IZNI,
           $or: [
             { 'detaylar.gecerlilik_tarihi': dateRangeQuery },
+            { 'detaylar.gecerlilik_tarihi': dateRangeQueryString },
+            { 'detaylar.gecerlilik_tarihi': dateRangeQueryYMD },
             { 'detaylar.gecerlilik_tarihi.$date': dateRangeQueryString }
           ]
         },
@@ -161,6 +170,8 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
           islem_turu: IslemTuruDto.DIGER,
           $or: [
             { 'detaylar.bitis_tarihi': dateRangeQuery },
+            { 'detaylar.bitis_tarihi': dateRangeQueryString },
+            { 'detaylar.bitis_tarihi': dateRangeQueryYMD },
             { 'detaylar.bitis_tarihi.$date': dateRangeQueryString }
           ]
         }
