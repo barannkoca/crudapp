@@ -354,7 +354,8 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
       aciklamalar: entity.aciklamalar,
       ucretler: entity.ucretler,
       pdf_dosyalari: entity.pdf_dosyalari || [],
-      detaylar: entity.detaylar || {}
+      detaylar: entity.detaylar || {},
+      dashboard_gizli: entity.dashboard_gizli || false
     };
   }
 
@@ -368,7 +369,8 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
       ucretler: createDto.ucretler || [],
       pdf_dosyalari: createDto.pdf_dosyalari || [],
       olusturma_tarihi: new Date(),
-      guncelleme_tarihi: new Date()
+      guncelleme_tarihi: new Date(),
+      dashboard_gizli: false
     };
 
     // İşlem türüne göre özel alanları set et
@@ -415,6 +417,7 @@ export class OpportunityService extends BaseService<IOpportunityDoc, Opportunity
     if (updateDto.aciklamalar !== undefined) entity.aciklamalar = updateDto.aciklamalar;
     if (updateDto.ucretler !== undefined) entity.ucretler = updateDto.ucretler;
     if (updateDto.pdf_dosyalari !== undefined) entity.pdf_dosyalari = updateDto.pdf_dosyalari;
+    if (updateDto.dashboard_gizli !== undefined) entity.dashboard_gizli = updateDto.dashboard_gizli;
 
     return entity;
   }

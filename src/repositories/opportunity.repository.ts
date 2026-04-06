@@ -147,6 +147,7 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
     const dateRangeQueryYMD = { $gte: nowYMD, $lte: futureYMD };
 
     return this.model.find({
+      dashboard_gizli: { $ne: true },
       $or: [
         {
           islem_turu: IslemTuruDto.CALISMA_IZNI,

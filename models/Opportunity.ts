@@ -57,6 +57,10 @@ const OpportunitySchema = new mongoose.Schema({
     default: 'beklemede',
     required: true,
   },
+  dashboard_gizli: {
+    type: Boolean,
+    default: false,
+  },
   olusturma_tarihi: { type: Date, default: Date.now },
   guncelleme_tarihi: { type: Date },
   

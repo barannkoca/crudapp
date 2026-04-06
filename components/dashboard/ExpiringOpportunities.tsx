@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { AlertCircle, Calendar, ArrowRight, Clock } from "lucide-react"
+import { AlertCircle, Calendar, ArrowRight, Clock, EyeOff } from "lucide-react"
 
 interface ExpiringOpportunity {
     _id: string;
@@ -23,23 +23,41 @@ export function ExpiringOpportunities() {
     const [opportunities, setOpportunities] = useState<ExpiringOpportunity[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchExpiring = async () => {
-            try {
-                const res = await fetch('/api/opportunities/expiring');
-                const data = await res.json();
-                if (data.success) {
-                    setOpportunities(data.data);
-                }
-            } catch (error) {
-                console.error('Error fetching expiring opportunities:', error);
-            } finally {
-                setLoading(false);
+    const fetchExpiring = async () => {
+        try {
+            const res = await fetch('/api/opportunities/expiring');
+            const data = await res.json();
+            if (data.success) {
+                setOpportunities(data.data);
             }
-        };
+        } catch (error) {
+            console.error('Error fetching expiring opportunities:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchExpiring();
     }, []);
+
+    const handleDismiss = async (id: string) => {
+        try {
+            const formData = new FormData();
+            formData.append('dashboard_gizli', 'true');
+            
+            const res = await fetch(`/api/opportunities/${id}`, {
+                method: 'PUT',
+                body: formData
+            });
+
+            if (res.ok) {
+                setOpportunities(prev => prev.filter(opp => opp._id !== id));
+            }
+        } catch (error) {
+            console.error('Error dismissing opportunity:', error);
+        }
+    };
 
     if (loading) {
         return (
@@ -104,11 +122,22 @@ export function ExpiringOpportunities() {
                                 <Badge variant={opp.daysLeft < 30 ? "destructive" : "secondary"} className={`text-[10px] px-1 h-5 ${opp.daysLeft >= 30 ? "bg-orange-100 text-orange-700 hover:bg-orange-200" : ""}`}>
                                     {opp.daysLeft} gün
                                 </Badge>
-                                <Button asChild size="sm" variant="ghost" className="h-5 text-[10px] px-1">
-                                    <Link href={`/customers/${(opp.musteri as any)._id || '#'}`}>
-                                        Detay <ArrowRight className="ml-1 h-2 w-2" />
-                                    </Link>
-                                </Button>
+                                <div className="flex items-center gap-1">
+                                    <Button asChild size="sm" variant="ghost" className="h-5 text-[10px] px-1">
+                                        <Link href={`/customers/${(opp.musteri as any)._id || '#'}`}>
+                                            Detay <ArrowRight className="ml-1 h-2 w-2" />
+                                        </Link>
+                                    </Button>
+                                    <Button 
+                                        onClick={() => handleDismiss(opp._id)}
+                                        size="sm" 
+                                        variant="ghost" 
+                                        className="h-5 w-5 p-0 text-muted-foreground hover:text-red-600 hover:bg-red-100/50" 
+                                        title="Listeden Çıkar"
+                                    >
+                                        <EyeOff className="h-3 w-3" />
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     ))}

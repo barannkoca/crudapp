@@ -211,6 +211,7 @@ export class OpportunityController extends BaseController {
         updateDto = {};
 
         if (formData.get('durum')) updateDto.durum = formData.get('durum') as any;
+        if (formData.get('dashboard_gizli') !== null) updateDto.dashboard_gizli = formData.get('dashboard_gizli') === 'true';
         if (formData.get('detaylar')) updateDto.detaylar = JSON.parse(formData.get('detaylar') as string);
         if (formData.get('aciklamalar')) updateDto.aciklamalar = JSON.parse(formData.get('aciklamalar') as string);
         if (formData.get('ucretler')) updateDto.ucretler = JSON.parse(formData.get('ucretler') as string);

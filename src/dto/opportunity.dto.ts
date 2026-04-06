@@ -59,6 +59,7 @@ export interface OpportunityDto {
   ucretler?: UcretDto[];
   pdf_dosyalari?: PdfDosyaDto[]; // Birden fazla PDF dosyası
   detaylar?: any; // İşlem türüne özel detaylar (esnek yapı)
+  dashboard_gizli?: boolean;
 }
 
 export interface CreateOpportunityDto {
@@ -112,6 +113,7 @@ export interface UpdateOpportunityDto {
   aciklamalar?: AciklamaDto[];
   ucretler?: UcretDto[];
   pdf_dosyalari?: PdfDosyaDto[]; // Birden fazla PDF dosyası
+  dashboard_gizli?: boolean;
 }
 
 export interface OpportunityFilterDto {
