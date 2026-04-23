@@ -81,10 +81,10 @@ export default function Page() {
 
       // Paralel olarak tüm istatistikleri çek
       const [customerStats, opportunityStats, paymentStats, activities] = await Promise.all([
-        fetch('/api/customers/stats').then(res => res.json()),
-        fetch('/api/opportunities/stats').then(res => res.json()),
-        fetch('/api/opportunities/payment-stats').then(res => res.json()),
-        fetch('/api/opportunities/recent').then(res => res.json())
+        fetch('/api/customers/stats', { cache: 'no-store' }).then(res => res.json()),
+        fetch('/api/opportunities/stats', { cache: 'no-store' }).then(res => res.json()),
+        fetch('/api/opportunities/payment-stats', { cache: 'no-store' }).then(res => res.json()),
+        fetch('/api/opportunities/recent', { cache: 'no-store' }).then(res => res.json())
       ]);
 
       // Payment stats'ı yeni sisteme göre işle
