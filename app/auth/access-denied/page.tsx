@@ -42,16 +42,16 @@ export default function AccessDeniedPage() {
         </CardHeader>
         <CardContent className="text-center space-y-4">
           <p className="text-gray-600">
-            Bu uygulamaya erişim yetkiniz bulunmamaktadır.
+            Bu uygulamaya erişim yetkiniz bulunmamaktadır!
           </p>
-          
+
           {session?.user?.email && (
             <div className="bg-gray-100 p-3 rounded-lg">
               <p className="text-sm text-gray-500">Giriş yapan kullanıcı:</p>
               <p className="font-medium text-gray-700">{session.user.email}</p>
             </div>
           )}
-          
+
           <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
             <p className="text-sm text-yellow-800">
               <strong>İzin verilen email adresleri:</strong>
@@ -61,11 +61,11 @@ export default function AccessDeniedPage() {
               <li>• turkuazgocdanismanlik@gmail.com</li>
             </ul>
           </div>
-          
+
           <p className="text-sm text-gray-500">
             5 saniye sonra otomatik olarak çıkış yapılacaktır.
           </p>
-          
+
           <div className="flex gap-2">
             <Button
               variant="outline"
