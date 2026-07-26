@@ -5,7 +5,6 @@ import { NextResponse } from "next/server";
 // İzin verilen email adresleri
 const ALLOWED_EMAILS = [
   'barannkoca@gmail.com',
-  'turkuazgocdanismanlik@gmail.com',
   'turnalargoc@gmail.com'
 ];
 

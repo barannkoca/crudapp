@@ -13,7 +13,8 @@ import {
   Briefcase,
   FileCheck,
   Calendar,
-  BarChart3
+  BarChart3,
+  Bird
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -125,10 +126,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton size="lg" asChild>
               <Link href="/dashboard">
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <FileText className="size-4" />
+                  <Bird className="size-4" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-medium">CRUD App</span>
+                  <span className="font-medium">Turnalar Göç</span>
                   <span className="text-xs">v1.0.0</span>
                 </div>
               </Link>

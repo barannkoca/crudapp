@@ -26,7 +26,7 @@ export default function Navbar() {
                             alt="CrudApp Logo"
                             className="w-8 h-8"
                         />
-                        <span className="text-xl font-semibold text-gray-900">CrudApp</span>
+                        <span className="text-xl font-semibold text-gray-900">Turnalar Göç</span>
                     </Link>
 
                     {/* Desktop Menu */}
@@ -41,7 +41,7 @@ export default function Navbar() {
                                 </Link>
                                 <Link 
                                     href="/records" 
-                                    className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
+                                    className="text-gray-700 hover:text-primary transition-colors duration-200 font-medium"
                                 >
                                     Kayıtları Gör
                                 </Link>
@@ -56,7 +56,7 @@ export default function Navbar() {
                         ) : (
                             <Link 
                                 href="/auth/signin"
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+                                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors duration-200 font-medium"
                             >
                                 Giriş Yap
                             </Link>
