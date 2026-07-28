@@ -17,6 +17,7 @@ import {
   Bird
 } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 
 import {
@@ -125,13 +126,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/dashboard">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <Bird className="size-4" />
-                </div>
-                <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-medium">Turnalar Göç</span>
-                  <span className="text-xs">v1.0.0</span>
-                </div>
+                <Image src="/turnalarlogo.png" alt="Turnalar Göç" width={180} height={48} className="h-12 w-auto object-contain bg-transparent" />
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

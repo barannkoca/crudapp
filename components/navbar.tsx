@@ -18,15 +18,14 @@ export default function Navbar() {
             <div className="container mx-auto px-4">
                 <div className="flex justify-between items-center h-16">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center space-x-2">
+                    <Link href="/" className="flex items-center">
                         <Image
-                            src="/file.svg"
-                            width={32}
-                            height={32}
-                            alt="CrudApp Logo"
-                            className="w-8 h-8"
+                            src="/turnalarlogo.png"
+                            width={180}
+                            height={48}
+                            alt="Turnalar Göç Logo"
+                            className="h-10 w-auto object-contain bg-transparent"
                         />
-                        <span className="text-xl font-semibold text-gray-900">Turnalar Göç</span>
                     </Link>
 
                     {/* Desktop Menu */}
