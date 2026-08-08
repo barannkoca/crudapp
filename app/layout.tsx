@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CrudApp",
-  description: "Simple Project for my Portfolio",
+  title: "Turnalar Göç",
+  description: "Turnalar Göç Danışmanlık - CRM Yönetim Paneli",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
