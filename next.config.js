@@ -5,6 +5,7 @@ const nextConfig = {
   serverExternalPackages: ['pdfkit'],
   outputFileTracingIncludes: {
     '/api/analytics/monthly-statement/pdf': [
+      './node_modules/pdfkit/js/standard-fonts/**/*',
       './node_modules/pdfjs-dist/standard_fonts/LiberationSans-Regular.ttf',
       './node_modules/pdfjs-dist/standard_fonts/LiberationSans-Bold.ttf',
     ],
