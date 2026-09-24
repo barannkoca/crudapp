@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // PDFKit kendi dahili standart font modüllerini Node çözümlemesiyle yükler.
+  // Bundle içine alınırsa bu modüller Vercel üretiminde bulunamayabiliyor.
+  serverExternalPackages: ['pdfkit'],
   outputFileTracingIncludes: {
     '/api/analytics/monthly-statement/pdf': [
       './node_modules/pdfjs-dist/standard_fonts/LiberationSans-Regular.ttf',
