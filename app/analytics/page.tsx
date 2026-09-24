@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 // Recharts kaldırıldı - Chart.js kullanıyoruz
 
 // Chart.js bileşenleri
@@ -150,7 +151,7 @@ export default function AnalyticsPage() {
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
-      currency: currency === 'TRY' ? 'TRY' : currency === 'USD' ? 'USD' : 'EUR'
+      currency: ['TRY', 'USD', 'EUR', 'GBP'].includes(currency) ? currency : 'TRY'
     }).format(amount);
   };
 
@@ -160,6 +161,10 @@ export default function AnalyticsPage() {
       'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
     ];
     return months[month - 1];
+  };
+
+  const openMonthlyStatement = (year: number, month: number) => {
+    window.open(`/api/analytics/monthly-statement/pdf?year=${year}&month=${month}`, '_blank', 'noopener,noreferrer');
   };
 
   // Aylık veri için tüm işlem türlerini birleştir (eksik aylarda 0 doldurmak için)
@@ -633,6 +638,7 @@ export default function AnalyticsPage() {
                       <th className="text-right p-3 font-medium">Gider</th>
                       <th className="text-right p-3 font-medium">Net Gelir</th>
                       <th className="text-right p-3 font-medium">Bekleyen</th>
+                      <th className="text-right p-3 font-medium">Ekstre</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -655,6 +661,16 @@ export default function AnalyticsPage() {
                         </td>
                         <td className="p-3 text-right text-orange-600 font-medium">
                           {formatCurrency(month.pendingPayments, 'TRY')}
+                        </td>
+                        <td className="p-3 text-right">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openMonthlyStatement(month.year, month.month)}
+                          >
+                            PDF Önizle
+                          </Button>
                         </td>
                       </tr>
                     ))}
