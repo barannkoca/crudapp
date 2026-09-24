@@ -168,7 +168,7 @@ export default function Page() {
         <div className="space-y-2 mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Hoş Geldiniz!</h1>
           <p className="text-muted-foreground">
-            CRM uygulamanızın kontrol paneli. Müşterilerinizi ve fırsatlarınızı yönetin.
+            Turnalar Göç Danışmanlık - Müşterilerinizi ve fırsatlarınızı yönetin.
           </p>
         </div>
 
@@ -330,7 +330,7 @@ export default function Page() {
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-2 mb-8">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-cyan-700">
+              <CardTitle className="flex items-center gap-2 text-primary">
                 <FileText className="h-5 w-5" />
                 İkamet İzni
               </CardTitle>
@@ -339,12 +339,12 @@ export default function Page() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button asChild className="w-full bg-cyan-600 hover:bg-cyan-700">
+              <Button asChild className="w-full">
                 <Link href="/ikamet-izni">
                   İkamet İzni Listesi
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="w-full border-cyan-600 text-cyan-600 hover:bg-cyan-50">
+              <Button asChild variant="outline" className="w-full">
                 <Link href="/ikamet-izni/create">
                   Yeni İkamet İzni
                 </Link>
@@ -354,7 +354,7 @@ export default function Page() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-purple-700">
+              <CardTitle className="flex items-center gap-2 text-primary">
                 <ClipboardList className="h-5 w-5" />
                 Diğer İşlemler
               </CardTitle>
@@ -363,12 +363,12 @@ export default function Page() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
+              <Button asChild className="w-full">
                 <Link href="/diger-islemler">
                   İşlem Listesi
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="w-full border-purple-600 text-purple-600 hover:bg-purple-50">
+              <Button asChild variant="outline" className="w-full">
                 <Link href="/diger-islemler/create">
                   Yeni İşlem
                 </Link>

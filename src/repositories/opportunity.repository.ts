@@ -377,20 +377,57 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
         received: number; // Alınan ödeme
         expense: number; // Gider
         net: number; // Net (alınan - gider)
+        pending: number; // Bekleyen
       }
     };
   }> {
     const paymentStats = await this.aggregate([
-      { $unwind: { path: '$ucretler', preserveNullAndEmptyArrays: false } },
-      { $match: { 'ucretler.miktar': { $exists: true, $ne: null, $gt: 0 } } },
+      {
+        $project: {
+          islem_turu: 1,
+          ucretler: { $ifNull: ['$ucretler', []] }
+        }
+      },
+      { $unwind: { path: '$ucretler', preserveNullAndEmptyArrays: true } },
       {
         $group: {
-          _id: {
-            islem_turu: '$islem_turu',
-            odeme_durumu: '$ucretler.odeme_durumu'
+          _id: '$_id',
+          islem_turu: { $first: '$islem_turu' },
+          totalRevenue: {
+            $sum: {
+              $cond: [{ $eq: ['$ucretler.odeme_durumu', 'toplam_ucret'] }, { $toDouble: '$ucretler.miktar' }, 0]
+            }
           },
-          totalAmount: { $sum: '$ucretler.miktar' },
-          count: { $sum: 1 }
+          receivedAmount: {
+            $sum: {
+              $cond: [{ $eq: ['$ucretler.odeme_durumu', 'alinan_ucret'] }, { $toDouble: '$ucretler.miktar' }, 0]
+            }
+          },
+          expenseAmount: {
+            $sum: {
+              $cond: [{ $eq: ['$ucretler.odeme_durumu', 'gider'] }, { $toDouble: '$ucretler.miktar' }, 0]
+            }
+          }
+        }
+      },
+      {
+        $addFields: {
+          pendingPayment: {
+            $cond: [
+              { $gt: [{ $subtract: ['$totalRevenue', '$receivedAmount'] }, 0] },
+              { $subtract: ['$totalRevenue', '$receivedAmount'] },
+              0
+            ]
+          }
+        }
+      },
+      {
+        $group: {
+          _id: '$islem_turu',
+          totalRevenue: { $sum: '$totalRevenue' },
+          receivedAmount: { $sum: '$receivedAmount' },
+          expenseAmount: { $sum: '$expenseAmount' },
+          pendingPayment: { $sum: '$pendingPayment' }
         }
       }
     ]);
@@ -398,43 +435,33 @@ export class OpportunityRepository extends BaseRepository<IOpportunityDoc> {
     let totalRevenue = 0;
     let receivedAmount = 0;
     let expenseAmount = 0;
-    const byType: { [key: string]: { total: number; received: number; expense: number; net: number } } = {};
+    let pendingPayments = 0;
+    const byType: { [key: string]: { total: number; received: number; expense: number; net: number; pending: number } } = {};
 
     paymentStats.forEach((stat: any) => {
-      const islemTuru = stat._id.islem_turu;
-      const odemeDurumu = stat._id.odeme_durumu;
-      const amount = stat.totalAmount || 0;
+      const islemTuru = stat._id || 'diger';
+      const t = stat.totalRevenue || 0;
+      const r = stat.receivedAmount || 0;
+      const e = stat.expenseAmount || 0;
+      const p = stat.pendingPayment || 0;
 
       if (!byType[islemTuru]) {
-        byType[islemTuru] = { total: 0, received: 0, expense: 0, net: 0 };
+        byType[islemTuru] = { total: 0, received: 0, expense: 0, net: 0, pending: 0 };
       }
 
-      switch (odemeDurumu) {
-        case 'toplam_ucret':
-          totalRevenue += amount;
-          byType[islemTuru].total += amount;
-          break;
-        case 'alinan_ucret':
-          receivedAmount += amount;
-          byType[islemTuru].received += amount;
-          break;
-        case 'gider':
-          expenseAmount += amount;
-          byType[islemTuru].expense += amount;
-          break;
-      }
+      totalRevenue += t;
+      receivedAmount += r;
+      expenseAmount += e;
+      pendingPayments += p;
+
+      byType[islemTuru].total += t;
+      byType[islemTuru].received += r;
+      byType[islemTuru].expense += e;
+      byType[islemTuru].net += (r - e);
+      byType[islemTuru].pending += p;
     });
 
-    // Net gelir hesapla
     const netRevenue = receivedAmount - expenseAmount;
-
-    // İşlem türü bazında net hesapla
-    Object.keys(byType).forEach(islemTuru => {
-      byType[islemTuru].net = byType[islemTuru].received - byType[islemTuru].expense;
-    });
-
-    // Bekleyen ödemeler = Toplam ücret - Alınan ücret
-    const pendingPayments = Math.max(0, totalRevenue - receivedAmount);
 
     return {
       totalRevenue,
