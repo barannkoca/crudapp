@@ -150,9 +150,9 @@ export async function GET(request: NextRequest) {
       doc.on('error', reject);
     });
 
-    // require.resolve, font dosyalarının üretim derlemesine de dahil edilmesini sağlar.
-    doc.registerFont('AppRegular', require.resolve('pdfjs-dist/standard_fonts/LiberationSans-Regular.ttf'));
-    doc.registerFont('AppBold', require.resolve('pdfjs-dist/standard_fonts/LiberationSans-Bold.ttf'));
+    const fontDirectory = path.join(process.cwd(), 'node_modules', 'pdfjs-dist', 'standard_fonts');
+    doc.registerFont('AppRegular', path.join(fontDirectory, 'LiberationSans-Regular.ttf'));
+    doc.registerFont('AppBold', path.join(fontDirectory, 'LiberationSans-Bold.ttf'));
     doc.font('AppRegular');
 
     const pageWidth = doc.page.width;

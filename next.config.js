@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  outputFileTracingIncludes: {
+    '/api/analytics/monthly-statement/pdf': [
+      './node_modules/pdfjs-dist/standard_fonts/LiberationSans-Regular.ttf',
+      './node_modules/pdfjs-dist/standard_fonts/LiberationSans-Bold.ttf',
+    ],
+  },
   images: {
     domains: ['lh3.googleusercontent.com'],
   },
