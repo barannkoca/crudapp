@@ -108,15 +108,20 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const year = Number(searchParams.get('year'));
   const month = Number(searchParams.get('month'));
+  const requestId = crypto.randomUUID();
+  let stage = 'validation';
 
   if (!Number.isInteger(year) || !Number.isInteger(month) || year < 2000 || month < 1 || month > 12) {
     return NextResponse.json({ success: false, error: 'Geçerli bir yıl ve ay gönderilmelidir.' }, { status: 400 });
   }
 
   try {
+    console.info('[monthly-statement-pdf] Başlatıldı', { requestId, year, month });
+    stage = 'database-connect';
     await connectDB();
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 1);
+    stage = 'database-query';
     const entries = await OpportunityModel.aggregate([
       { $match: { olusturma_tarihi: { $gte: startDate, $lt: endDate }, 'ucretler.0': { $exists: true } } },
       { $unwind: '$ucretler' },
@@ -140,8 +145,13 @@ export async function GET(request: NextRequest) {
       { $sort: { olusturmaTarihi: 1 } }
     ]).exec() as StatementEntry[];
 
+    console.info('[monthly-statement-pdf] Kayıtlar alındı', { requestId, entryCount: entries.length });
+    stage = 'statement-rows';
     const rows = buildStatementRows(entries);
     const totals = getTotals(rows);
+    console.info('[monthly-statement-pdf] Ekstre satırları oluşturuldu', { requestId, rowCount: rows.length, currencies: Object.keys(totals) });
+
+    stage = 'pdf-document';
     const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 28, bufferPages: true });
     const chunks: Buffer[] = [];
     const pdf = new Promise<Buffer>((resolve, reject) => {
@@ -151,8 +161,16 @@ export async function GET(request: NextRequest) {
     });
 
     const fontDirectory = path.join(process.cwd(), 'node_modules', 'pdfjs-dist', 'standard_fonts');
-    doc.registerFont('AppRegular', path.join(fontDirectory, 'LiberationSans-Regular.ttf'));
-    doc.registerFont('AppBold', path.join(fontDirectory, 'LiberationSans-Bold.ttf'));
+    const regularFont = path.join(fontDirectory, 'LiberationSans-Regular.ttf');
+    const boldFont = path.join(fontDirectory, 'LiberationSans-Bold.ttf');
+    console.info('[monthly-statement-pdf] Font kontrolü', {
+      requestId,
+      regularFontExists: existsSync(regularFont),
+      boldFontExists: existsSync(boldFont)
+    });
+    stage = 'pdf-fonts';
+    doc.registerFont('AppRegular', regularFont);
+    doc.registerFont('AppBold', boldFont);
     doc.font('AppRegular');
 
     const pageWidth = doc.page.width;
@@ -199,6 +217,7 @@ export async function GET(request: NextRequest) {
       tableY += rowHeight;
     };
 
+    stage = 'pdf-rows';
     rows.forEach((row) => drawRow([
       formatDate(row.tarih),
       `${row.isAdi}\n${row.musteri}`,
@@ -220,6 +239,7 @@ export async function GET(request: NextRequest) {
       '', `${total.karZarar < 0 ? '-' : '+'}${formatCurrency(Math.abs(total.karZarar), currency)}`
     ], true));
 
+    stage = 'pdf-footer';
     const pages = doc.bufferedPageRange();
     for (let index = 0; index < pages.count; index++) {
       doc.switchToPage(index);
@@ -232,8 +252,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    stage = 'pdf-finalize';
     doc.end();
     const pdfBuffer = await pdf;
+    console.info('[monthly-statement-pdf] PDF oluşturuldu', { requestId, bytes: pdfBuffer.length, pageCount: pages.count });
     const filename = `${year}-${String(month).padStart(2, '0')}-gelir-gider-ekstresi.pdf`;
 
     return new NextResponse(pdfBuffer, {
@@ -244,7 +266,19 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Monthly statement PDF error:', error);
-    return NextResponse.json({ success: false, error: 'Aylık ekstre PDF olarak oluşturulamadı.' }, { status: 500 });
+    const details = error instanceof Error ? error.message : 'Bilinmeyen hata';
+    console.error('[monthly-statement-pdf] Hata', {
+      requestId,
+      stage,
+      error: details,
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    return NextResponse.json({
+      success: false,
+      error: 'Aylık ekstre PDF olarak oluşturulamadı.',
+      debugId: requestId,
+      stage,
+      details
+    }, { status: 500 });
   }
 }
